@@ -1,3 +1,6 @@
+/* Copyright(c) 1986 Association of Universities for Research in Astronomy Inc.
+ */
+
 #include <stdio.h>
 #define import_spp
 #define	import_kernel
@@ -11,6 +14,8 @@ ZDOJMP (jmpbuf, status)
 XINT	*jmpbuf;
 XINT	*status;
 {
-	*((int *)jmpbuf[0]) = *status;
+	register int stat = *status;
+
+	*((int *)jmpbuf[0]) = stat ? stat : 1;
 	longjmp (&jmpbuf[1], *status);
 }

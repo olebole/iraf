@@ -46,6 +46,7 @@ sysgen:
 	$call gks
 	$call ncar
 	$call sgi
+	$call imd
 
 	# Not all systems want the NCAR/NSPP and CALCOMP graphics kernels.
 	$ifeq (USE_NSPP, yes)
@@ -124,6 +125,12 @@ sgi:
 	$update   libsgi.a
 	$checkin  libsgi.a  lib$
 	;
+imd:
+	$echo "-------------- LIBIMD ----------------" 
+	$checkout libimd.a  lib$
+	$update   libimd.a
+	$checkin  libimd.a  lib$
+	;
 ds:
 	$echo "-------------- LIBDS ----------------" 
 	$checkout libds.a  lib$
@@ -182,6 +189,7 @@ libex.a:				# High level system stuff
 	@plio
 	@pmio
 	@qpoe
+	@mwcs
 	;
 
 libvops.a:
@@ -230,6 +238,10 @@ libstg.a:				# The STDGRAPH graphics kernel
 	;
 
 libsgi.a:				# The SGI (simple graphics) kernel
+	@gio
+	;
+
+libimd.a:				# The IMD (image device) kernel
 	@gio
 	;
 

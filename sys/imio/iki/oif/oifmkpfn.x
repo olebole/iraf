@@ -19,11 +19,20 @@ int	maxch
 char	suffix[2]
 int	len_osdir, len_root, len_extn, n
 pointer	sp, imdir, osdir, root, extn, subdir, fname, ip, op
+
+bool	fnullfile()
 int	fnroot(), fnldir(), access(), envgets(), strncmp()
 string	pixextn OIF_PIXEXTN
-errchk	fmkdir
+errchk	fmkdir, imerr
 
 begin
+	# Check for the null image.
+	if (fnullfile (IM_HDRFILE(im))) {
+	    call strcpy ("dev$null", IM_PIXFILE(im), SZ_IMPIXFILE)
+	    call strcpy (IM_PIXFILE(im), pixfile, maxch)
+	    return
+	}
+
 	call smark (sp)
 	call salloc (imdir,  SZ_PATHNAME, TY_CHAR)
 	call salloc (osdir,  SZ_PATHNAME, TY_CHAR)
@@ -90,7 +99,7 @@ begin
 		    if (suffix[2] == 'z') {
 			suffix[2] = 'a'
 			if (suffix[1] == 'z')
-			    call fatal (SYS_FMKTEMP) 
+			    call imerr (IM_NAME(im), SYS_FMKTEMP)
 			else
 			    suffix[1] = suffix[1] + 1
 		    } else

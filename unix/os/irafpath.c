@@ -87,9 +87,6 @@ char *fname;			/* simple filename, no dirs */
 #ifdef vax
 	strcat (pathname, "vax");
 #endif
-#ifdef CONVEX
-	strcat (pathname, "convex");
-#endif
 #endif
 #endif
 #endif

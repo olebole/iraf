@@ -1,6 +1,7 @@
 # QPIO.H -- Definitions for the QPOE event i/o subpackage.
 
 # Default parameter and domain names.
+define	DEF_BLOCK	"defblock"	# header param - default block factor
 define	DEF_MASK	"defmask"	# header param - default region mask
 define	DEF_FILTER	"deffilt"	# header param - default event filter
 define	DEF_EVENTTYPE	"event"		# default name of user event datatype
@@ -104,6 +105,7 @@ define	NoINDEX_NoRMorBB	0	# nonindexed, no RM no BB
 define	NoINDEX_RMorBB		1	# nonindexed, maybe RM or BB
 define	INDEX_NoRMorBB		2	# indexed, no RM or BB
 define	INDEX_RMorBB		3	# indexed, maybe RM or BB
+define	NoDATA_NoAREA		4	# no events can be returned
 
 # Stored Event List header (one per stored event list).
 define	LEN_EHDES	16

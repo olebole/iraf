@@ -4,12 +4,12 @@
 # machine.
 
 #set	echo
-set	MACH = convex
-#set	MACH = `mach`		# SUNOS specific.
+#set	MACH = vax
+set	MACH = `mach`		# SUNOS specific.
 
 # Determine IRAF root directory (value set in install script).
 if ($?iraf == 0) then
-    setenv iraf "/iraf/iraf/"
+    setenv iraf "/local/iraf/"
 endif
 
 # Check for obsolete IRAFBIN definition.
@@ -35,13 +35,8 @@ if ($?IRAFARCH) then
     endif
 endif
 
-# IRAFARCH not defined: determine the architecture to be used.
-if ("$MACH" == "convex") then
-    if (-e ${iraf}bin.ieee/cl.e) then
-	setenv IRAFARCH "ieee"
-    else
-	setenv IRAFARCH "native"
-else if ("$MACH" == "sparc") then
+# Determine the architecture to be used.
+if ("$MACH" == "sparc") then
     setenv IRAFARCH "sparc"
 else if ("$MACH" == "i386") then
     setenv IRAFARCH "i386"
@@ -51,7 +46,7 @@ else
     setenv IRAFARCH "f68881"
 endif
 
-setenv arch ".$IRAFARCH"
+setenv arch .$IRAFARCH
 setenv IRAFBIN ${iraf}bin$arch/
 set file = ${IRAFBIN}cl.e
 

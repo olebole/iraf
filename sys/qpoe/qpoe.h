@@ -1,7 +1,7 @@
 # QPOE.H -- QPOE data definitions (private to the package).
 
 # Size limiting definitions.
-define	DEF_BLOCKFACTOR	8		# default block factor for image matrix
+define	DEF_BLOCKFACTOR	1		# default block factor for image matrix
 define	DEF_BUCKETLEN	1024		# def nevents per bucket
 define	DEF_FMMAXLFILES 128		# def maxlfile per datafile
 define	DEF_FMPAGESIZE	512		# def datafile page size
@@ -30,6 +30,7 @@ define	QPOE_VERSION	101		# QPOE interface version number
 define	QPOE_TITLE	"QPOE-V1.1"	# title string, for symbol table
 define	QPOE_EXTN	".qp"		# QPOE file extension
 define	QPOE_MACROEXTN	".qpm"		# QPOE macro definitions file extension
+define	QPWCS		"qpwcs"		# header parameter for default WCS
 define	IMMEDIATE	0		# for qp_sizeof
 define	INSTANCEOF	1		# for qp_sizeof
 

@@ -82,6 +82,12 @@ begin
 %	    errmsg = 'wrong number of axes on image'
 	case IE_AXLEN:
 %	    errmsg = 'length of each image axis must be .ge. 1'
+	case IE_MKDIR:
+%	    errmsg = 'cannot create pixel subdirectory'
+	case IE_PFNNUNIQ:
+%	    errmsg = 'cannot create unique pixel file name'
+	case IE_CLOBBER:
+%	    errmsg = 'new image would overwrite existing image'
 
 	case SYS_IDBDELNXKW:
 %	    errmsg = 'attempt to delete a nonexistent image header keyword'

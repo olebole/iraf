@@ -2,7 +2,7 @@
 # included in every SPP program.  See also lib$mach.h.
 
 # Generic constants.
-define	ARB		32767
+define	ARB		999999999
 define	BOF		-3
 define	EOF		-2
 define	EOS		0
@@ -57,6 +57,7 @@ define	SZ_USHORT	1
 define	SZ_FNAME	63		# max chars in a file name
 define	SZ_LINE		161		# max chars in a line
 define	SZ_PATHNAME	127		# OS dependent file names
+define	SZ_COMMAND	1024		# max size command block
 
 define	TY_BOOL		1		# codes for type arguments, sizeof
 define	TY_CHAR		2
@@ -98,9 +99,9 @@ define	P2X	((($1)-1)/2+1)
 # Map the following onto host Fortran intrinsic functions if possible,
 # else onto the andi, ori, etc. portable VOS functions.
 
-define and	iand
-define or	ior
-define xor	ieor
+# define and	andi
+# define or	ori
+# define xor	xori
 # define not	noti
 
 # Name conversions (to avoid conflicts with host system).  Must agree with

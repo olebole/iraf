@@ -23,7 +23,7 @@ set	SNML = S.nm.$BMACH
 set	SVER = S.ver.$BMACH
 set	OMIT = omit.$BMACH
 set	EXCL = "zshlib.o zzstrt.o"
-set	ADDR = 0e000000		# default base address of shared region
+set	ADDR = 0a000000		# default base address of shared region
 set	PGSZ = 0x2000		# page size
 
 set	FIOCOMSZ = 0x1560	# exported commons
@@ -44,7 +44,7 @@ while ("$1" != "")
 	set ADDR = $1
 	# I couldn't get a direct !~ csh pattern match test to work here.
 	if ("`echo $ADDR | grep '[0-9][0-9a-f]*'`" == "") then
-	    set ADDR = 0e000000
+	    set ADDR = 0a000000
 	    echo -n "Warning: shared library base address not given,"
 	    echo " defaults to $ADDR"
 	endif
@@ -79,9 +79,9 @@ if ($?IRAFULIB) then
     if ($PROC == S.e) then
 	echo "Warning: user library IRAFULIB=$IRAFULIB will be searched"
     endif
-    set dirs = "$IRAFULIB $iraf/lib $iraf/unix/hlib"
+    set dirs = "$IRAFULIB $iraf/lib $iraf/unix/bin.`mach`"
 else
-    set dirs = "$iraf/lib $iraf/unix/hlib"
+    set dirs = "$iraf/lib $iraf/unix/bin.`mach`"
 endif
 
 # In the following, the object V.o must be the first object to be linked,
@@ -147,7 +147,11 @@ link:
 
 	if (! -e Malloc.o) then
 	    if (! -e medit.e) then
-		cc medit.c -o medit.e
+		if (`mach` == mc68020) then
+		    cc -fsoft medit.c -o medit.e
+		else
+		    cc medit.c -o medit.e
+		endif
 	    endif
 	    ar x /usr/lib/libc.a malloc.o; mv malloc.o Malloc.o
 	    medit.e Malloc.o malloc Malloc realloc Realloc free Free

@@ -8,9 +8,9 @@
  * Use osb$zzeps.f to compute the machine epsilon.
  */
 #define	OSOK		0		/* normal successful completion	*/
-#define	LEN_JUMPBUF	16		/* save buffer for ZSVJMP/ZDOJMP  */
-#define	EPSILON		5.97e-8		/* smallest real E s.t. (1.0+E > 1.0) */
-#define EPSILOND	1.39e-17	/* double precision epsilon */
+#define	LEN_JUMPBUF	64		/* C "jmp_buf" len + 1 (or larger) */
+#define	EPSILON		(1.192e-7)	/* smallest real E s.t. (1.0+E > 1.0) */
+#define EPSILOND	(2.220d-16)	/* double precision epsilon */
 #define	MAX_LONG	2147483647
 #define	FNNODE_CHAR	'!'		/* node name delimiter character */
 
@@ -30,6 +30,7 @@
 #define	SZ_LINE		161
 #define	SZ_FNAME	63
 #define	SZ_PATHNAME	127
+#define	SZ_COMMAND	1024
 #define	EOS		'\0'
 #define	ERR		(-1)
 #define	OK		0

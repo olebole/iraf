@@ -1,4 +1,17 @@
-#{ Dummy package script task assigned to packages which have not yet been
-# released.
+#{ ARTDATA - Artificial data package
 
-= "not yet available"
+package artdata
+
+task	gallist,
+	mk1dspec,
+	mk2dspec,
+	mkheader,
+	mknoise,
+	mkobjects,
+	mkpattern,
+	starlist	= "artdata$x_artdata.e"
+
+set	mkexamples	= "artdata$mkexamples/"
+task	mkexamples	= "mkexamples$mkexamples.cl"
+
+clbye()

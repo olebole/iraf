@@ -419,9 +419,18 @@ XINT	*status;			/* return status		*/
 
 	kfp->fpos += count;
 
+	/* If an error occurred while writing to the file, clear the error
+	 * on the host stream and report a file write error to the caller.
+	 * Ignore the special case of an EBADF occuring while writing to the
+	 * terminal, which occurs when a background job writes to the terminal
+	 * after the user has logged out.
+	 */
 	if (ferror (fp)) {
 	    clearerr (fp);
-	    *status = XERR;
+	    if (errno == EBADF && (fp == stdout || fp == stderr))
+		*status = count;
+	    else
+		*status = XERR;
 	} else
 	    *status = count;
 }

@@ -7,11 +7,10 @@ static	int	u_jmpstat;
 #define	setjmp(e)	(ZSVJMP((e),&u_jmpstat),u_jmpstat)
 #define	longjmp(e,v)	(u_jmpstat=(v),ZDOJMP((e),&u_jmpstat))
 
-/* This causes an "undefined control" error on Sun-3s.
- * #ifdef sparc
- * extern	zsvjmp_();
- * #pragma unknown_control_flow(zsvjmp_)
- * #endif
+/* The following is necessary to prevent to prevent the optimizer from
+ * doing unwise things with setjmp on a Sun-4.
  */
+extern	zsvjmp_();
+#pragma unknown_control_flow(zsvjmp_)
 
 #define	D_setjmp

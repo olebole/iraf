@@ -65,14 +65,14 @@ begin
 	 # get optional keywords
 	 switch (optiono) {
 	 case KEY_BSCALE:
-	    if (NAXIS(im) <= 0)
+	    if ((NAXIS(im) <= 0) || (FITS_BITPIX(fits) < 0))
 		stat = NO
 	    else {
 	        call wft_encoded ("BSCALE", BSCALE(fits), card,
 	        "REAL = TAPE*BSCALE + BZERO", NDEC_DOUBLE)
 	    }
 	 case KEY_BZERO:
-	    if (NAXIS(im) <= 0)
+	    if ((NAXIS(im) <= 0) || (FITS_BITPIX(fits) < 0))
 		stat = NO
 	    else
 	        call wft_encoded ("BZERO", BZERO(fits), card, "", NDEC_DOUBLE)
@@ -175,9 +175,9 @@ int	up		# pointer to next character in the unknown string
 char	card[ARB]	# FITS card image
 
 char	cval
-int	stat
+int	stat, axis, index
 char	chfetch()
-int	strmatch()
+int	strmatch(), ctoi()
 
 begin
 	if (chfetch (UNKNOWN(im), up, cval) == EOS)
@@ -189,21 +189,41 @@ begin
 	        call wft_fits_card (UNKNOWN(im), up, card, 1, LEN_CARD, '\n')
 		if (card[1] == EOS)
 		    break
-	        if (strmatch (card, "^GROUPS  ") != 0)
+	        if (strmatch (card, "^GROUPS  ") != 0) {
 		    stat = NO
-	        else if (strmatch (card, "^GCOUNT  ") != 0)
+	        } else if (strmatch (card, "^SIMPLE  ") != 0) {
 		    stat = NO
-	        else if (strmatch (card, "^PCOUNT  ") != 0)
+	        } else if (strmatch (card, "^BITPIX  ") != 0) {
 		    stat = NO
-	        else if (strmatch (card, "^PSIZE   ") != 0)
+	        } else if (strmatch (card, "^NAXIS   ") != 0) {
 		    stat = NO
-	        else if (strmatch (card, "^BSCALE  ") != 0)
+	        } else if (strmatch (card, "^NAXIS") != 0) {
+		    index = LEN_NAXIS_KYWRD + 1
+		    if (ctoi (card, index, axis) > 0)
+		        stat = NO
+		    else
+			stat = YES
+	        } else if (strmatch (card, "^GCOUNT  ") != 0) {
 		    stat = NO
-	        else if (strmatch (card, "^BZERO   ") != 0)
+	        } else if (strmatch (card, "^PCOUNT  ") != 0) {
 		    stat = NO
-	        else if (strmatch (card, "^BLANK   ") != 0)
+	        } else if (strmatch (card, "^PSIZE   ") != 0) {
 		    stat = NO
-	        else
+	        } else if (strmatch (card, "^BSCALE  ") != 0) {
+		    stat = NO
+	        } else if (strmatch (card, "^BZERO   ") != 0) {
+		    stat = NO
+	        } else if (strmatch (card, "^BLANK   ") != 0) {
+		    stat = NO
+	        } else if (strmatch (card, "^IRAF-MAX") != 0) {
+		    stat = NO
+	        } else if (strmatch (card, "^IRAF-MIN") != 0) {
+		    stat = NO
+	        } else if (strmatch (card, "^IRAFTYPE") != 0) {
+		    stat = NO
+	        } else if (strmatch (card, "^IRAF-B/P") != 0) {
+		    stat = NO
+	        } else
                     stat = YES
 	    }
 

@@ -192,19 +192,6 @@ struct	_hwx hwx_exception[] = {
 	SEGV_PROT,		"access exceeded protections",
 	SEGV_OBJERR,		"object returned errno value",
 #endif
-#ifdef CONVEX
-	FPE_INTOVF_TRAP,	"integer overflow",
-	FPE_INTDIV_TRAP,	"integer divide by zero",
-	FPE_FLTOVF_TRAP,	"floating overflow",
-	FPE_FLTDIV_TRAP,	"floating divide by zero",
-	FPE_FLTUND_TRAP,	"floating underflow",
-	FPE_RESOP_TRAP,		"Reserved Operand trap",
-	FPE_SQRT_TRAP,		"square root negative argument",
-	FPE_EXP_TRAP,		"exp overflow",
-	FPE_LN_TRAP,		"ln arg less than or equal zero",
-	FPE_SIN_TRAP,		"sin: arg too large",
-	FPE_COS_TRAP,		"cos: arg too large",
-#endif
 	EOMAP,			""
 };
 

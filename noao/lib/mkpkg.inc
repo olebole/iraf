@@ -14,6 +14,6 @@ $else $ifeq (MACH, ffpa) then
 $include "noao$lib/mkpkg.sf.SUN3"
 $else $ifeq (MACH, vms) then
 $include "noao$lib/mkpkg.sf.VMS"
-$else $ifeq (MACH, convex) then
-$include "noao$lib/mkpkg.sf.CX"
+$else $ifeq (MACH, mips) then
+$include "noao$lib/mkpkg.sf.MIPS"
 $end

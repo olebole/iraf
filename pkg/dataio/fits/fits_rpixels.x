@@ -6,7 +6,8 @@ include <mach.h>
 
 # RFT_INIT_READ_PIXELS and READ_PIXELS -- Read pixel data with record buffering
 # and data type conversion.  The input data must meet the MII standard
-# except for possibly having the least significant byte first.
+# except for possibly in the case of integers having the least significant
+# byte first.
 #
 # Read data in records of len_record and convert to the specified IRAF
 # data type.  Successive calls of rft_read_pixels returns the next npix pixels.
@@ -25,16 +26,17 @@ include <mach.h>
 
 int procedure rft_init_read_pixels (npix_record, bitpix, lsbf, spp_type)
 
-int	npix_record	# Number of pixels per input record
-int	bitpix		# Bits per pixel (must correspond to an MII type)
+int	npix_record	# number of pixels per input record
+int	bitpix		# bits per pixel (must correspond to an MII type)
 int	lsbf		# byte swap?
 int	spp_type	# SPP data type to be returned
 
 # entry rft_read_pixels (fd, buffer, npix)
+
 int	rft_read_pixels
-int	fd		# Input file descriptor
-char	buffer[ARB]	# Output buffer
-int	npix		# Number of pixels to read
+int	fd		# input file descriptor
+char	buffer[1]	# output buffer
+int	npix		# number of pixels to read
 
 int	swap
 int	ty_mii, ty_spp, npix_rec, nch_rec, sz_rec, nchars, len_mii, recptr
@@ -93,7 +95,7 @@ entry	rft_read_pixels (fd, buffer, npix, recptr, bufsize)
 		call miiupk (Memi[mii], Memc[spp], npix_rec, ty_mii, ty_spp)
 
 		ip = 0
-		recptr = recptr + 1
+		#recptr = recptr + 1
 	    }
 
 	    n = min (nch_rec - ip, nchars - op)
@@ -117,25 +119,36 @@ int	sz_rec		# size in chars of record to be read
 int	bufsize		# buffer size in records
 int	recptr		# last successful FITS record read
 
-int	i
+int	i, nchars
 int	read()
 errchk	read
 
 begin
-	iferr {
-	    i = read (fd, buf, sz_rec)
-	} then {
-	    call fseti (fd, F_VALIDATE, bufsize * i)
-	    call printf ("Error reading FITS record %d\n")
-	    if (mod (recptr + 1, bufsize) == 0)
-		call pargi ((recptr + 1) / bufsize)
+	nchars = 0
+	repeat {
+	    iferr {
+	        i = read (fd, buf[nchars+1], sz_rec - nchars)
+	    } then {
+	        call fseti (fd, F_VALIDATE, bufsize * i)
+	        call printf ("Error reading FITS record %d\n")
+	        if (mod (recptr + 1, bufsize) == 0)
+		    call pargi ((recptr + 1) / bufsize)
+	        else
+		    call pargi ((recptr + 1) / bufsize + 1)
+	        i = read (fd, buf[nchars+1], sz_rec - nchars)
+	    }
+
+	    if (i == EOF)
+		break
 	    else
-		call pargi ((recptr + 1) / bufsize + 1)
-	    i = read (fd, buf, sz_rec)
-	}
+	        nchars = nchars + i
+
+	} until (nchars >= sz_rec)
 
 	if (i == EOF)
 	    return (EOF)
-	else
-	    return (i)
+	else {
+	    recptr = recptr + 1
+	    return (nchars)
+	}
 end

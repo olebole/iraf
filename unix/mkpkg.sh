@@ -4,13 +4,8 @@
 #
 # USAGE:  `sh -x mkpkg.sh >& spool'  to bootstrap the IRAF HSI.
 
-# Set `as' for the current host architecture.
-#if test -h as; then rm -rf as; fi
-#    ln -s as.$MACH as
-
-# Ditto for `bin'.
-#if test -h bin; then rm -rf bin; fi
-#    ln -s bin.$MACH bin
+# Set the HSI architecture.
+sh -x setarch.sh
 
 echo "----------------------- OS -----------------------------"
 echo "+"; echo "+"
@@ -18,9 +13,9 @@ echo "+"; echo "+"
 echo "----------------------- BOOT ---------------------------"
 echo "+"; echo "+"
 (cd boot; sh -x mkpkg.sh)
-#echo "----------------------- SHLIB --------------------------"
-#echo "+"; echo "+"
-#(cd shlib; sh -x mkpkg.sh)
+echo "----------------------- SHLIB --------------------------"
+echo "+"; echo "+"
+(cd shlib; sh -x mkpkg.sh)
 echo "----------------------- GDEV ---------------------------"
 (cd gdev; sh -x mkpkg.sh)
 

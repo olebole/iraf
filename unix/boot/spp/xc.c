@@ -5,6 +5,8 @@
 #include <ctype.h>
 #include <signal.h>
 #include <errno.h>
+#include <sys/types.h>
+#include <dirent.h>
 #include "xpp.h"
 
 #define	NOKNET
@@ -28,23 +30,24 @@
 #define	SZ_PATHNAME	127
 
 #define	DEBUGFLAG	'g'		/* what to use when -x is seen */
-#define	XPP		"xpp"
-#define	XPPEXE		"xpp.e"
-#define	RPP		"rpp"
-#define	RPPEXE		"rpp.e"
+#define	SYSBINDIR	"/usr/lang/"		/* special system BIN */
+#define	LOCALBINDIR	"/usr/local/bin/"	/* standard local BIN */
+
+#define	XPP		"xpp.e"
+#define	RPP		"rpp.e"
+#define	EDSYM		"edsym.e"
+#define	SHIMAGE		"S.e"
 #define LIBMAIN		"libmain.o"
 #define SHARELIB	"libshare.a"
 #define IRAFLIB1	"libex.a"
 #define IRAFLIB2	"libsys.a"
 #define IRAFLIB3	"libvops.a"
 #define IRAFLIB4	"libos.a"
-
-#define FORTLIB0	"-lU77"		/* Convex libraries */
-#define FORTLIB1	"-lF77"
-#define FORTLIB2	"-lI77"
-#define FORTLIB3	"-lD77"
+#define FORTLIB0	"-lU77"
+#define FORTLIB1	"-lm"
+#define FORTLIB2	"-lF77"
+#define FORTLIB3	"-lI77"
 #define FORTLIB4	"-lm"
-#define FORTLIB5	"-lmathC1"
 
 #ifdef SUNOS4
 int	usesharelib = YES;
@@ -87,6 +90,7 @@ char	*foreign_defsfile = "";
 
 char	*vfn2osfn();
 char	*os_getenv();
+char	*findexe();
 
 
 /* MAIN -- Execution begins here.  Interpret command line arguments and
@@ -199,6 +203,7 @@ char	*argv[];
 		     * on command line.
 		     */
 		    hostprog++;
+		    noedsym++;
 		    break;
 
 		default:
@@ -324,10 +329,10 @@ passflag:		    mkobject = YES;
 	 * everything be declared) for raw Fortran files.
 	 */
 	nargs = 0;
-	arglist[nargs++] = "fc";
+	arglist[nargs++] = "f77";
 	arglist[nargs++] = "-c";
 	if (optimize)
-	    arglist[nargs++] = "-O1";
+	    arglist[nargs++] = "-O";
 
 	for (i=0;  i < nflags;  i++)
 	    arglist[nargs++] = lflags[i];
@@ -338,8 +343,8 @@ passflag:		    mkobject = YES;
 
 	if (i > 0) {
 	    if (debug)
-		printargs ("fc", arglist, nargs);
-	    errflag += run ("fc", arglist);
+		printargs ("f77", arglist, nargs);
+	    errflag += run ("f77", arglist);
 	}
 
 
@@ -347,11 +352,11 @@ passflag:		    mkobject = YES;
 	 * object code.
 	 */
 	nargs = 0;
-	arglist[nargs++] = "fc";
+	arglist[nargs++] = "f77";
 	arglist[nargs++] = "-c";
-	/* arglist[nargs++] = "-u"; */
+	arglist[nargs++] = "-u";
 	if (optimize)
-	    arglist[nargs++] = "-O1";
+	    arglist[nargs++] = "-O";
 
 	for (i=0;  i < nflags;  i++)
 	    arglist[nargs++] = lflags[i];
@@ -371,8 +376,8 @@ passflag:		    mkobject = YES;
 
 	if (noperands > 0) {
 	    if (debug)
-		printargs ("fc", arglist, nargs);
-	    errflag += run ("fc", arglist);
+		printargs ("f77", arglist, nargs);
+	    errflag += run ("f77", arglist);
 	}
 
 
@@ -441,15 +446,64 @@ passflag:		    mkobject = YES;
 		    }
 	    }
 
+	/* Link options. */
 	for (i=0;  i < nflags;  i++)
 	    arglist[nargs++] = lflags[i];
-	
+
+#ifdef sun
+	/* If we are using the V1.3 Sun Fortran compiler, the V1.3 "f77"
+	 * should be a symbolic link pointing to the BIN directory for the
+	 * new compiler.  Construct the path to this directory and put it
+	 * out as a -Ldir flag on the link line to ensure that the library
+	 * is searched for linking.
+	 */
+	if (isv13()) {
+	    char    libpath[256];
+	    char    dir[256], *path;
+	    char    *pp, *ip, *op, *s;
+	    int     n;
+
+	    path = findexe ("f77", dir);
+
+	    strcpy (libpath, "-L");
+	    strcpy (libpath+2, dir);
+	    for (op=libpath;  *op;  op++)
+		;
+	    if ((n = readlink (path, op, 128)) > 0) {
+		op[n] = EOS;
+
+		for (ip=op;  *ip;  ip++)
+		    if (*ip == '/')
+			op = ip;
+		*op = EOS;
+
+		/* Search, e.g., /usr/lang/SC0.0/ffpa first if Sun-3. */
+		if (s = os_getenv ("FLOAT_OPTION")) {
+		    *op = '/';
+		    strcpy (op+1, s);
+		    strcpy (libp, libpath);
+		    libp += strlen (pp = libp) + 1;
+		    arglist[nargs++] = pp;
+		}
+
+		/* Search /usr/lang/SC0.0 (or whatever). */
+		*op = EOS;
+		strcpy (libp, libpath);
+		libp += strlen (pp = libp) + 1;
+		arglist[nargs++] = pp;
+	    }
+	}
+#endif
+
+	/* File to link. */
 	for (i=0;  i < nfiles;  i++)
 	    arglist[nargs++] = lfiles[i];
 
-	if (hostprog)
-	    arglist[nargs++] = mkfname (FORTLIB0);
-	else {
+	/* Libraries to link against. */
+	if (hostprog) {
+	    if (!isv13())
+		arglist[nargs++] = mkfname (FORTLIB0);
+	} else {
 	    arglist[nargs++] = mkfname (LIBMAIN);
 	    if (usesharelib) {
 		arglist[nargs++] = mkfname (SHARELIB);
@@ -462,11 +516,19 @@ passflag:		    mkobject = YES;
 	    }
 	}
 
-	arglist[nargs++] = mkfname (FORTLIB1);
-	arglist[nargs++] = mkfname (FORTLIB2);
-	arglist[nargs++] = mkfname (FORTLIB3);
-	arglist[nargs++] = mkfname (FORTLIB4);
-	arglist[nargs++] = mkfname (FORTLIB5);
+	/* The remaining system libraries depend upon which vversion of
+	 * the SunOS compiler we are using.  The V1.3 compilers use only
+	 * -lF77 and -lm.
+	 */
+	if (isv13()) {
+	    arglist[nargs++] = mkfname (FORTLIB2);
+	    arglist[nargs++] = mkfname (FORTLIB4);
+	} else {
+	    arglist[nargs++] = mkfname (FORTLIB1);
+	    arglist[nargs++] = mkfname (FORTLIB2);
+	    arglist[nargs++] = mkfname (FORTLIB3);
+	    arglist[nargs++] = mkfname (FORTLIB4);
+	}
 	arglist[nargs] = NULL;
 
 	if (ncomp) {
@@ -493,15 +555,18 @@ passflag:		    mkobject = YES;
 	 */
 	if (usesharelib && !noedsym && !stripexe) {
 	    char    shlib[SZ_PATHNAME+1];
+	    char    edsym[SZ_PATHNAME+1];
 	    char    command[256];
 
-	    if (os_sysfile ("S.e", shlib, SZ_PATHNAME) > 0) {
-		sprintf (command, "edsym %s %s", outfile, shlib);
-		if (noshsym)
-		    strcat (command, " -T");
-		else if (notvsym)
-		    strcat (command, " -t");
-		status = sys (command);
+	    if (os_sysfile (SHIMAGE, shlib, SZ_PATHNAME) > 0) {
+		if (os_sysfile (EDSYM, edsym, SZ_PATHNAME) > 0) {
+		    sprintf (command, "%s %s %s", edsym, outfile, shlib);
+		    if (noshsym)
+			strcat (command, " -T");
+		    else if (notvsym)
+			strcat (command, " -t");
+		    status = sys (command);
+		}
 	    }
 	}
 	errflag += status;
@@ -600,7 +665,7 @@ char	*file;
 	}
 
 	if (!xpp_path[0])
-	    if (os_sysfile (XPPEXE, xpp_path, SZ_PATHNAME) <= 0)
+	    if (os_sysfile (XPP, xpp_path, SZ_PATHNAME) <= 0)
 		strcpy (xpp_path, XPP);
 
 	if (pkgenv)
@@ -620,7 +685,7 @@ char	*file;
 	chdot (fname, 'f');
 
 	if (!rpp_path[0])
-	    if (os_sysfile (RPPEXE, rpp_path, SZ_PATHNAME) <= 0)
+	    if (os_sysfile (RPP, rpp_path, SZ_PATHNAME) <= 0)
 		strcpy (rpp_path, RPP);
 	sprintf (cmdbuf, "%s %s >%s", rpp_path, file, fname);
 	if (!(errflag & XPP_BADXFILE))
@@ -708,31 +773,20 @@ char	*task;
 char	*argv[];
 {
 	int	waitpid, fork();
-	char	*s, *t, path[50];
-
-	s = path;
-	t = "/usr/bin/";
-	while (*t != EOS)
-	    *s++ = *t++;
-	for (t = task;  (*s++ = *t++) != EOS;  )
-	    ;
+	char	path[256];
 
 	if ((waitpid = fork()) == 0) {
 	    enbint (SIG_DFL);
 
-	    execv (path+9, argv);	/* command */
-	    execv (path+4, argv);	/* /bin/command */
-	    execv (path  , argv);	/* /usr/bin/command */
+	    execvp (task, argv);	/* use user PATH for search */
+	    strcpy (path, SYSBINDIR);
+	    strcat (path, task);
+	    execv  (task, argv);	/* look in SYSBINDIR */
+	    strcpy (path, LOCALBINDIR);
+	    strcat (path, task);
+	    execv  (task, argv);	/* look in LOCALBINDIR */
 
-	    s = path;
-	    t = "/usr/convex/";
-	    while (*t != EOS)
-		*s++ = *t++;
-	    for (t = task;  (*s++ = *t++) != EOS;  )
-		;
-	    execv (path  , argv);	/* /usr/convex/command */
-
-	    fatalstr ("Cannot execute %s", path+9);
+	    fatalstr ("Cannot execute %s", task);
 	}
 
 	return (await (waitpid));
@@ -746,63 +800,60 @@ char	*argv[];
 
 
 /* SYS -- Execute a general UNIX command passed as a string.  The command may
- * contain i/o redirection metacharacters.
+ * contain i/o redirection metacharacters.  The full path of the command to
+ * be executed should be given (and always is in the case of XC).
  */
-sys (str)
-char	*str;
+sys (cmd)
+char	*cmd;
 {
-	register char *s, *t;
-	char	*argv[100], path[100];
+	register char *ip;
+	char	*argv[256];
 	char	*inname, *outname;
 	int	append;
 	int	waitpid;
 	int	argc;
 
 	if (debug) {
-	    fprintf (stderr, "debug: %s\n", str);
+	    fprintf (stderr, "debug: %s\n", cmd);
 	    fflush (stderr);
 	}
 
 	inname  = NULL;
 	outname = NULL;
-	argv[0] = shellname;
-	argc = 1;
+	argc = 0;
 
-	t = str;
-	while (isspace (*t))
-	    ++t;
-	while (*t) {
-	    if (*t == '<')
-		inname = t+1;
-	    else if (*t == '>') {
-		if (t[1] == '>') {
+	/* Parse command string into argv array, inname, and outname.
+	 */
+	ip = cmd;
+	while (isspace (*ip))
+	    ++ip;
+	while (*ip) {
+	    if (*ip == '<')
+		inname = ip+1;
+	    else if (*ip == '>') {
+		if (ip[1] == '>') {
 		    append = YES;
-		    outname = t+2;
+		    outname = ip+2;
 		} else {
 		    append = NO;
-		    outname = t+1;
+		    outname = ip+1;
 		}
 	    } else
-		argv[argc++] = t;
-	    while ( !isspace (*t) && *t != '\0' )
-		++t;
-	    if (*t) {
-		*t++ = '\0';
-		while (isspace (*t))
-		    ++t;
+		argv[argc++] = ip;
+	    while ( !isspace (*ip) && *ip != '\0' )
+		++ip;
+	    if (*ip) {
+		*ip++ = '\0';
+		while (isspace (*ip))
+		    ++ip;
 	    }
 	}
 
-	if (argc == 1)				/* no command */
+	if (argc <= 0)				/* no command */
 	    return (-1);
 	argv[argc] = 0;
 
-	s = path;
-	t = "/usr/bin/";
-	while (*t)
-	    *s++ = *t++;
-	for (t = argv[1] ; *s++ = *t++ ; )
-	    ;
+	/* Execute the command. */
 	if ((waitpid = fork()) == 0) {
 	    if (inname)
 		freopen (inname, "r", stdin);
@@ -810,59 +861,11 @@ char	*str;
 		freopen (outname, (append ? "a" : "w"), stdout);
 	    enbint (SIG_DFL);
 
-	    texec (path+9, argv);	/* command */
-	    texec (path+4, argv);	/* /bin/command */
-	    texec (path  , argv);	/* /usr/bin/command */
-
-	    s = path;
-	    t = "/local/bin/";
-	    while (*t)
-		*s++ = *t++;
-	    for (t = argv[1] ; *s++ = *t++ ; )
-		;
-	    texec (path  , argv);	/* /local/bin/command */
-
-	    s = path;
-	    t = "/usr/local/bin/";
-	    while (*t)
-		*s++ = *t++;
-	    for (t = argv[1] ; *s++ = *t++ ; )
-		;
-	    texec (path  , argv);	/* /usr/local/bin/command */
-
-	    s = path;
-	    t = "/iraf/local/bin/";
-	    while (*t)
-		*s++ = *t++;
-	    for (t = argv[1] ; *s++ = *t++ ; )
-		;
-	    texec (path  , argv);	/* /iraf/local/bin/command */
-
-	    fatalstr ("Cannot execute %s", path);
+	    execv (argv[0], argv);
+	    fatalstr ("Cannot execute %s", argv[0]);
 	}
 
 	return (await (waitpid));
-}
-
-
-/* TEXEC -- Spawn a shell to execute with the given argument list.
- * Taken from the shell with minor modifications.
- */
-texec (f, av)
-char	*f;
-char	**av;
-{
-	extern int errno;
-
-	execv (f, av+1);
-
-	if (errno == ENOEXEC) {
-	    av[1] = f;
-	    execv (shellname, av);
-	    fatal ("No shell!");
-	}
-	if (errno == ENOMEM)
-	    fatalstr ("%s: too large", f);
 }
 
 
@@ -980,4 +983,88 @@ char	*s;
 {
 	fprintf (stderr, "Error: %s\n", s);
 	fflush (stderr);
+}
+
+
+/* ISV13 -- Test if we are using the version 1.3 Sun Fortran compiler.
+ * There is no simple, reliable way to do this.  The heuristic used is
+ * to first locate the "f77" we will use, then see if there is a file
+ * named "f77-1.3*" in the same directory.
+ */
+isv13()
+{
+	static	int v13 = -1;
+	struct	dirent *dp;
+	char	dir[256];
+	char	*name;
+	DIR	*dirp;
+
+	if (v13 != -1)
+	    return (v13);
+
+	if (findexe ("f77", dir) && (dirp = opendir(dir)) != NULL) {
+	    while (dp = readdir(dirp)) {
+		/* Actually, we don't want to be too picky about the
+		 * version number of this won't work for future versions,
+		 * so just match up to the version number.
+		 */
+		name = dp->d_name;
+		if (!strncmp (name, "f77-1.3", 4) && isdigit(name[4])) {
+		    closedir (dirp);
+		    return (v13 = 1);
+		}
+	    }
+	    closedir (dirp);
+	}
+
+	return (v13 = 0);
+}
+
+
+/* FINDEXE -- Search for the named file and return the path if found, else
+ * NULL.  If "dir" is non-NULL the directory in which the file resides is
+ * returned in the string buffer pointed to.  The user's PATH is searched,
+ * followed by SYSBINDIR, then LOCALBINDIR.
+ */
+char *
+findexe (prog, dir)
+char	*prog;			/* file to search for */
+char	*dir;			/* pointer to output string buf, or NULL */
+{
+	register char *ip, *op;
+	static	char path[256];
+	char	dirpath[256];
+	char	*dp = dir ? dir : dirpath;
+
+	/* Look for the program in the directories in the user's path.
+	 */
+	ip = os_getenv ("PATH");
+	while (*ip) {
+	    for (op=dp;  *ip && (*op = *ip++) != ':';  op++)
+		;
+	    *op++ = '/';
+	    *op++ = EOS;
+	    strcpy (path, dp);
+	    strcat (path, prog);
+	    if (access (path, 0) != -1)
+		return (path);
+	}
+
+	/* Look in SYSBINDIR. */
+	strcpy (dp, SYSBINDIR);
+	strcpy (path, dp);
+	strcat (path, prog);
+	if (access (path, 0) != -1)
+	    return (path);
+
+
+	/* Look in LOCALBINDIR. */
+	strcpy (dp, LOCALBINDIR);
+	strcpy (path, dp);
+	strcat (path, prog);
+	if (access (path, 0) != -1)
+	    return (path);
+
+	/* Not found. */
+	return (NULL);
 }

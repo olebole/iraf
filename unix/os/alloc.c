@@ -6,6 +6,7 @@
 #include <pwd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <ctype.h>
 
 #define	import_spp
 #define	import_alloc
@@ -49,7 +50,6 @@ struct file {				/* special files for "device"	*/
 int	debug=0;
 int	nsfiles;			/* number of special files	*/
 int	mode;				/* 07 mode, ie, 04, 02, or 06	*/
-static	char cmd[64];
 
 main (argc, argv)
 int	argc;
@@ -57,16 +57,13 @@ char	*argv[];
 {
 	int	iexit = DV_ERROR;
 
-#ifndef CONVEX
 	if (geteuid()) {
 	    fprintf (stderr,
 		"Error: uid of $hbin/alloc.e must be set to 0 (root)\n");
 	    fprintf (stderr, "(rerun install script $hlib/install, or)\n");
 	    fprintf (stderr, "(login as root: cd $hbin; chown 0 alloc.e)\n");
 	    exit (DV_ERROR);
-	}
-#endif
-	if (argc < 3) {
+	} else if (argc < 3) {
 	    fprintf (stderr, "alloc.e called with invalid argument list\n");
 	    exit (DV_ERROR);
 	}
@@ -105,20 +102,6 @@ int	statonly;		/* if set, just return device status */
 	    ruid = fp->f_sbuf.st_uid;
 	    mode = fp->f_sbuf.st_mode;
 
-#ifdef CONVEX
-	    if (debug)
-		fprintf (stderr,
-		    "%s: uid=%d, mode=%o\n", fp->f_name, ruid, mode);
-	    if (ruid) {
-		if (ruid != getuid()) {
-		    if (!statonly)
-			printf ("%s already allocated to %s\n",
-			    fp->f_name, (getpwuid (ruid))->pw_name);
-		    return (DV_DEVINUSE);
-		} else
-		    return (statonly ? DV_DEVALLOC : XOK);
-	    }
-#else
 	    if (ruid == 0 && (mode & 06) == 0) {
 		if (!statonly)
 		    printf ("rw access to %s is denied\n", fp->f_name);
@@ -132,7 +115,6 @@ int	statonly;		/* if set, just return device status */
 		} else
 		    return (statonly ? DV_DEVALLOC : XOK);
 	    }
-#endif
 	}
 
 	if (statonly)
@@ -145,20 +127,10 @@ int	statonly;		/* if set, just return device status */
 	    fp = &sfiles[i];
 	    if (debug)
 		printf ("alloc file `%s'\n", fp->f_name);
-#ifdef CONVEX
-	    sprintf (cmd,
-		"/usr/convex/tpalloc -f %s >> /dev/null", fp->f_name);
-	    if (debug)
-		fprintf (stderr, "%s\n", cmd);
-	    system (cmd);
-	    if (i == 0)
-		break;
-#else
 	    if (chmod (fp->f_name, RWOWN) == -1)
 		printf ("cannot chmod `%s'\n", fp->f_name);
 	    if (chown (fp->f_name, ruid, rgid) == -1)
 		printf ("cannot chown `%s'\n", fp->f_name);
-#endif
 	}
 
 	return (XOK);
@@ -195,20 +167,10 @@ char	*argv[];
 		continue;
 	    if (debug)
 		printf ("dealloc file `%s'\n", fp->f_name);
-#ifdef CONVEX
-	    sprintf (cmd,
-		"/usr/convex/tpdealloc -k %s >> /dev/null", fp->f_name);
-	    if (debug)
-		fprintf (stderr, "%s\n", cmd);
-	    system (cmd);
-	    if (i == 0)
-		break;
-#else
 	    if (chmod (fp->f_name, RWALL) == -1)
 		printf ("cannot chmod `%s'\n", fp->f_name);
 	    if (chown (fp->f_name, 0, 0) == -1)
 		printf ("cannot chown `%s'\n", fp->f_name);
-#endif
 	}
 
 	return (XOK);
@@ -222,11 +184,20 @@ findsfs (argv)
 char	*argv[];
 {
 	register struct file *fp;
-	register char	*argp;
+	register char	*argp, *ip;
+	char	*fname;
 
 	for (nsfiles=0;  (argp = argv[nsfiles]);  nsfiles++) {
 	    fp = &sfiles[nsfiles];
-	    sprintf (fp->f_name, "/dev/%s", argp);
+	    for (ip=fname=argp;  *ip;  ip++)
+		if (!isalnum (*ip))
+		    fname = ip + 1;
+	    if (*fname == '\0') {
+		printf ("alloc: cannot fstat %s\n", fname);
+		continue;
+	    }
+
+	    sprintf (fp->f_name, "/dev/%s", fname);
 	    if (stat (fp->f_name, &fp->f_sbuf) == -1) {
 		printf ("alloc: cannot fstat %s\n", fp->f_name);
 		continue;

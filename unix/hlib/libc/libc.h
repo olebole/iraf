@@ -8,8 +8,8 @@
 #define	SZ_DEFIOBUF	1024
 #define	FIO_MAXFD	128
 
-#define	FIOCOM		_fiocom_		/* [MACHDEP] */
-#define	MEMCOM		_mem_
+#define	FIOCOM		fiocom_		/* [MACHDEP] */
+#define	MEMCOM		mem_
 #define	XERPSH		xerpsh_
 #define	XERPOP		xerpop_
 #define	c_main		cmain_

@@ -216,7 +216,11 @@ clflprcache()
 
 	    if ((o.o_type & OT_BASIC) == OT_STRING) {
 		ltp = ltasksrch ("", o.o_val.v_s);
-		pid = pr_pnametopid (findexe(ltp->lt_pkp, ltp->lt_u.ltu_pname));
+		if (ltp->lt_flags & (LT_SCRIPT|LT_BUILTIN|LT_FOREIGN|LT_PSET))
+		    pid = NULL;
+		else
+		    pid = pr_pnametopid (findexe(ltp->lt_pkp,
+			ltp->lt_u.ltu_pname));
 		if (pid == NULL) {
 		    eprintf ("Warning: task `%s' not in cache\n", o.o_val.v_s);
 		    continue;
@@ -1049,7 +1053,7 @@ clreset()
  * else
  *   show value of specified environment variable(s).
  */
-#define  SZ_VALUE  512
+#define  SZ_VALUE  SZ_COMMAND
 
 clshow()
 {
