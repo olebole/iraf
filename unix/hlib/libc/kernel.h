@@ -22,9 +22,9 @@
 
 #define TX_OPTBUFSIZE	SZ_LINE	/* optimum buffer size for text file	*/
 #define TX_MAXBUFSIZE	0	/* maximum buffer size for text file	*/
-#define BF_OPTBUFSIZE	4096	/* optimum buffer size for binary file	*/
+#define BF_OPTBUFSIZE	32768	/* optimum buffer size for binary file	*/
 #define BF_MAXBUFSIZE	0	/* maximum buffer size for binary file	*/
-#define SF_OPTBUFSIZE	4096	/* optimum buffer size for static file	*/
+#define SF_OPTBUFSIZE	32768	/* optimum buffer size for static file	*/
 #define SF_MAXBUFSIZE	0	/* maximum buffer size for static file	*/
 #define	KS_OPTBUFSIZE	4096	/* optimal buffer size for KS i/o	*/
 #define	KS_MAXBUFSIZE	0	/* maximum buffer size for KS i/o	*/
@@ -70,12 +70,6 @@ extern	struct fiodes zfd[];		/* array of descriptors		*/
 #define RAWON		"\033+rAw"	/* turn raw mode on		*/
 #define	LEN_SETREDRAW	6		/* nchars in setredraw string	*/
 #define SETREDRAW	"\033=rDw"	/* set/enable screenredraw code	*/
-
-#define	STDIO_FILES {			/* initialization of stdio	*/\
-	stdin,  0L, 0L, 0, 0, KF_NOSEEK, NULL,\
-	stdout, 0L, 0L, 0, 0, KF_NOSEEK, NULL,\
-	stderr, 0L, 0L, 0, 0, KF_NOSEEK, NULL\
-}
 
 #ifdef AUX
 #define SIGFUNC sigfunc_t

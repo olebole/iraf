@@ -3,6 +3,8 @@
 
 if (-f /etc/redhat-release) then
     setenv MACH	redhat
+else if (-f /etc/SuSE-release) then
+    setenv MACH	suse
 else
     setenv MACH	`uname -s | tr '[A-Z]' '[a-z]'`
 endif
@@ -40,15 +42,41 @@ case redhat:
     setenv HSI_CF "-O -DLINUX -DREDHAT -DPOSIX -DSYSV -w -Wunused"
     setenv HSI_XF "-Inolibc -DLINUX -DREDHAT -DPOSIX -DSYSV -w -/Wunused"
     setenv HSI_FF "-O"
-    setenv HSI_LF ""
+    setenv HSI_LF "-Wl,-Bstatic"
     setenv HSI_F77LIBS ""
     setenv HSI_LFLAGS ""
     setenv HSI_OSLIBS ""
     set    mkzflags = "'lflags=-Nxz -/Wl,-Bstatic'"
     breaksw
 
+case suse:
+    setenv HSI_CF "-O -DSUSE -DLINUX -DPOSIX -DSYSV -w -Wunused"
+    setenv HSI_XF "-Inolibc -DSUSE -DLINUX -DPOSIX -DSYSV -w -/Wunused"
+    setenv HSI_FF "-O"
+    setenv HSI_LF "-Wl,-Bstatic -specs=/iraf/iraf//unix/bin.suse/gcc-specs"
+    setenv HSI_F77LIBS ""
+    setenv HSI_LFLAGS ""
+    setenv HSI_OSLIBS ""
+    set    mkzflags = "'lflags=-Nxz -/Wl,-Bstatic'"
+    breaksw
+
+case sunos:
+    setenv HSI_CF "-O -DSOLARIS -DX86 -DPOSIX -DSYSV -w -Wunused"
+    setenv HSI_XF "-Inolibc -DSOLARIS -DX86 -DPOSIX -DSYSV -w -/Wunused"
+    setenv HSI_FF "-O"
+    #setenv HSI_LF "-t -Wl,-Bstatic"
+    #setenv HSI_LFLAGS "-t -Wl,-Bstatic"
+    #setenv HSI_OSLIBS \
+    #	"-lsocket -lnsl -lintl -Wl,-Bdynamic -ldl -Wl,-Bstatic -lelf"
+    setenv HSI_LF "-t"
+    setenv HSI_F77LIBS ""
+    setenv HSI_LFLAGS "-t"
+    setenv HSI_OSLIBS "-lsocket -lnsl -lintl -ldl -lelf"
+    set    mkzflags = "'lflags=-Nxz -/Wl,-Bstatic'"
+    breaksw
+
 default:
-    echo "Warning in hlib\$irafuser.csh: unknown platform `$MACH'"
+    echo 'Warning in hlib$irafuser.csh: unknown platform '"$MACH"
     exit 1
     breaksw
 endsw

@@ -175,6 +175,8 @@ begin
 		case 4:
 		    call error (1, "Image dimension greater than 3 not allowed")
 		}
+
+		call sfree (sp)
 	    }
 	}
 

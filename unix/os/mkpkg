@@ -14,7 +14,16 @@ alloc:
 libos.a:
 	$set XFLAGS = "-cd $(HSI_XF)"
 
-	"as$zsvjmp.s"
+	$ifdef (DEBUG)
+	    $iffile (as$zsvjmp_p.s)
+		as$zsvjmp_p.s
+	    $else
+		as$zsvjmp.s
+	    $endif
+	$else
+	    as$zsvjmp.s
+	$endif
+
 	#"as$enbint.s"
 
 	# Do not put zmain.o in the library if it is linked explicitly as a .o
@@ -61,6 +70,7 @@ libos.a:
 	zgcmdl.c	<libc/kernel.h> <libc/spp.h>
 	zghost.c	<libc/kernel.h> <libc/spp.h>
 	zglobl.c	<libc/kernel.h> <libc/spp.h>
+	zgmtco.c	<libc/kernel.h> <libc/spp.h>
 	zgtenv.c	<libc/kernel.h> <libc/spp.h>
 	zgtime.c	<libc/kernel.h> <libc/spp.h>
 	zgtpid.c	<libc/kernel.h> <libc/spp.h>

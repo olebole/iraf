@@ -1,4 +1,4 @@
-/* Copyright(c) 1986 Association of Universities for Research in Astronomy Inc.
+/* cOPYRIght(c) 1986 Association of Universities for Research in Astronomy Inc.
  */
 
 #include <stdio.h>
@@ -14,8 +14,10 @@
 #define	import_knames
 #include <iraf.h>
 
-#ifdef SOLARIS
-#undef SOLARIS
+#if defined(LINUX) || defined(BSD)
+# ifdef SOLARIS
+#  undef SOLARIS
+# endif
 #endif
 
 /*
@@ -23,7 +25,7 @@
  * system.
  */
 
-#define VERSION		"Sun/IRAF XC V1.5 Mon Apr 7 1997"
+#define VERSION		"PC-IRAF XC V2.0 Feb 1998"
 
 #define	ERR		(-1)
 #define	EOS		'\0'
@@ -31,6 +33,7 @@
 #define	NO		0
 #define	MAXFLAG		64			/* maximum option flags */
 #define MAXFILE		1024			/* maximum files on cmdline */
+#define	SZ_CMDBUF	4096			/* maximum command buffer */
 #define	SZ_BUFFER	4096			/* library names, flags */
 #define	SZ_LIBBUF	4096			/* full library names */
 #define	SZ_FNAME	255
@@ -38,9 +41,9 @@
 #define	SZ_PKGENV	256
 #define DEF_PKGENV	"iraf"
 
-#define	CCOMP		"cc"			/* C compiler (also .s etc.) */
+#define	CCOMP		"gcc"			/* C compiler (also .s etc.) */
 #define	F77COMP		"f77"			/* Fortran compiler */
-#define	LINKER		"cc"			/* Linking utility */
+#define	LINKER		"gcc"			/* Linking utility */
 #define	DEBUGFLAG	'g'			/* host flag for -x */
 #define	USEF2C		1			/* use Fortran to C trans. */
 
@@ -86,16 +89,16 @@
 #define FORTLIBA        ""
 #else
 #ifdef SOLARIS
-#define FORTLIB0	"-lM77"
-#define FORTLIB1	"-lM77"
-#define FORTLIB2	"-lF77"
-#define FORTLIB3	"-lsunmath"
-#define FORTLIB4	"-lm"
-#define FORTLIB5	"-lsocket"
-#define FORTLIB6	"-lnsl"
-#define FORTLIB7	"-lintl"
-#define FORTLIB8	"-ldl"
-#define FORTLIB9	"-lelf"
+#define FORTLIB0	"-lf2c"
+#define FORTLIB1	"-lf2c"
+#define FORTLIB2	"-lm"
+#define FORTLIB3	"-lsocket"
+#define FORTLIB4	"-lnsl"
+#define FORTLIB5	"-lintl"
+#define FORTLIB6	"-ldl"
+#define FORTLIB7	"-lelf"
+#define FORTLIB8	""
+#define FORTLIB9	""
 #define FORTLIBA	""
 #else
 #define FORTLIB0	"-lU77"
@@ -122,8 +125,8 @@
 #define	F_SHARED	"-Wl,-Bdynamic"
 #else
 #ifdef SOLARIS
-#define	F_STATIC	"-Bstatic"
-#define	F_SHARED	"-Bdynamic"
+#define	F_STATIC	"-Wl,-Bstatic"
+#define	F_SHARED	"-Wl,-Bdynamic"
 #endif
 #endif
 #endif
@@ -138,8 +141,14 @@
 
 
 #ifdef SOLARIS
+#ifdef X86
+int	usesharelib = NO;
+int	noedsym = YES;
+#else
 int	usesharelib = YES;
 int	noedsym = NO;
+#endif
+
 #else
 #ifdef SHLIB
 int	usesharelib = YES;
@@ -228,7 +237,7 @@ char	*argv[];
 	ZZSTRT();
 	isv13();
 
-#if defined(LINUX) || defined(BSD)
+#if defined(LINUX) || defined(BSD) || defined(X86)
 	if (os_sysfile ("f77.sh", f77comp, SZ_FNAME) < 0)
 	    strcpy (f77comp, "f77");
 	if (os_sysfile ("f2c.e", tempfile, SZ_FNAME) > 0)
@@ -718,6 +727,7 @@ passflag:		    mkobject = YES;
 	nargs = 0;
 	arglist[nargs++] = ccomp;
 	arglist[nargs++] = "-c";
+
 #ifdef LINUX
 	arglist[nargs++] = "-DLINUX";
 	arglist[nargs++] = "-DPOSIX";
@@ -726,10 +736,19 @@ passflag:		    mkobject = YES;
 #ifdef BSD
 	arglist[nargs++] = "-DBSD";
 #endif
+#ifdef SOLARIS
+	arglist[nargs++] = "-DSOLARIS";
+#ifdef X86
+	arglist[nargs++] = "-DX86";
+#endif
+	arglist[nargs++] = "-DPOSIX";
+	arglist[nargs++] = "-DSYSV";
+#endif
 #ifdef LINUXAOUT
         arglist[nargs++] = "-b";
 	arglist[nargs++] = "i486-linuxaout";
 #endif
+
 #ifdef sun
 	if (floatoption[0])
 	    arglist[nargs++] = floatoption;
@@ -770,7 +789,18 @@ passflag:		    mkobject = YES;
 	nargs = 0;
 	arglist[nargs++] = linker;
 #ifdef SOLARIS
-	arglist[nargs++] = "-t";
+	arglist[nargs++] = "-Wl,-t";
+#endif
+#ifdef SUSE
+	{   char gcc_specs[SZ_PATHNAME];
+	    static char cmd[256];
+
+	    if (os_sysfile ("gcc-specs", gcc_specs, SZ_PATHNAME) < 0)
+		arglist[nargs++] = "/iraf/iraf/unix/bin.suse/gcc-specs";
+	    sprintf (cmd, "-specs=%s", gcc_specs);
+
+	    arglist[nargs++] = cmd;
+	}
 #endif
 #ifdef LINUXAOUT
         arglist[nargs++] = "-b";
@@ -872,7 +902,7 @@ passflag:		    mkobject = YES;
 	 */
 	if (hostprog) {
 	    if (!isv13())
-		arglist[nargs++] = FORTLIB0;
+		arglist[nargs++] = mkfname (FORTLIB0);
 	} else
 	    arglist[nargs++] = mkfname (LIBMAIN);
 
@@ -1018,16 +1048,12 @@ int *p_nargs;
 		link_static = 1;
 	    else if (strcmp (flag, F_SHARED) == 0)
 		link_static = 0;
-#if defined(LINUX) || defined(BSD)
+#if defined(LINUX) || defined(BSD) || defined(X86)
 	    else if (strcmp (flag, "-lf2c") == 0) {
 		/* Use the IRAF version of libf2c.a, not the host version
 		 * which may or may not be present.
 		 */
-		if (!link_static)
-		    arglist[nargs++] = F_STATIC;
 		arglist[nargs++] = mkfname (flag);
-		if (!link_static)
-		    arglist[nargs++] = F_SHARED;
 		*p_nargs = nargs;
 		return (1);
 	    }
@@ -1164,7 +1190,7 @@ xtof (file)
 char	*file;
 {
 	static  char xpp_path[SZ_PATHNAME+1], rpp_path[SZ_PATHNAME+1];
-	char	cmdbuf[100], fname[100];
+	char	cmdbuf[SZ_CMDBUF], fname[SZ_FNAME];
 
 	lxfiles[nxfiles++] = file;
 	if (nxfiles > MAXFILE)
@@ -1256,7 +1282,7 @@ char	*task;
 char	*argv[];
 {
 	int	waitpid, fork();
-	char	path[256];
+	char	path[SZ_PATHNAME];
 
 	if ((waitpid = fork()) == 0) {
 	    enbint (SIG_DFL);
@@ -1441,7 +1467,7 @@ rmfiles()
 fatalstr (s1, s2)
 char	*s1, *s2;
 {
-	char	out[100];
+	char	out[512];
 
 	sprintf (out, s1, s2);
 	fatal (out);
@@ -1477,13 +1503,17 @@ isv3()
 {
 	static	int v3 = -1;
 	struct	dirent *dp;
-	char	dir[256];
+	char	dir[SZ_PATHNAME];
 	char	*name;
 	DIR	*dirp;
 
 #ifndef SOLARIS
 	return (v3 = 0);
 #else
+	char	*path;
+	char	link[SZ_PATHNAME];
+	int	n;
+
         if (v3 != -1)
             return (v3);
 
@@ -1516,7 +1546,7 @@ isv13()
 {
 	static	int v13 = -1;
 	struct	dirent *dp;
-	char	dir[256];
+	char	dir[SZ_PATHNAME];
 	char	*name;
 	DIR	*dirp;
 
@@ -1558,8 +1588,8 @@ char	*prog;			/* file to search for */
 char	*dir;			/* pointer to output string buf, or NULL */
 {
 	register char *ip, *op;
-	static	char path[256];
-	char	dirpath[256];
+	static	char path[SZ_PATHNAME];
+	char	dirpath[SZ_PATHNAME];
 	char	*dp = dir ? dir : dirpath;
 	char	*pathp;
 

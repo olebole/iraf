@@ -20,6 +20,7 @@ define	MARGIN		    0.95		# defaults for 300 dpi
 define	PAGEWID	    	    612
 define	PAGEHGT	    	    762
 define	SZ_EPSBUF	    8192
+define	SZ_TRAILER	    31
 
 
 # EX_EPS - Write the output image to an Encasulated PostScript file.
@@ -50,7 +51,7 @@ begin
 	iferr (call calloc (eps, SZ_EPSSTRUCT, TY_STRUCT))
 	    call error (0, "Error allocating eps structure.")
 	call calloc (EPS_HPTR(eps), 17, TY_CHAR)
-	call calloc (EPS_BPTR(eps), SZ_EPSBUF, TY_CHAR)
+	call calloc (EPS_BPTR(eps), SZ_EPSBUF+SZ_TRAILER, TY_CHAR)
 	call strcpy (HEXITS, Memc[EPS_HPTR(eps)], 17)
 	EPS_BCNT(eps) = 1
 
@@ -80,11 +81,11 @@ begin
 	call calloc (bptr, SZ_EPSBUF, TY_CHAR)
 
 	if (mod (EPS_BCNT(eps),2) == 0) {
-	    call amovc ("\ngrestore showpage\n%%Trailer\n", 
-		BUF(eps,EPS_BCNT(eps)), SZ_LINE)
+	    call amovc ("\ngrestore showpage\n%%Trailer\n\0", 
+		BUF(eps,EPS_BCNT(eps)), SZ_TRAILER)
 	} else {
 	    call amovc ("\ngrestore  showpage\n%%Trailer\n", 
-		BUF(eps,EPS_BCNT(eps)), SZ_LINE)
+		BUF(eps,EPS_BCNT(eps)), SZ_TRAILER)
 	}
 	len = strlen (BUF(eps,1))
 	call strpak (BUF(eps,1), Memc[bptr], len)
@@ -112,7 +113,6 @@ bool	is_gray				#i is this a grayscale cmap?
 pointer	op, bop, out, cm
 int	i, j, k, line, percent
 int	len, orow, type
-short	zero
 
 pointer	ex_evaluate(), ex_chtype()
 
@@ -121,7 +121,6 @@ begin
         type = EX_OUTTYPE(ex)
         percent = 0
         orow = 0
-        zero = 0
 	cm = EX_CMAP(ex)
 	call malloc (out, EX_OCOLS(ex)+2, TY_SHORT)
         do i = 1, EX_NEXPR(ex) {
@@ -190,7 +189,6 @@ int	fd				#i output file descriptor
 
 pointer	op, bop, out
 int	i, j, k, line, percent, orow, type
-short	zero
 
 pointer	ex_evaluate(), ex_chtype()
 
@@ -199,7 +197,6 @@ begin
         type = EX_OUTTYPE(ex)
         percent = 0
         orow = 0
-	zero = 0
 	call malloc (out, EX_OCOLS(ex)+2, TY_SHORT)
         do j = 1, EX_NLINES(ex) {
 

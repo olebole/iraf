@@ -66,8 +66,12 @@ main(argc,argv) int argc; char *argv[]; {
 others(){ /* put out other arrays, copy the parsers */
 	register c, i, j;
 
-	finput = fopen( PARSER, "r" );
-	if( finput == NULL ) error( "cannot find parser %s", PARSER );
+	finput = fopen (PARSER1, "r");
+	if (finput == NULL) {
+	    finput = fopen (PARSER2, "r");
+	    if (finput == NULL)
+		error ("cannot find parser %s", PARSER2);
+	}
 
 	warray( "yyr1", levprd, nprod );
 

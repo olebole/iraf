@@ -22,7 +22,7 @@ time_t	gmt;
 	time_t	time_var;
 	long	gmtl;
 	
-	/* Subtract minutes westward from GMT */
+	/* Subtract seconds westward from GMT */
 	time_var = gmt - get_timezone();
 
 	/* Correct for daylight savings time, if in effect */

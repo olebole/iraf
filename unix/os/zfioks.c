@@ -124,6 +124,7 @@ extern	int save_prtype;
 #define	SELWIDTH	32		/* number of bits for select	  */
 #endif
 
+#define	KSRSH		"KSRSH"		/* set in env to override RSH cmd */
 #if (defined(BSD) | defined(LINUX))
 #define	RSH		"rsh"		/* typical names are rsh, remsh   */
 #else
@@ -748,13 +749,17 @@ retry:
 		} else {
 		    /* Call rsh to start up in.irafksd on server node.
 		     */
+		    char *s, *rshcmd;
+
 		    close (pin[0]);  close (pout[1]);
 		    close (0);  dup (pout[0]);  close (pout[0]);
 		    close (1);  dup (pin[1]);   close (pin[1]);
 
+		    rshcmd = (s = getenv(KSRSH)) ? s : RSH;
+
 		    dbgmsg3 ("exec rsh %s -l %s `%s' in.irafksd\n",
 			host, username, cmd);
-		    execlp (RSH, RSH,
+		    execlp (rshcmd, rshcmd,
 			host, "-l", username, cmd, "in.irafksd", NULL);
 		    exit (1);
 		}
@@ -1887,7 +1892,7 @@ char	*host;
 	tc_save = tc;
 	 
 	tc.c_lflag &=
-	    ~(0 | ICANON | ECHO | ECHOE | ECHOK | ECHONL);
+	    ~(0 | ECHO | ECHOE | ECHOK | ECHONL);
 	tc.c_oflag |=
 	    (0 | TAB3 | OPOST | ONLCR);
 	tc.c_oflag &=

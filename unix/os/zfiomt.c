@@ -295,7 +295,7 @@ static struct mtchar {
 	int	pname;		/* 2 byte parameter name code */
 	int	pcode;		/* parameter number */
 	int	bitflag;	/* flag bit */
-	int	isset;		/* value has been set */
+	int	valset;		/* value has been set */
 } devpar[] = {
 	{ PNAME('a','l'), P_AL, 0, 0 },
 	{ PNAME('b','f'), P_BF, 0, 0 },
@@ -809,7 +809,7 @@ XINT	*o_status;
 	    pp->filno++;
 	    pp->recno = 1;
 	    pp->pflags |= MF_EOF;
-	    zmtdbg1 (mp, "record = 1");
+	    zmtdbg (mp, "record = 1");
 	    if (spaceused(pp))
 		mp->tbytes += mp->mtdev.eofsize;
 	    zmtdbg2 (mp, "file = %d%s", pp->filno, ateot(pp) ? " (EOT)" : "");
@@ -1091,7 +1091,7 @@ struct	_mtpos *devpos;	/* device position info (or NULL ptr) */
 
 	/* Prepare to scan tapecap entry. */
 	for (pp=devpar;  pp->pname;  pp++)
-	    pp->isset = 0;
+	    pp->valset = 0;
 
 	/* Process the tapecap entry.  This is a sequence of entries of the
 	 * form "nn=value", where the NN is a two character name, the "=" is
@@ -1116,7 +1116,7 @@ struct	_mtpos *devpos;	/* device position info (or NULL ptr) */
 		    /* If multiple entries are given for the parameter ignore
 		     * all but the first.
 		     */
-		    if (pp->isset)
+		    if (pp->valset)
 			continue;
 		    else
 			mp->flags |= pp->bitflag;
@@ -1124,7 +1124,7 @@ struct	_mtpos *devpos;	/* device position info (or NULL ptr) */
 		    /* Check for a negated entry (e.g., ":ir@:"). */
 		    if (*ip == '@') {
 			mp->flags &= ~pp->bitflag;
-			pp->isset++;
+			pp->valset++;
 			continue;
 		    }
 
@@ -1153,7 +1153,7 @@ struct	_mtpos *devpos;	/* device position info (or NULL ptr) */
 				*op++ = *ip;
 			}
 			*op = EOS;
-			pp->isset++;
+			pp->valset++;
 
 			/* Default if no string value given but entry was
 			 * found, e.g., ":so:".
@@ -1192,7 +1192,7 @@ struct	_mtpos *devpos;	/* device position info (or NULL ptr) */
 			    ;
 			}
 
-			pp->isset++;
+			pp->valset++;
 			break;
 		    }
 		}

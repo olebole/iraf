@@ -101,7 +101,14 @@ static	tty_onsig(), tty_stop(), tty_continue();
 struct ttyport ttyports[MAXOTTYS];
 struct ttyport *lastdev = NULL;
 
-#ifdef LINUX
+/* Omit this for now; it was put in for an old Linux libc bug, and since libc
+ * is completely different now the need for it has probably gone away.
+ *
+ * #ifdef LINUX
+ * #define FCANCEL
+ * #endif
+ */
+#ifdef FCANCEL
 /* The following definition has intimate knowledge of the STDIO structures. */
 #define	fcancel(fp)	( \
     (fp)->_IO_read_ptr = (fp)->_IO_read_end = (fp)->_IO_read_base,\
@@ -351,7 +358,7 @@ XINT	*status;
 		while (*op++ = ch = getc(fp), ch != EOF)
 		    if (--maxch <= 0 || ch == NEWLINE)
 			break;
-#ifdef LINUX
+#ifdef FCANCEL
 		if (errno == EINTR)
 		    fcancel (fp);
 #endif
@@ -412,7 +419,7 @@ XINT	*status;
 		clearerr (fp);
 		ch = getc (fp);
 	    }
-#ifdef LINUX
+#ifdef FCANCEL
 	    if (ch == CTRLC)
 		fcancel (fp);
 #endif
@@ -538,7 +545,8 @@ XINT	*status;			/* return status		*/
 	    for (ip=buf, cp=SETREDRAW;  *cp && (*ip == *cp);  ip++, cp++)
 		;
 	    if (*cp == EOS) {
-		port->redraw = *ip;
+		if (port)
+		    port->redraw = *ip;
 		*status = XOK;
 		return;
 	    }
@@ -630,9 +638,12 @@ XINT	*status;
 	    }
 	}
 
-	if (kfp->fpos == ERR)
+	if (kfp->fpos == ERR) {
 	    *status = XERR;
-	else {
+	} else if (kfp->flags & KF_NOSEEK) {
+	    kfp->fpos = 0;
+	    *status = XOK;
+	} else {
 	    kfp->fpos = ftell (kfp->fp);
 	    *status = XOK;
 	}

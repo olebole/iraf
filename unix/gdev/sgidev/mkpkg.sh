@@ -39,3 +39,13 @@ $CC -c $HSI_CF	sgi2ueps.c
 $CC $HSI_LF	sgi2ueps.o $HSI_LIBS -o sgi2ueps.e
 mv -f		sgi2ueps.e ../../hlib
 rm		sgi2ueps.o
+
+$CC -c $HSI_CF	sgi2gif.c
+$CC $HSI_LF	sgi2gif.o $HSI_LIBS -o sgi2gif.e
+mv -f		sgi2gif.e ../../hlib
+rm		sgi2gif.o
+
+$CC -c $HSI_CF	sgi2xbm.c
+$CC $HSI_LF	sgi2xbm.o $HSI_LIBS -o sgi2xbm.e
+mv -f		sgi2xbm.e ../../hlib
+rm		sgi2xbm.o

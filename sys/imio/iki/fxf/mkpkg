@@ -19,14 +19,14 @@ libex.a:
 	fxfmkcard.x	
 	fxfnull.x	fxf.h
 	fxfopen.x	fxf.h fxfcache.com <error.h> <imhdr.h> <imio.h>\
-			fxfcache.com <fset.h> <mii.h>
+			<fset.h> <mii.h>
 	fxfopix.x	fxf.h <fset.h> <imhdr.h> <imio.h> <error.h> <mach.h>
 	fxfpak.x	fxf.h <mach.h>
 	fxfrcard.x	fxf.h <mii.h>
 	fxfrdhdr.x	fxf.h <finfo.h> <imhdr.h> <imio.h> <mach.h>
 	fxfrename.x	<error.h> fxf.h fxfcache.com
 	fxfrfits.x	fxf.h fxfcache.com <ctype.h> <finfo.h> <fset.h>\
-			<imhdr.h> <imio.h> <imset.h> <mach.h>
+			<imhdr.h> <imio.h> <imset.h> <mach.h> <time.h>
 	fxfupdhdr.x	fxf.h <fio.h> <fset.h> <imhdr.h> <imio.h> fxfcache.com\
 			<error.h> <finfo.h> <mach.h> <mii.h> <time.h>
 	fxfupk.x	fxf.h <mach.h>
