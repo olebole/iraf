@@ -41,7 +41,7 @@ pointer	i_ltm, i_ltv, o_ltm, o_ltv, t_ltm, t_ltv, ltm, ltv
 pointer	sp, w1, w2, ct, wf, fc, lp, ip, op, ct_r, sv_wcs
 
 pointer	coerce()
-errchk	syserr, syserrs, calloc, zcall2, mw_invertd, mw_system
+errchk	syserr, syserrs, calloc, zcall2, mw_invertd, mw_ssystem
 include	"mwcs.com"
 
 begin
@@ -110,7 +110,7 @@ begin
 	ltv = CT_LTV(ct)
 
 	# We also need some full-system matrix and vector buffers.
-	pdim = min (WCS_NDIM(w1), WCS_NDIM(w1))
+	pdim = min (WCS_NDIM(w1), WCS_NDIM(w2))
 	pdim = min (MI_NDIM(mw), pdim)
 
 	i = pdim * pdim

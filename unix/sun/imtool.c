@@ -46,7 +46,7 @@
 /* Default values, size limiting values.
  */
 #define	MAX_ARGS		50	/* max command line arguments	*/
-#define	MAX_FBCONFIG		64	/* max possible frame buf sizes	*/
+#define	MAX_FBCONFIG		128	/* max possible frame buf sizes	*/
 #define	MAX_FRAMES		16	/* max number of frames		*/
 #define	FRAME_CHOICES	"1","2","3","4"	/* nframes choices for setup	*/
 #define	NGREY			256	/* max physical greylevels	*/
@@ -60,7 +60,7 @@
 #define	SZ_IMTITLE		128	/* image title string		*/
 #define	SZ_WCTEXT		80	/* WCS box text 		*/
 #define	SZ_WCSBUF		320	/* WCS text buffer size		*/
-#define	SZ_PANTEXT		26	/* displayed chars in o_fname	*/
+#define	SZ_PANTEXT		18	/* displayed chars in o_fname	*/
 #define	SZ_COLORBAR		11	/* height of colorbar in pixels	*/
 #define	SZ_FNAME		128
 #define	SZ_LINE			256
@@ -111,15 +111,25 @@
 #define	FBCONFIG_ENV1	"imtoolrc"
 #define	FBCONFIG_ENV2	"IMTOOLRC"
 
+#define	R_TYPE		0		/* 0=postscript, 1=rasterfile */
+#define	R_DISPOSE	"lpr -s %s"	/* dispose command */
+#define	R_FILENAME	""		/* output filename */
+
 /* Global state codes. */
 #define	TRACK_CURSOR	0
 #define	WINDOW		1
 #define	ROAM		2
 
-#define	MONO				0
-#define	LINEAR_PSEUDOCOLOR		1
-#define	RANDOM_PSEUDOCOLOR		2
-#define	CONTINUOUS_RANDOM_PSEUDOCOLOR	3
+#define	MONO		0
+#define	HEAT		1
+#define	RAMP1		2
+#define	RAMP2		3
+#define	HALLEY		4
+#define	LINEARPS	5
+#define	RANDOMPS	6
+#define	CRANDOMPS	7
+#define	ULUT1		8
+#define	ULUT2		9
 
 /* WCS definitions. */
 #define	W_UNITARY	0
@@ -154,6 +164,7 @@ static	int save_sx, save_sy;		/* save absolute mouse position	*/
 static	int last_bx, last_by;		/* last button press		*/
 static	int fb_bkgcolor_index = BKG_WHITE;
 static	int window_open = 1;
+static	int global_colortable = 1;	/* globally manage colortable	*/
 static	int fbconfig = 0;
 static	int last_x, last_y, last_key, key_left=0;
 static	int reading_imcursor = 0;
@@ -185,6 +196,27 @@ typedef struct bigrect {
 	int	r_left, r_top;
 	int	r_width, r_height;
 } BRect;
+
+/* Predefined lookup tables. */
+struct triplet {
+	float red, green, blue;
+};
+struct lut {
+	int	lutlen;
+	struct	triplet hue[NGREY];
+};
+
+struct lut heat = {
+#include "heat.lut"
+};
+
+struct lut halley = {
+#include "halley.lut"
+};
+
+/* User defined lookup tables. */
+static	char u_lut1[SZ_FNAME+1] = "none";
+static	char u_lut2[SZ_FNAME+1] = "none";
 
 static	BRect pw_rect;			/* raw frame buffer		*/
 static	int fb_depth  = 8;
@@ -255,6 +287,11 @@ static	struct fbconfig fb_config[MAX_FBCONFIG];
 static	char startfile[SZ_FNAME+1];	/* image read on startup	*/
 static	char rasterfile[SZ_FNAME+1] = "raster.%d.%d";
 
+/* Screendump stuff. */
+int	r_type = R_TYPE;
+char	r_dispose[SZ_FNAME+1] = R_DISPOSE;
+char	r_filename[SZ_FNAME+1] = R_FILENAME;
+
 #define HEIGHTADJUST \
 	(tool_headerheight((int)window_get(gio_frame, FRAME_SHOW_LABEL)) + \
 	TOOL_BORDERWIDTH)
@@ -270,11 +307,13 @@ static	int	datain, dataout;
 static	Menu_item blink_item;
 static	Panel	setup_panel;
 static	Window	setup_frame;
-static	Panel_item pan_show_colorbar;
+static	Panel_item pan_show_colorbar, pan_globalcolor;
 static	Panel_item pan_set_nframes, pan_blink_rate, pan_blink_list;
 static	Panel_item pan_set_maptype, pan_crandom_rate, pan_set_ofname;
 static	Panel_item pan_snapframetoo, pan_set_background, pan_set_rfname;
+static	Panel_item pan_set_rtype, pan_set_rdispose, pan_set_rfilename;
 static	Panel_item pan_set_marker, pan_zoom_list;
+static	Panel_item pan_set_ulut1, pan_set_ulut2;
 static	unsigned char red[NGREY], blue[NGREY], green[NGREY];
 static	unsigned char m_red[NGREY], m_blue[NGREY], m_green[NGREY];
 
@@ -288,6 +327,7 @@ static	char *getfname(), *framelabel();
 static	struct ctran *wcs_update();
 static	struct pixrect *get_screen_rect();
 static	refresh_display();
+extern	char *getenv();
 
 
 /* IMTOOL_MAIN -- Create the Imtool windows, i.e., the main display window,
@@ -304,14 +344,26 @@ imtool_main (argc, argv)
 int	argc;
 char	**argv;
 {
+	char	*s;
+
 	main_argc = argc;
 	main_argv = argv;
 	parse_args (argc, argv, &gio_argc, gio_argv);
 
+	/* Screendump stuff. */
+	if (s = getenv ("R_DISPOSE"))
+	    strcpy (r_dispose, s);
+	if (s = getenv ("R_FILENAME"))
+	    strcpy (r_filename, s);
+	if (s = getenv ("R_RASTERFILE")) {
+	    strcpy (r_filename, s);
+	    r_type = 1;
+	}
+
 	gio_frame = window_create (NULL, FRAME,
 		FRAME_ICON,		&icon,
 		FRAME_LABEL,
-		    "imtool - NOAO/IRAF Sunview Prototype Image Display V1.0",
+		    "imtool - NOAO/IRAF Sunview Image Display V1.1",
 		FRAME_ARGS,		gio_argc, gio_argv,
 		FRAME_NO_CONFIRM,	FALSE,
 		0);
@@ -426,7 +478,6 @@ get_fbconfig()
 	register FILE	*fp;
 	int	config, nframes, width, height, i;
 	char	lbuf[SZ_LINE+1], *fname;
-	char	*getenv();
 
 	/* Initialize the config table. */
 	for (i=0;  i < MAX_FBCONFIG;  i++)
@@ -632,12 +683,24 @@ char	**argv;
 		argp = argv[++arg];
 		if (!strncmp (argp, "mono", 1))
 		    maptype = MONO;
+		else if (!strncmp (argp, "heat", 1))
+		    maptype = HEAT;
+		else if (!strncmp (argp, "ramp1", 1))
+		    maptype = RAMP1;
+		else if (!strncmp (argp, "ramp2", 1))
+		    maptype = RAMP2;
+		else if (!strncmp (argp, "halley", 1))
+		    maptype = HALLEY;
 		else if (!strncmp (argp, "linear", 1))
-		    maptype = LINEAR_PSEUDOCOLOR;
+		    maptype = LINEARPS;
 		else if (!strncmp (argp, "random", 1))
-		    maptype = RANDOM_PSEUDOCOLOR;
+		    maptype = RANDOMPS;
 		else if (!strncmp (argp, "crandom", 1))
-		    maptype = CONTINUOUS_RANDOM_PSEUDOCOLOR;
+		    maptype = CRANDOMPS;
+		else if (!strncmp (argp, "ulut1", 1))
+		    maptype = ULUT1;
+		else if (!strncmp (argp, "ulut2", 1))
+		    maptype = ULUT2;
 		else
 		    fprintf (stderr, "unknown arg `%s' to -maptype\n", argp);
 	    } else if (!strncmp (argp, "-nocolorbar", 9)) {
@@ -652,6 +715,22 @@ char	**argv;
 	    } else if (!strncmp (argp, "-white", 3)) {
 		background = 0;
 		fb_bkgcolor_index = BKG_WHITE;
+
+	    } else if (!strncmp (argp, "-rtype", 3)) {
+		argp = argv[++arg];
+		r_type = (argp[0] == 'r');
+	    } else if (!strncmp (argp, "-rdispose", 3)) {
+		argp = argv[++arg];
+		strcpy (r_dispose, argp);
+	    } else if (!strncmp (argp, "-rfilename", 3)) {
+		argp = argv[++arg];
+		strcpy (r_filename, argp);
+	    } else if (!strncmp (argp, "-ulut1", 6)) {
+		argp = argv[++arg];
+		strcpy (u_lut1, argp);
+	    } else if (!strncmp (argp, "-ulut2", 6)) {
+		argp = argv[++arg];
+		strcpy (u_lut2, argp);
 	    }
 	}
 
@@ -708,6 +787,8 @@ create_setup_popup ()
 	extern	setup_proc(), toggle_graphics(), set_background();
 	extern	setframe_proc(), blinkenable_proc(), register_proc();
 	static	Panel_setting set_ofname(), set_rfname();
+	static	Panel_setting set_rtype(), set_rdispose(), set_rfilename();
+	static	Panel_setting set_ulut1(), set_ulut2();
 	static	Panel_setting set_blinklist(), set_zoomslist();
 	static	panel_set_item();
 
@@ -723,14 +804,14 @@ create_setup_popup ()
 	    exit (1);
 
 	panel_create_item (setup_panel, PANEL_MESSAGE,
-		PANEL_ITEM_X,		ATTR_COL(15),
+		PANEL_ITEM_X,		ATTR_COL(10),
 		PANEL_ITEM_Y,		ATTR_ROW(0),
 		PANEL_LABEL_STRING,	"Image Display Setup and Control",
 		0);
 
 	pan_set_nframes = panel_create_item (setup_panel, PANEL_CYCLE,
 		PANEL_ITEM_X,		ATTR_COL(0),
-		PANEL_ITEM_Y,		ATTR_ROW(1),
+		PANEL_ITEM_Y,		ATTR_ROW(1) + 5,
 		PANEL_DISPLAY_LEVEL,	PANEL_CURRENT,
 		PANEL_LABEL_STRING,	"Number of frame buffers:        ",
 		PANEL_CHOICE_STRINGS,	FRAME_CHOICES, 0,
@@ -740,21 +821,59 @@ create_setup_popup ()
 
 	pan_set_maptype = panel_create_item (setup_panel, PANEL_CYCLE,
 		PANEL_ITEM_X,		ATTR_COL(0),
-		PANEL_ITEM_Y,		ATTR_ROW(2),
+		PANEL_ITEM_Y,		ATTR_ROW(2) + 5,
 		PANEL_DISPLAY_LEVEL,	PANEL_CURRENT,
 		PANEL_LABEL_STRING,	"Greyscale mapping:              ",
 		PANEL_CHOICE_STRINGS,	"Mono",
-					"Linear Pseudocolor",
-					"Random Pseudocolor",
-					"Crandom Pseudocolor",
+					"ESO-Heat",
+					"Ramp1",
+					"Ramp2",
+					"Halley",
+					"Linear-pseudo",
+					"Random-pseudo",
+					"Crandom-pseudo",
+					"User 1",
+					"User 2",
 					0,
 		PANEL_VALUE,		maptype,
 		PANEL_NOTIFY_PROC,	panel_set_item,
 		0);
 
+	pan_set_ulut1 = panel_create_item (setup_panel, PANEL_TEXT,
+		PANEL_ITEM_X,		ATTR_COL(0),
+		PANEL_ITEM_Y,		ATTR_ROW(3) + 8,
+		PANEL_DISPLAY_LEVEL,	PANEL_CURRENT,
+		PANEL_LABEL_STRING,	"User lookup table 1:            ",
+		PANEL_VALUE,		u_lut1,
+		PANEL_VALUE_STORED_LENGTH, SZ_FNAME,
+		PANEL_VALUE_DISPLAY_LENGTH, SZ_PANTEXT,
+		PANEL_NOTIFY_PROC,	set_ulut1,
+		0);
+
+	pan_set_ulut2 = panel_create_item (setup_panel, PANEL_TEXT,
+		PANEL_ITEM_X,		ATTR_COL(0),
+		PANEL_ITEM_Y,		ATTR_ROW(4) + 8,
+		PANEL_DISPLAY_LEVEL,	PANEL_CURRENT,
+		PANEL_LABEL_STRING,	"User lookup table 2:            ",
+		PANEL_VALUE,		u_lut2,
+		PANEL_VALUE_STORED_LENGTH, SZ_FNAME,
+		PANEL_VALUE_DISPLAY_LENGTH, SZ_PANTEXT,
+		PANEL_NOTIFY_PROC,	set_ulut2,
+		0);
+
+	pan_globalcolor = panel_create_item (setup_panel, PANEL_CYCLE,
+		PANEL_ITEM_X,		ATTR_COL(0),
+		PANEL_ITEM_Y,		ATTR_ROW(5) + 8,
+		PANEL_DISPLAY_LEVEL,	PANEL_CURRENT,
+		PANEL_LABEL_STRING,	"Globally manage colortable:     ",
+		PANEL_CHOICE_STRINGS,	"No", "Yes", 0,
+		PANEL_VALUE,		global_colortable,
+		PANEL_NOTIFY_PROC,	panel_set_item,
+		0);
+
 	pan_crandom_rate = panel_create_item (setup_panel, PANEL_CYCLE,
 		PANEL_ITEM_X,		ATTR_COL(0),
-		PANEL_ITEM_Y,		ATTR_ROW(3),
+		PANEL_ITEM_Y,		ATTR_ROW(6) + 8,
 		PANEL_DISPLAY_LEVEL,	PANEL_CURRENT,
 		PANEL_LABEL_STRING,	"Rate (sec) for crandom option:  ",
 		PANEL_CHOICE_STRINGS,	CRANDOM_CHOICES, 0,
@@ -764,7 +883,7 @@ create_setup_popup ()
 
 	pan_set_background = panel_create_item (setup_panel, PANEL_CYCLE,
 		PANEL_ITEM_X,		ATTR_COL(0),
-		PANEL_ITEM_Y,		ATTR_ROW(4),
+		PANEL_ITEM_Y,		ATTR_ROW(7) + 8,
 		PANEL_DISPLAY_LEVEL,	PANEL_CURRENT,
 		PANEL_LABEL_STRING,	"Background color:               ",
 		PANEL_CHOICE_STRINGS,	"white", "black", 0,
@@ -774,7 +893,7 @@ create_setup_popup ()
 
 	pan_snapframetoo = panel_create_item (setup_panel, PANEL_CYCLE,
 		PANEL_ITEM_X,		ATTR_COL(0),
-		PANEL_ITEM_Y,		ATTR_ROW(5),
+		PANEL_ITEM_Y,		ATTR_ROW(8) + 8,
 		PANEL_DISPLAY_LEVEL,	PANEL_CURRENT,
 		PANEL_LABEL_STRING,	"Include frame border in imcopy: ",
 		PANEL_CHOICE_STRINGS,	"No", "Yes", 0,
@@ -784,7 +903,7 @@ create_setup_popup ()
 
 	pan_show_colorbar = panel_create_item (setup_panel, PANEL_CYCLE,
 		PANEL_ITEM_X,		ATTR_COL(0),
-		PANEL_ITEM_Y,		ATTR_ROW(6),
+		PANEL_ITEM_Y,		ATTR_ROW(9) + 8,
 		PANEL_DISPLAY_LEVEL,	PANEL_CURRENT,
 		PANEL_LABEL_STRING,	"Show colorbar:                  ",
 		PANEL_CHOICE_STRINGS,	"No", "Yes", 0,
@@ -794,7 +913,7 @@ create_setup_popup ()
 
 	pan_set_marker = panel_create_item (setup_panel, PANEL_CYCLE,
 		PANEL_ITEM_X,		ATTR_COL(0),
-		PANEL_ITEM_Y,		ATTR_ROW(7),
+		PANEL_ITEM_Y,		ATTR_ROW(10) + 8,
 		PANEL_DISPLAY_LEVEL,	PANEL_CURRENT,
 		PANEL_LABEL_STRING,	"Cursor marker:                  ",
 		PANEL_CHOICE_STRINGS,	"None", "Circle", "Cross", "Square", 0,
@@ -804,7 +923,7 @@ create_setup_popup ()
 
 	pan_blink_rate = panel_create_item (setup_panel, PANEL_CYCLE,
 		PANEL_ITEM_X,		ATTR_COL(0),
-		PANEL_ITEM_Y,		ATTR_ROW(8),
+		PANEL_ITEM_Y,		ATTR_ROW(11) + 8,
 		PANEL_DISPLAY_LEVEL,	PANEL_CURRENT,
 		PANEL_LABEL_STRING,	"Blink rate (sec):               ",
 		PANEL_CHOICE_STRINGS,	BLINKRATE_CHOICES, 0,
@@ -814,7 +933,7 @@ create_setup_popup ()
 
 	pan_blink_list = panel_create_item (setup_panel, PANEL_TEXT,
 		PANEL_ITEM_X,		ATTR_COL(0),
-		PANEL_ITEM_Y,		ATTR_ROW(9) + 3,
+		PANEL_ITEM_Y,		ATTR_ROW(12) + 11,
 		PANEL_DISPLAY_LEVEL,	PANEL_CURRENT,
 		PANEL_LABEL_STRING,	"Frames to be blinked:           ",
 		PANEL_VALUE,		s_blinklist,
@@ -825,7 +944,7 @@ create_setup_popup ()
 
 	pan_zoom_list = panel_create_item (setup_panel, PANEL_TEXT,
 		PANEL_ITEM_X,		ATTR_COL(0),
-		PANEL_ITEM_Y,		ATTR_ROW(10) + 3,
+		PANEL_ITEM_Y,		ATTR_ROW(13) + 11,
 		PANEL_DISPLAY_LEVEL,	PANEL_CURRENT,
 		PANEL_LABEL_STRING,	"Zoom factors:                   ",
 		PANEL_VALUE,		s_zoomslist,
@@ -837,7 +956,7 @@ create_setup_popup ()
 	strcpy (o_fname, COORDFILE);
 	pan_set_ofname = panel_create_item (setup_panel, PANEL_TEXT,
 		PANEL_ITEM_X,		ATTR_COL(0),
-		PANEL_ITEM_Y,		ATTR_ROW(11) + 3,
+		PANEL_ITEM_Y,		ATTR_ROW(14) + 11,
 		PANEL_DISPLAY_LEVEL,	PANEL_CURRENT,
 		PANEL_LABEL_STRING,	"Coordinate list output file:    ",
 		PANEL_VALUE,		o_fname,
@@ -848,18 +967,51 @@ create_setup_popup ()
 
 	pan_set_rfname = panel_create_item (setup_panel, PANEL_TEXT,
 		PANEL_ITEM_X,		ATTR_COL(0),
-		PANEL_ITEM_Y,		ATTR_ROW(12) + 3,
+		PANEL_ITEM_Y,		ATTR_ROW(15) + 11,
 		PANEL_DISPLAY_LEVEL,	PANEL_CURRENT,
-		PANEL_LABEL_STRING,	"Raster filename (load/save):    ",
+		PANEL_LABEL_STRING,	"Rasterfile name (load/save):    ",
 		PANEL_VALUE,		rasterfile,
 		PANEL_VALUE_STORED_LENGTH, SZ_FNAME,
 		PANEL_VALUE_DISPLAY_LENGTH, SZ_PANTEXT,
 		PANEL_NOTIFY_PROC,	set_rfname,
 		0);
 
+	pan_set_rtype = panel_create_item (setup_panel, PANEL_CYCLE,
+		PANEL_ITEM_X,		ATTR_COL(0),
+		PANEL_ITEM_Y,		ATTR_ROW(16) + 13,
+		PANEL_DISPLAY_LEVEL,	PANEL_CURRENT,
+		PANEL_LABEL_STRING,	"Screendump output type:         ",
+		PANEL_CHOICE_STRINGS,	"postscript", "rasterfile", 0,
+		PANEL_VALUE,		r_type,
+		PANEL_NOTIFY_PROC,	panel_set_item,
+		0);
+
+
+	pan_set_rdispose = panel_create_item (setup_panel, PANEL_TEXT,
+		PANEL_ITEM_X,		ATTR_COL(0),
+		PANEL_ITEM_Y,		ATTR_ROW(17) + 13,
+		PANEL_DISPLAY_LEVEL,	PANEL_CURRENT,
+		PANEL_LABEL_STRING,	"Screendump dispose command:     ",
+		PANEL_VALUE,		r_dispose,
+		PANEL_VALUE_STORED_LENGTH, SZ_FNAME,
+		PANEL_VALUE_DISPLAY_LENGTH, SZ_PANTEXT,
+		PANEL_NOTIFY_PROC,	set_rdispose,
+		0);
+
+	pan_set_rfilename = panel_create_item (setup_panel, PANEL_TEXT,
+		PANEL_ITEM_X,		ATTR_COL(0),
+		PANEL_ITEM_Y,		ATTR_ROW(18) + 11,
+		PANEL_DISPLAY_LEVEL,	PANEL_CURRENT,
+		PANEL_LABEL_STRING,	"Screendump output file:         ",
+		PANEL_VALUE,		r_filename,
+		PANEL_VALUE_STORED_LENGTH, SZ_FNAME,
+		PANEL_VALUE_DISPLAY_LENGTH, SZ_PANTEXT,
+		PANEL_NOTIFY_PROC,	set_rfilename,
+		0);
+
 	panel_create_item (setup_panel, PANEL_BUTTON,
 		PANEL_ITEM_X,		ATTR_COL(0),
-		PANEL_ITEM_Y,		ATTR_ROW(13) + 3,
+		PANEL_ITEM_Y,		ATTR_ROW(19) + 15,
 		PANEL_LABEL_IMAGE,
 		    panel_button_image (setup_panel,"Register Frames",0,0),
 		PANEL_NOTIFY_PROC,	register_proc,
@@ -872,8 +1024,20 @@ create_setup_popup ()
 		0);
 
 	panel_create_item (setup_panel, PANEL_BUTTON,
+		PANEL_LABEL_IMAGE,
+		    panel_button_image (setup_panel, "Blink", 0,0),
+		PANEL_NOTIFY_PROC,	blinkenable_proc,
+		0);
+
+	panel_create_item (setup_panel, PANEL_BUTTON,
+		PANEL_LABEL_IMAGE,
+		    panel_button_image (setup_panel, "Frame", 0,0),
+		PANEL_NOTIFY_PROC,	setframe_proc,
+		0);
+
+	panel_create_item (setup_panel, PANEL_BUTTON,
 		PANEL_ITEM_X,		ATTR_COL(0),
-		PANEL_ITEM_Y,		ATTR_ROW(14) + 4,
+		PANEL_ITEM_Y,		ATTR_ROW(20) + 15,
 		PANEL_LABEL_IMAGE,
 		    panel_button_image (setup_panel, "Reset", 0,0),
 		PANEL_NOTIFY_PROC,	reset_proc,
@@ -905,19 +1069,7 @@ create_setup_popup ()
 
 	panel_create_item (setup_panel, PANEL_BUTTON,
 		PANEL_LABEL_IMAGE,
-		    panel_button_image (setup_panel, "Blink", 0,0),
-		PANEL_NOTIFY_PROC,	blinkenable_proc,
-		0);
-
-	panel_create_item (setup_panel, PANEL_BUTTON,
-		PANEL_LABEL_IMAGE,
-		    panel_button_image (setup_panel, "Frame", 0,0),
-		PANEL_NOTIFY_PROC,	setframe_proc,
-		0);
-
-	panel_create_item (setup_panel, PANEL_BUTTON,
-		PANEL_LABEL_IMAGE,
-		    panel_button_image (setup_panel, "Quit", 0,0),
+		    panel_button_image (setup_panel, "DISMISS", 0,0),
 		PANEL_NOTIFY_PROC,	setup_proc,
 		0);
 
@@ -946,6 +1098,10 @@ int		value;
 	    marktype = value;
 	} else if (item == pan_blink_rate) {
 	    blink_rate_index = value;
+	} else if (item == pan_set_rtype) {
+	    r_type = value;
+	} else if (item == pan_globalcolor) {
+	    global_colortable = value;
 
 	} else if (item == pan_set_background) {
 	    /* Set the background color.
@@ -1115,6 +1271,34 @@ Event		*event;
 }
 
 
+/* SET_ULUT1 -- Set the file name for user lookup table 1.
+ */
+static Panel_setting
+set_ulut1 (item, event)
+Panel_item	item;
+Event		*event;
+{
+	char	*s;
+
+	strcpy (u_lut1, (char *) panel_get_value (item));
+	return (panel_text_notify (item,event));
+}
+
+
+/* SET_ULUT2 -- Set the file name for user lookup table 2.
+ */
+static Panel_setting
+set_ulut2 (item, event)
+Panel_item	item;
+Event		*event;
+{
+	char	*s;
+
+	strcpy (u_lut2, (char *) panel_get_value (item));
+	return (panel_text_notify (item,event));
+}
+
+
 /* SET_RFNAME -- Set the file name for rasterfile load/save.
  */
 static Panel_setting
@@ -1125,6 +1309,34 @@ Event		*event;
 	char	*s;
 
 	strcpy (rasterfile, (char *) panel_get_value (item));
+	return (panel_text_notify (item,event));
+}
+
+
+/* SET_RDISPOSE -- Set the raster file dispose command.
+ */
+static Panel_setting
+set_rdispose (item, event)
+Panel_item	item;
+Event		*event;
+{
+	char	*s;
+
+	strcpy (r_dispose, (char *) panel_get_value (item));
+	return (panel_text_notify (item,event));
+}
+
+
+/* SET_RFILENAME -- Set the screendump filename template.
+ */
+static Panel_setting
+set_rfilename (item, event)
+Panel_item	item;
+Event		*event;
+{
+	char	*s;
+
+	strcpy (r_filename, (char *) panel_get_value (item));
 	return (panel_text_notify (item,event));
 }
 
@@ -1583,7 +1795,71 @@ set_colortable()
 		m_red[i] = m_green[i] = m_blue[i] = i;
 	    break;
 
-	case LINEAR_PSEUDOCOLOR:
+	case HEAT:
+	    for (i=0;  i < NGREY;  i++) {
+		m_red[i]   = heat.hue[i].red   * (NGREY - 1);
+		m_green[i] = heat.hue[i].green * (NGREY - 1);
+		m_blue[i]  = heat.hue[i].blue  * (NGREY - 1);
+	    }
+	    break;
+
+	case RAMP1:
+	    for (i=0;  i < NGREY;  i++) {
+		m_red[i]   = heat.hue[i].red   * NGREY;
+		m_green[i] = heat.hue[i].green * NGREY;
+		m_blue[i]  = heat.hue[i].blue  * NGREY;
+	    }
+	    break;
+
+	case RAMP2:
+	    for (i=0;  i < NGREY;  i++) {
+		m_red[i]   = heat.hue[i].red   * ((NGREY - 1) * 2);
+		m_green[i] = heat.hue[i].green * ((NGREY - 1) * 2);
+		m_blue[i]  = heat.hue[i].blue  * ((NGREY - 1) * 2);
+	    }
+	    break;
+
+	case HALLEY:
+	    for (i=0;  i < NGREY;  i++) {
+		m_red[i]   = halley.hue[i].red   * (NGREY - 1);
+		m_green[i] = halley.hue[i].green * (NGREY - 1);
+		m_blue[i]  = halley.hue[i].blue  * (NGREY - 1);
+	    }
+	    break;
+
+	case ULUT1:
+	case ULUT2:
+	    {   struct lut user;
+		struct triplet *p;
+		int i, j;
+		FILE *fp;
+		char *s;
+
+		s = (df_p->fb_maptype == ULUT1) ? u_lut1 : u_lut2;
+		if ((fp = fopen (getfname(s,0), "r")) == NULL) {
+		    fprintf (stderr, "cannot open %s\n", s);
+		    return;
+		}
+
+		for (user.lutlen=0;  user.lutlen < NGREY;  user.lutlen++) {
+		    p = &user.hue[user.lutlen];
+		    if (fscanf (fp, " %f %f %f",
+			&p->red, &p->green, &p->blue) == EOF)
+			break;
+		}
+
+		for (i=0;  i < NGREY;  i++) {
+		    j = max(0, min(NGREY-1, (i * user.lutlen / NGREY)));
+		    m_red[i]   = user.hue[j].red   * (NGREY - 1);
+		    m_green[i] = user.hue[j].green * (NGREY - 1);
+		    m_blue[i]  = user.hue[j].blue  * (NGREY - 1);
+		}
+
+		fclose (fp);
+	    }
+	    break;
+
+	case LINEARPS:
 	    for (i=0;  i < NGREY;  i++)
 		m_red[i] = m_green[i] = m_blue[i] = 0;
 
@@ -1613,12 +1889,12 @@ set_colortable()
 	    }
 	    break;
 
-	case CONTINUOUS_RANDOM_PSEUDOCOLOR:
+	case CRANDOMPS:
 	    set_transfer_function (gio_pw, df_p->fb_center, df_p->fb_slope);
 	    imt_pause (cr_msec[crandom_blink_rate], set_colortable);
 	    /* fall through */
 
-	case RANDOM_PSEUDOCOLOR:
+	case RANDOMPS:
 	    if (!seed)
 		seed = time(0);
 	    srand (seed++);
@@ -1744,7 +2020,8 @@ edit_colormap()
 	    bcopy (&blue[CMS_FIRST], &b[CMS_FIRST], CMS_NGREY);
 
 	    pw_putcolormap (gio_pw, 0, NGREY, r, g, b);
-	    pr_putcolormap (screen, 0, NGREY, r, g, b);
+	    if (global_colortable)
+		pr_putcolormap (screen, 0, NGREY, r, g, b);
 	    pr_close (screen);
 
 	    /* Update the canvas pixwin colortable. */
@@ -2550,11 +2827,17 @@ Notify_event_type type;
 		if (state == WINDOW) {
 		    switch (df_p->fb_maptype) {
 		    case MONO:
-		    case LINEAR_PSEUDOCOLOR:
+		    case HEAT:
+		    case RAMP1:
+		    case RAMP2:
+		    case HALLEY:
+		    case LINEARPS:
+		    case ULUT1:
+		    case ULUT2:
 			compute_transfer_function (event);
 			break;
-		    case RANDOM_PSEUDOCOLOR:
-		    case CONTINUOUS_RANDOM_PSEUDOCOLOR:
+		    case RANDOMPS:
+		    case CRANDOMPS:
 			set_colortable();
 			break;
 		    }
@@ -3877,7 +4160,6 @@ int	arg;
 {
 	static	char pathname[SZ_FNAME];
 	char	fmt[SZ_LINE], *udir;
-	char	*getenv();
 
 	/* Were we passed an absolute pathname as input? */
 	if (*rootname == '/') {

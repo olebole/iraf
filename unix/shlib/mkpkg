@@ -31,7 +31,7 @@ relink_:
 	$end
 
 	$ifeq (rebuild, yes)
-	    !mkshlib.csh -a $(ADDR)
+	    !./mkshlib.csh -a $(ADDR)
 	    $call libshare
 	$else
 	    $echo "shared library is up to date"
@@ -75,5 +75,5 @@ edsym.e:
 	;
 
 clean:
-	!mkshlib.csh -c
+	!./mkshlib.csh -c
 	;

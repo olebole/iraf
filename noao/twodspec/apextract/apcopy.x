@@ -1,6 +1,7 @@
 include	"apertures.h"
 
 # AP_COPY -- Make a copy of an aperture.
+# The title is not copied.
 
 procedure ap_copy (apin, apout)
 
@@ -22,5 +23,6 @@ begin
 	    AP_HIGH(apout, i) = AP_HIGH(apin, i)
 	}
 	call ap_cvset (apin, apout)
-	call ap_icset (apin, 0., 0., apout)
+	call ic_open (AP_IC(apout))
+	call ic_copy (AP_IC(apin), AP_IC(apout))
 end

@@ -20,10 +20,9 @@ int	param		# parameter
 char	str[ARB]	# string
 int	maxch		# maximum number of characters
 
-pointer	 dsp, nse, ply
+pointer	 nse, ply
 
 begin
-	dsp = AP_PDISPLAY(ap)
 	nse = AP_NOISE(ap)
 	ply = AP_POLY(ap)
 
@@ -101,10 +100,9 @@ real procedure ap2statr (ap, param)
 pointer	ap		# pointer to apphot structure
 int	param		# parameter
 
-pointer	dsp, nse, ply, rprof, fnd
+pointer	nse, ply, rprof, fnd
 
 begin
-	dsp = AP_PDISPLAY(ap)
 	nse = AP_NOISE(ap)
 	ply = AP_POLY(ap)
 	rprof = AP_RPROF(ap)
@@ -157,12 +155,10 @@ begin
 	    return (AP_SKYSIGMA(nse))
 	case EPADU:
 	    return (AP_EPADU(nse))
-	case THRESHOLD:
-	    return (AP_THRESHOLD(nse))
-	case CTHRESHOLD:
-	    return (AP_CTHRESHOLD(nse))
 	case READNOISE:
 	    return (AP_READNOISE(nse))
+	case THRESHOLD:
+	    return (AP_THRESHOLD(fnd))
 	case RATIO:
 	    return (AP_RATIO(fnd))
 	case THETA:

@@ -6,20 +6,16 @@
 #include <iraf.h>
 
 #define	SZ_FBUF		512		/* File i/o buffer size		*/
-/* #define	NOVOS			/* Do not use VOS for vfn2osfn	*/
 
-# ifdef VMS
+#ifdef VMS
 #define	rindex	strrchr 
-# endif
-
-# ifdef UNIX
-#include <sys/time.h>
-#else
 struct	timeval {
 	long	tv_sec;
 	long	tv_usec;
 };
-# endif
+#else
+#include <sys/time.h>
+#endif
 
 
 # ifdef FINIT

@@ -55,6 +55,10 @@ begin
 	    call strcpy (AP_FILTER(ap), str, maxch)
 	case FILTERID:
 	    call strcpy (AP_FILTERID(ap), str, maxch)
+	case OBSTIME:
+	    call strcpy (AP_OBSTIME(ap), str, maxch)
+	case OTIME:
+	    call strcpy (AP_OTIME(ap), str, maxch)
 	default:
 	    call error (0, "APSTATS: Unknown apphot string parameter")
 	}
@@ -117,7 +121,7 @@ begin
 end
 
 
-# AP2STATR -- Procedure to set a real apphot parameter.
+# AP1STATR -- Procedure to set a real apphot parameter.
 
 real procedure ap1statr (ap, param)
 
@@ -153,6 +157,8 @@ begin
 	    return (AP_PXCUR(phot))
 	case PYCUR:
 	    return (AP_PYCUR(phot))
+	case CTHRESHOLD:
+	    return (AP_CTHRESHOLD(cen))
 	case MAXSHIFT:
 	    return (AP_MAXSHIFT(cen))
 	case MINSNRATIO:
@@ -173,8 +179,14 @@ begin
 	    return (AP_SCALE(ap))
 	case K1:
 	    return (AP_K1(sky))
-	case K2:
-	    return (AP_K2(sky))
+	case SLOREJECT:
+	    return (AP_SLOREJECT(sky))
+	case SHIREJECT:
+	    return (AP_SHIREJECT(sky))
+	case SLOCLIP:
+	    return (AP_SLOCLIP(sky))
+	case SHICLIP:
+	    return (AP_SHICLIP(sky))
 	case BINSIZE:
 	    return (AP_BINSIZE(sky))
 	case RGROW:

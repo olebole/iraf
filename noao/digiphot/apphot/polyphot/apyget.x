@@ -117,8 +117,7 @@ begin
 end
 
 
-# AP_YMKPOLY -- Procedure to mark the coordinates of a polygon
-# on the display device.
+# AP_YMKPOLY -- Mark the coordinates of a polygon on the display device.
 
 int procedure ap_ymkpoly (py, id, x, y, max_nvertices)
 
@@ -136,18 +135,18 @@ real	apstatr(), asumr()
 errchk	gscur
 
 begin
-	# Reopen the device
+	# Reopen the device.
 	if (id != NULL)
 	    call greactivate (id, 0)
 
-	# Initialize
+	# Initialize.
 	call smark (sp)
 	call salloc (cmd, SZ_LINE, TY_CHAR)
 
 	# Type prompt.
 	call printf (
 	    "Mark polygon vertex [space=mark,q=quit].\n")
-	stat = clgcur ("commands", xtemp, ytemp, wcs, key, Memc[cmd], SZ_LINE)
+	stat = clgcur ("icommands", xtemp, ytemp, wcs, key, Memc[cmd], SZ_LINE)
 
 	# Fetch the polygon and draw it on the display.
 	nvertices = 0
@@ -173,9 +172,10 @@ begin
 	    # Type prompt.
 	    call printf (
 	        "Mark polygon vertex [space=mark,q=quit].\n")
-	    stat = clgcur ("commands", xtemp, ytemp, wcs, key, Memc[cmd],
+	    stat = clgcur ("icommands", xtemp, ytemp, wcs, key, Memc[cmd],
 	        SZ_LINE)
 	}
+	call printf ("\n")
 
 	call sfree (sp)
 

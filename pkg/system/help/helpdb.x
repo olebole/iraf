@@ -427,7 +427,7 @@ pointer	db			#I database descriptor
 pointer	data			#I data buffer (compiled help directories)
 pointer	index			#I database index
 
-int	i, j, len_modlist, newpos
+int	i, j, len_modlist, pos
 pointer	hp, o_hp, mp, ix, sbuf, o_mp, c_modlist, hdfile
 
 bool	streq()
@@ -491,49 +491,40 @@ begin
 	call malloc (c_modlist, len_modlist, TY_STRUCT)
 	call amovi (Memi[HD_MODULE(hp,1)], Memi[c_modlist], len_modlist)
 
-	do i = 1, HD_NMODULES(hp) {
-	    # Get position in the copied modlist, and pointer to helpdir
-	    # file name.
+	pos = 0
+	do j = 1, HDB_NENTRIES(db) {
+	    # Find next valid index entry.
+	    ix = index + (j - 1) * LEN_HDBINDEX
+	    if (strncmp (DBI_KEY(ix), "_index", 6) == 0)
+		next
 
-	    o_mp = c_modlist + (i - 1) * LEN_MODSTRUCT
-	    hdfile = HD_SBUF(hp) + M_PKG(o_mp)
-
-	    # Search DBI index for the package help directory and hence the
-	    # package.  Cannot use hdb_search because DBI has not yet been
-	    # sorted (if it were it would no longer be in depth first order).
-	    # The search will fail if the package is defined as a subpackage
-	    # somewhere but has no .hd file.  We exclude such files from the
-	    # index, hence the new modlist may be shorter than the original.
-
-	    newpos = ERR
-	    do j = 1, HDB_NENTRIES(db) {
-		ix = index + (j - 1) * LEN_HDBINDEX
-		if (streq (DBI_KEY(ix), Memc[hdfile])) {
-		    newpos = j
-		    break
+	    # Locate corresponding helpdir entry, if any.
+	    do i = 1, HD_NMODULES(hp) {
+		o_mp = c_modlist + (i - 1) * LEN_MODSTRUCT
+		hdfile = HD_SBUF(hp) + M_PKG(o_mp)
+		if (Memc[hdfile] == EOS)
+		    next
+		else if (streq (DBI_KEY(ix), Memc[hdfile])) {
+		    # Append entry to output helpdir.
+		    pos = pos + 1
+		    call amovi (Memi[o_mp], Memi[HD_MODULE(hp,pos)],
+			LEN_MODSTRUCT)
 		}
 	    }
-
-	    # Copy the module entry back into the original modlist,
-	    # overwriting a field.
-
-	    if (newpos != ERR)
-		call amovi (Memi[o_mp], Memi[HD_MODULE(hp,newpos)],
-		    LEN_MODSTRUCT)
 	}
 
 	call mfree (c_modlist, TY_STRUCT)
-	HD_NMODULES(hp) = HDB_NENTRIES(db)
+	HD_NMODULES(hp) = pos
 
 	# Return any unused space in string buffer.
 	call realloc (HD_SBUF(hp), HD_NEXTCH(hp), TY_CHAR)
 	HD_SZSBUF(hp) = HD_NEXTCH(hp)
 
 	# Return any unused module descriptors.
-	HD_LENHD(hp) = HD_LENHD(hp) -
+        HD_LENHD(hp) = HD_LENHD(hp) -
 	    LEN_MODSTRUCT * (HD_MAXMODULES(hp) - HD_NMODULES(hp))
-	HD_MAXMODULES(hp) = HD_NMODULES(hp)
 	call realloc (hp, HD_LENHD(hp), TY_STRUCT)
+	HD_MAXMODULES(hp) = HD_NMODULES(hp)
 
 	return (hp)
 end
@@ -1196,5 +1187,5 @@ begin
 
 readerr_
 	# Common read error code.
-	call error ("Cannot read help database data\n")
+	call error (1, "Cannot read help database data\n")
 end

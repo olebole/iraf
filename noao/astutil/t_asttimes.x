@@ -10,7 +10,7 @@ int	year			# Year
 int	month			# Month
 int	day			# Day
 double	zt			# Zone time
-int	zone			# Time zone from Greenwich
+double	zone			# Time zone from Greenwich
 double	longitude		# Longitude for LMST
 
 double	ut			# Universal time (output)
@@ -20,18 +20,24 @@ double	lmst			# Local mean siderial time (output)
 
 int	fd
 char	file[SZ_FNAME]
+pointer	obs
 
 int	clpopnu(), clplen(), clgfil(), clgeti(), btoi()
 int	open(), fscan(), nscan()
 bool	clgetb()
-double	clgetd()
+double	clgetd(), obsgetd()
+pointer	obsopen()
 
 begin
 	# Get parameters other than date.
 	list = clpopnu ("files")
 	header = btoi (clgetb ("header"))
-	zone = clgeti ("zone")
-	longitude = clgetd ("longitude")
+	call clgstr ("observatory", file, SZ_FNAME)
+	obs = obsopen (file)
+	if (header == YES)
+	    call obslog (obs, "ASTTIMES", "timezone longitude", STDOUT)
+	zone = obsgetd (obs, "timezone")
+	longitude = obsgetd (obs, "longitude")
 
 	# If no files are given then get dates from the CL.
 	if (clplen (list) == 0) {
@@ -41,8 +47,8 @@ begin
 	    day = clgeti ("day")
 	    zt = clgetd ("time")
 
-	    call times (year, month, day, zt, zone, longitude, ut, epoch, jd,
-		lmst, header)
+	    call ast_times (year, month, day, zt, zone, longitude, ut, epoch,
+		jd, lmst, header)
 	
 	    # Record results in the parameter file.
 	    call clputd ("ut", ut)
@@ -67,7 +73,7 @@ begin
 		    if (nscan() < 4)
 			next
 
-	    	    call times (year, month, day, zt, zone, longitude, ut,
+	    	    call ast_times (year, month, day, zt, zone, longitude, ut,
 			epoch, jd, lmst, header)
 		}
 
@@ -76,19 +82,20 @@ begin
 	    call clpcls (list)
 	}
 
+	call obsclose (obs)
 end
 
 
 # TIMES -- Print times.
 
-procedure times (year, month, day, zt, zone, longitude, ut, epoch, jd, lmst,
+procedure ast_times (year, month, day, zt, zone, longitude, ut, epoch, jd, lmst,
 	header)
 
 int	year		# Year
 int	month		# Month (1-12)
 int	day		# Day of month
 double	zt		# Zone time
-int	zone		# Time zone
+double	zone		# Time zone
 double	longitude	# Longitude
 double	ut		# UT
 double	epoch		# Epoch in 365.25 solar mean days
@@ -99,18 +106,40 @@ int	header		# Print header?
 char	dow[3]
 int	d
 
-double	ast_julday(), ast_mst()
+double	ast_date_to_julday(), ast_mst()
 
 begin
 	# Determine day of the week in zone time.
+	if (zt < 0.) {
+	    zt = zt + 24
+	    day = day - 1
+	}
+	if (zt >= 24.) {
+	    zt = zt - 24
+	    day = day + 1
+	}
+	jd = ast_date_to_julday (year, month, day, zt)
+	call ast_julday_to_date (jd, year, month, day, zt)
 	call ast_date_to_epoch (year, month, day, zt, epoch)
-	jd = ast_julday (epoch)
 	call ast_day_of_week (jd, d, dow, 3)
 
 	# Determine UT, EPOCH, JD, and MST.
-	ut = zt + zone
-	call ast_date_to_epoch (year, month, day, ut, epoch)
-	jd = ast_julday (epoch)
+	for (ut=zone; ut<-12.; ut=ut+24.)
+	    ;
+	for (; ut>=12.; ut=ut-24.)
+	    ;
+	ut = zt + ut
+	d = day
+	if (ut < 0.) {
+	    ut = ut + 24
+	    d = d - 1
+	}
+	if (ut >= 24.) {
+	    ut = ut - 24
+	    d = d + 1
+	}
+	jd = ast_date_to_julday (year, month, d, ut)
+	call ast_date_to_epoch (year, month, d, ut, epoch)
 	lmst = ast_mst (epoch, longitude)
 
 	# Print Times.
@@ -126,14 +155,14 @@ begin
 		call pargstr ("LMST")
 	    header = NO
 	}
-	call printf ("%4d %3d %2d %3s %10h %10h %10.5f %12.4f %10h\n")
+	call printf ("%4d %3d %2d %3s %10.1h %10.1h %10.5f %12.4f %10.1h\n")
 	    call pargi (year)
 	    call pargi (month)
 	    call pargi (day)
 	    call pargstr (dow)
-	    call pargd (zt)
-	    call pargd (ut)
+	    call pargd (nint (zt*36000.0D0)/36000.0D0)
+	    call pargd (nint (ut*36000.0D0)/36000.0D0)
 	    call pargd (epoch)
 	    call pargd (jd)
-	    call pargd (lmst)
+	    call pargd (nint (lmst*36000.0D0)/36000.0D0)
 end

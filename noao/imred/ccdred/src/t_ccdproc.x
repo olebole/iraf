@@ -31,8 +31,8 @@ bool	clgetb()
 real	clgetr()
 int	imtopenp(), imtgetim(), imtlen()
 pointer	sp, input, output, str, in, out, ccd
-errchk	set_input, set_output, ccddelete
-errchk	set_zero, set_dark, set_flat, set_illum, set_fringe
+errchk	set_input, set_output, ccddelete, cal_open
+errchk	set_fixpix, set_zero, set_dark, set_flat, set_illum, set_fringe
 
 begin
 	call smark (sp)
@@ -86,11 +86,12 @@ begin
 	        call set_zero (ccd)
 	        call set_dark (ccd)
 		CORS(ccd, FINDMEAN) = YES
+		CORS(ccd, MINREP) = YES
 	    case ILLUM:
 	        call set_zero (ccd)
 	        call set_dark (ccd)
 	        call set_flat (ccd)
-	    case OBJECT:
+	    case OBJECT, COMP:
 	        call set_zero (ccd)
 	        call set_dark (ccd)
 	        call set_flat (ccd)
@@ -129,8 +130,10 @@ begin
 	    } else {
 		# Delete the temporary output image leaving the input unchanged.
 	        call imunmap (in)
-	        call imunmap (out)
-		call imdelete (Memc[output])
+	        iferr (call imunmap (out))
+		    ;
+		iferr (call imdelete (Memc[output]))
+		    ;
 	    }
 	    call free_proc (ccd)
 
@@ -140,7 +143,6 @@ begin
 		call readcor (Memc[input])
 	    case FLAT:
 		call ccdmean (Memc[input])
-		call scancor (Memc[input])
 	    }
 	}
 

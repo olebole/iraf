@@ -33,7 +33,7 @@ begin
 	call salloc (str, SZ_LINE, TY_CHAR)
 
 	# Get the fringe correction image.
-	call cal_image (IN_IM(ccd), FRINGE, Memc[image], SZ_FNAME)
+	call cal_image (IN_IM(ccd), FRINGE, 1, Memc[image], SZ_FNAME)
 
 	# If no processing is desired print fringe image name and return.
 	if (clgetb ("noproc")) {
@@ -109,8 +109,6 @@ begin
 	FRINGESCALE(ccd) = exptime1 / exptime2 * fringescale
 	CORS(ccd, FRINGECOR) = Q
 	COR(ccd) = YES
-	if (IM_PIXTYPE(im) == TY_REAL)
-	    CALCTYPE(ccd) = TY_REAL
 
 	# Log the operation.
 	call sprintf (Memc[str], SZ_LINE,

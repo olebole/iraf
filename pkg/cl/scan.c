@@ -14,8 +14,7 @@
 #include "errs.h"
 
 /*
- * SCAN -- free-format scan.
- * TODO: someday print, and even later formatted scanf and printf.
+ * SCAN -- free-format and formatted scan functions.
  */
 
 extern	int cldebug;
@@ -24,6 +23,7 @@ extern	char *eofstr;
 extern	char *indefstr;
 extern	char *indeflc;
 
+#define	MAXARGS 32
 static	int nscan_val=0;	/* value returned by NSCAN intrinsic	*/
 
 
@@ -82,12 +82,14 @@ char	*source;
 	    /* Get source name from first operand (FSCAN call)
 	     */
 	    o = popop();
-	    makelower (o.o_val.v_s);
-	    if (!strcmp (o.o_val.v_s, "stdin")) {
+	    if (!strcmp (o.o_val.v_s, "stdin") ||
+		!strcmp (o.o_val.v_s, "STDIN")) {
+
 		if (fgets (buf, SZ_LINE, currentask->t_stdin) == NULL)
 		    eoftst++;
 		else
 		    lentst (buf);
+
 	    } else {
 		breakout (o.o_val.v_s, &pk, &t, &p, &f);
 		pp = paramsrch (pk, t, p);
@@ -124,11 +126,11 @@ char	*source;
 
 	while (nargs-- > 0) {		/* get each destination name	*/
 	    o = popop();
-	    makelower (o.o_val.v_s);
 
-	    if (!strcmp (o.o_val.v_s, "stdout"))
+	    if (!strcmp (o.o_val.v_s, "stdout") ||
+		!strcmp (o.o_val.v_s, "STDOUT")) {
 		pp = NULL;
-	    else {
+	    } else {
 		breakout (o.o_val.v_s, &pk, &t, &p, &f);
 		field = *f;
 		pp = paramsrch (pk, t, p);	/* never returns NULL	*/
@@ -182,6 +184,131 @@ char	*source;
 	 */
 	while (--nargs >= 0)
 	    popop();
+
+	o.o_type = OT_INT;
+	o.o_val.v_i = nscan_val;
+	pushop (&o);
+}
+
+
+/* CL_SCANF -- Formatted scan.  Like SCAN except that a C-scanf like format
+ * statement is used to decode the input text.
+ */
+cl_scanf (format, nargs, input)
+char	*format;
+int	nargs;
+char	*input;
+{
+	int	nscan_val, eoftst, n;
+	char	*pk, *t, *p, *f;
+	struct	operand o, pv;
+	char	buf[SZ_LINE];
+	char	*v[MAXARGS];
+	struct	param *pp;
+
+	eoftst = 0;
+
+	/* Fill buf with the line to be scanned.
+	 */
+	if (strcmp (input, "stdin") == 0) {
+	    /* Read from the standard input (SCANF).
+	     */
+	    if (fgets (buf, SZ_LINE, currentask->t_stdin) == NULL)
+		eoftst++;
+	    else
+		lentst (buf);
+	    /* First arg is an output param, not source, so increment nargs. */
+	    nargs++;
+
+	} else {
+	    /* Get source name from first operand (FSCANF).
+	     */
+	    o = popop();
+
+	    if (!strcmp (o.o_val.v_s, "stdin") ||
+		!strcmp (o.o_val.v_s, "STDIN")) {
+
+		if (fgets (buf, SZ_LINE, currentask->t_stdin) == NULL)
+		    eoftst++;
+		else
+		    lentst (buf);
+
+	    } else {
+		breakout (o.o_val.v_s, &pk, &t, &p, &f);
+		pp = paramsrch (pk, t, p);
+		paramget (pp, *f);
+		opcast (OT_STRING);
+		o = popop();
+
+		if (pp->p_flags & P_LEOF)
+		    eoftst++;
+		else {
+		    if (opundef (&o)) {
+			query (pp);		/* pushes op */
+			opcast (OT_STRING);
+			o = popop();
+		    }
+		    strncpy (buf, o.o_val.v_s, SZ_LINE);
+		}
+	    }
+	}
+
+	/* Check for EOF. */
+	if (eoftst) {
+	    o.o_type = OT_INT;
+	    o.o_val.v_i = CL_EOF;
+	    while (nargs-- > 0)
+		popop();		/* flush op stack		*/
+	    pushop (&o);
+	    return;
+	}
+
+	/* Process the stacked operands and build the argument list for
+	 * the scanf call.  Each argument pointer points directly to the
+	 * stored parameter value in the parameter descriptor.
+	 */
+	for (n=0;  --nargs >= 0;  n++) {
+	    /* Stacked operand is parameter name. */
+	    o = popop();
+	    breakout (o.o_val.v_s, &pk, &t, &p, &f);
+	    pp = paramsrch (pk, t, p);
+
+	    /* Add address of parameter value to argument list.  First set
+	     * the value with PARAMSET, to make sure that the pset knows
+	     * that the value has been modified.
+	     */
+	    switch (pp->p_valo.o_type & OT_BASIC) {
+	    case OT_BOOL:
+		o = makeop ("yes", OT_BOOL);  pushop (&o);
+		paramset (pp, FN_VALUE);
+		v[n] = (char *) &pp->p_valo.o_val.v_i;
+		break;
+	    case OT_INT:
+		o = makeop ("0", OT_INT);  pushop (&o);
+		paramset (pp, FN_VALUE);
+		v[n] = (char *) &pp->p_valo.o_val.v_i;
+		break;
+	    case OT_REAL:
+		o = makeop ("0", OT_REAL);  pushop (&o);
+		paramset (pp, FN_VALUE);
+		v[n] = (char *) &pp->p_valo.o_val.v_r;
+		break;
+	    case OT_STRING:
+		o = makeop ("", OT_STRING);  pushop (&o);
+		paramset (pp, FN_VALUE);
+		v[n] = (char *) pp->p_valo.o_val.v_s;
+		break;
+	    default:
+		cl_error (E_UERR, "scanf: cannot scan into %s\n", o.o_val.v_s);
+	    }
+	}
+
+	/* Perform the scan. */
+	nscan_val = sscanf (buf, format,
+	    v[ 0], v[ 1], v[ 2], v[ 3], v[ 4], v[ 5], v[ 6], v[ 7],
+	    v[ 8], v[ 9], v[10], v[11], v[12], v[13], v[14], v[15],
+	    v[16], v[17], v[18], v[19], v[20], v[21], v[22], v[23],
+	    v[24], v[25], v[26], v[27], v[28], v[29], v[30], v[31]);
 
 	o.o_type = OT_INT;
 	o.o_val.v_i = nscan_val;

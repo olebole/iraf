@@ -10,6 +10,12 @@
 #define import_error
 #include <iraf.h>
 
+#ifdef LINUX
+#undef SYSV
+#undef i386
+#define GNUAR
+#endif
+
 /*
  * HOST.C -- [MACHDEP] Special host interface routines required by the MKPKG
  * utility.
@@ -17,6 +23,7 @@
 
 #define	SZ_COPYBUF	4096
 #define	SZ_CMD		512		/* max size OS command	*/
+#define	SZ_LIBPATH	512		/* path to library */
 #define	LIBRARIAN	"ar"
 #define	LIBFLAGS	"r"
 #define	REBUILD		"ranlib"
@@ -28,9 +35,10 @@ extern	ignore;
 extern	verbose;
 extern	debug;
 
-extern	char	*makeobj();
-extern	char	*vfn2osfn();
-extern	char	*getenv();
+extern	char *makeobj();
+extern	char *vfn2osfn();
+extern	char *getenv();
+char	*resolvefname();
 char	*mkpath();
 
 
@@ -131,7 +139,11 @@ char	*irafdir;		/* iraf root directory		*/
 	 * Update the library.
 	 * ---------------------
 	 */
+#ifdef LINUX
+	sprintf (cmd, "%s %s %s", LIBRARIAN, LIBFLAGS, resolvefname(library));
+#else
 	sprintf (cmd, "%s %s %s", LIBRARIAN, LIBFLAGS, library);
+#endif
 
 	/* Compute offset to the file list and initialize loop variables.
 	 * Since the maximum command length is limited, only a few files
@@ -190,12 +202,15 @@ char	*irafdir;		/* iraf root directory		*/
 h_rebuildlibrary (library)
 char	*library;		/* filename of library	*/
 {
-	char	cmd[SZ_LINE+1];
-
+#ifdef SYSV
+	/* Skip the library rebuild if COFF format library. */
+	return (OK);
+#else
 #ifdef i386
 	/* Skip the library rebuild if COFF format library. */
 	return (OK);
 #else
+	char	cmd[SZ_LINE+1];
 
 	sprintf (cmd, "%s %s", REBUILD, vfn2osfn(library,0));
 	if (verbose) {
@@ -207,6 +222,7 @@ char	*library;		/* filename of library	*/
 	    return (os_cmd (cmd));
 	else
 	    return (OK);
+#endif
 #endif
 }
 
@@ -380,6 +396,8 @@ char	*dir;		/* LOGICAL directory name */
 	 * if (execute)
 	 *     call os_cmd to execute purge command
 	 */
+
+	 return (OK);
 }
 
 
@@ -392,7 +410,6 @@ char	*newfile;		/* new file, not a directory name */
 {
 	char	old[SZ_PATHNAME+1];
 	char	new[SZ_PATHNAME+1];
-	int	exit_status;
 
 	strcpy (old, vfn2osfn (oldfile, 0));
 	strcpy (new, vfn2osfn (newfile, 1));
@@ -493,7 +510,6 @@ char	*new;		/* new pathname of file		*/
 {
 	char	old_osfn[SZ_PATHNAME+1];
 	char	new_osfn[SZ_PATHNAME+1];
-	int	exit_status;
 
 	strcpy (old_osfn, vfn2osfn (old, 0));
 	strcpy (new_osfn, vfn2osfn (new, 0));
@@ -686,6 +702,47 @@ char	*outstr;
 }
 
 
+/* RESOLVEFNAME -- If a filename reference is a symbolic link resolve it to
+ * the pathname of an actual file by tracing back through all symbolic links
+ * to the fully resolved file or path.
+ * 
+ * Example:
+ *
+ *     ./libsys.a -> /iraf/iraf/lib/libsys.a
+ *        /iraf/iraf/lib/libsys.a -> ../bin/libsys.a
+ *	    -> /iraf/iraf/bin/libsys.a
+ *
+ * Note that the "fully resolved" filename may still contain unresolved links
+ * for directory elements - it is only the filename which is fully resolved
+ * in the output pathname.
+ */
+char *
+resolvefname (fname)
+char *fname;
+{
+	static char pathname[SZ_LIBPATH];
+	char relpath[SZ_LIBPATH];
+	extern char *strrchr();
+
+	strcpy (pathname, fname);
+	while (os_symlink (pathname, relpath, SZ_LIBPATH)) {
+	    if (relpath[0] == '/') {
+		/* Link to an absolute pathname, just use new path. */
+		strcpy (pathname, relpath);
+	    } else {
+		/* Relative path.  This includes upwards references such
+		 * as ../foo.  Replace the filename by the relative path.
+		 * Let unix resolve any upwards references later, when the
+		 * file is accessed.
+		 */
+		strcpy (strrchr(pathname,'/') + 1, relpath);
+	    }
+	}
+
+	return (pathname);
+}
+
+
 /* H_DIREQ -- Compare two directory pathnames for equality.  This is easy
  * in most cases, but the comparison can fail when it shouldn't due to aliases
  * for directory names, e.g., a directory may be referred to by a symbolic
@@ -696,20 +753,34 @@ h_direq (dir1, dir2)
 char	*dir1, *dir2;
 {
 	register char	*ip1, *ip2;
-	/* If the pathname contains an "iraf", ignore everything to the left
-	 * for the purposes of this comparision.
+
+	/* If the pathname contains a directory named "irafXXX" (where the
+	 * XXX are optional characters in the directory name) everything to
+	 * the left for the purposes of this comparision.  This allows the
+	 * iraf root directory to be specified with a path such as
+	 *
+	 *		/<whatever>/iraf/iraf.version/
+	 *
+	 * and the directory name comparision will take place using only
+	 * the portion of the path following this prefix.
 	 */
 	for (ip1=dir1;  *ip1;  ip1++)
 	    if (*ip1 == '/' && *(ip1+1) == 'i')
-		if (strncmp (ip1+1, "iraf/", 5) == 0) {
-		    dir1 = ip1 + 6;
-		    break;
+		if (strncmp (ip1+1, "iraf", 4) == 0) {
+		    for (ip1++;  *ip1 && *ip1 != '/';  ip1++)
+			;
+		    if (*ip1 == '/')
+			dir1 = ip1 + 1;
+		    --ip1;
 		}
 	for (ip2=dir2;  *ip2;  ip2++)
 	    if (*ip2 == '/' && *(ip2+1) == 'i')
-		if (strncmp (ip2+1, "iraf/", 5) == 0) {
-		    dir2 = ip2 + 6;
-		    break;
+		if (strncmp (ip2+1, "iraf", 4) == 0) {
+		    for (ip2++;  *ip2 && *ip2 != '/';  ip2++)
+			;
+		    if (*ip2 == '/')
+			dir2 = ip2 + 1;
+		    --ip2;
 		}
 
 	return (strcmp (dir1, dir2) == 0);

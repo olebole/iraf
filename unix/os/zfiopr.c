@@ -5,6 +5,8 @@
 #include <signal.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <sys/time.h>
+#include <sys/resource.h>
 
 #define	import_kernel
 #define	import_knames
@@ -14,6 +16,13 @@
 #include <iraf.h>
 
 extern	int errno;		/* error code returned by the kernel	*/
+#ifdef SYSV
+#define	vfork	fork
+#else
+#  ifdef sun
+#  include <vfork.h>
+#  endif
+#endif
 
 /* ZFIOPR -- File i/o to a subprocess.  A "connected" subprocess is connected
  * to the parent via two IPC channels (read and write), and is analogous to a
@@ -41,6 +50,8 @@ extern	int errno;		/* error code returned by the kernel	*/
 
 int	pr_ionbytes[MAXOFILES];		/* nbytes read|written on channel */
 int	debug_ipc = 0;			/* print debug info on stderr	  */
+int	ipc_in = 0;			/* logfile for IPC input	  */
+int	ipc_out = 0;			/* logfile for IPC output	  */
 int	ipc_isatty = 0;			/* set when debugging IPC at TTY  */
 
 
@@ -97,6 +108,14 @@ XINT	*pid;
 	if (*pid == 0) {
 	    /* New, child process.  Make child think the pipe is its stdin/out.
 	     */
+	    struct rlimit rlim;
+	    int maxfd;
+
+	    if (getrlimit (RLIMIT_NOFILE, &rlim))
+		maxfd = MAXOFILES;
+	    else
+		maxfd = rlim.rlim_cur;
+
 	    close (pin[0]);
 	    close (pout[1]);
 	    close (0);  dup (pout[0]);  close (pout[0]);
@@ -113,7 +132,7 @@ XINT	*pid;
 	     * do not expect to inherit any file descriptors other than
 	     * stdin, stdout, and stderr.
 	     */
-	    for (fd=3;  fd < getdtablesize();  fd++)
+	    for (fd=3;  fd < maxfd;  fd++)
 		fcntl (fd, F_SETFD, 1);
 
 	    /* Exec the new process.  Will not return if successful.
@@ -192,8 +211,13 @@ XLONG	*loffset;		/* not used */
 {
 	register char *op;
 	register int fd, nbytes;
-	int	sigmask_save, record_length, status;
+	int	record_length, status;
 	short	temp;
+#ifdef SOLARIS
+	sigset_t sigmask_save, set;
+#else
+	int	sigmask_save;
+#endif
 
 	fd = *chan;
 	op = (char *)buf;
@@ -243,6 +267,9 @@ XLONG	*loffset;		/* not used */
 	    }
 	}
 
+	if (ipc_in > 0)
+	    write (ipc_in, (char *)&temp, 2);
+
 	/* Get byte count of record.
 	 */
 	if (read (fd, &temp, 2) != 2) {
@@ -252,6 +279,8 @@ XLONG	*loffset;		/* not used */
 	record_length = temp;
 	nbytes = min (record_length, *maxbytes);
 	pr_ionbytes[fd] = nbytes;
+	if (ipc_in > 0)
+	    write (ipc_in, (char *)&temp, 2);
 
 	/* Now read exactly nbytes of data from channel into user buffer.
 	 * Return actual byte count if EOF is seen.  If ERR is seen return
@@ -259,7 +288,14 @@ XLONG	*loffset;		/* not used */
 	 * entire record.  This is implemented as a critical section to
 	 * prevent corruption of the IPC protocol when an interrupt occurs.
 	 */
+#ifdef SOLARIS
+	sigemptyset (&set);
+	sigaddset (&set, SIGINT);
+	sigaddset (&set, SIGTERM);
+	sigprocmask (SIG_BLOCK, &set, &sigmask_save);
+#else
 	sigmask_save = sigblock (mask(SIGINT) | mask(SIGTERM));
+#endif
 
 	while (nbytes > 0)
 	    switch (status = read (fd, op, nbytes)) {
@@ -280,6 +316,9 @@ XLONG	*loffset;		/* not used */
 	    write (2, (char *)buf, op - (char *)buf);
 	}
 
+	if (ipc_in > 0)
+	    write (ipc_in, (char *)buf, op - (char *)buf);
+
 	/* If the record is larger than maxbytes, we must read and discard
 	 * the additional bytes.  The method used is inefficient but it is
 	 * unlikely that we will be called to read less than a full record.
@@ -288,7 +327,11 @@ XLONG	*loffset;		/* not used */
 	    if (read (fd, &temp, 1) <= 0)
 		break;
 reenab_:
+#ifdef SOLARIS
+	sigprocmask (SIG_SETMASK, &sigmask_save, NULL);
+#else
 	sigsetmask (sigmask_save);
+#endif
 }
 
 
@@ -303,7 +346,11 @@ XLONG	*loffset;
 {
 	register int fd;
 	short	temp;
+#ifdef SOLARIS
+	sigset_t sigmask_save, set;
+#else
 	int	sigmask_save;
+#endif
 
 	fd = *chan;
 
@@ -326,18 +373,35 @@ XLONG	*loffset;
 
 	/* Write IPC block header.
 	 */
+#ifdef SOLARIS
+	sigemptyset (&set);
+	sigaddset (&set, SIGINT);
+	sigaddset (&set, SIGTERM);
+	sigprocmask (SIG_BLOCK, &set, &sigmask_save);
+#else
 	sigmask_save = sigblock (mask(SIGINT) | mask(SIGTERM));
+#endif
 
 	temp = IPC_MAGIC;
 	write (fd, &temp, 2);
+	if (ipc_out > 0)
+	    write (ipc_out, &temp, 2);
 	temp = *nbytes;
 	write (fd, &temp, 2);
+	if (ipc_out > 0)
+	    write (ipc_out, &temp, 2);
 
 	/* Write data block.
 	 */
 	pr_ionbytes[fd] = write (fd, (char *)buf, (int)*nbytes);
+	if (ipc_out > 0)
+	    write (ipc_out, (char *)buf, (int)*nbytes);
 
+#ifdef SOLARIS
+	sigprocmask (SIG_SETMASK, &sigmask_save, NULL);
+#else
 	sigsetmask (sigmask_save);
+#endif
 
 	if (debug_ipc) {
 	    fprintf (stderr, "[%d] wrote %d bytes to IPC channel %d:\n",

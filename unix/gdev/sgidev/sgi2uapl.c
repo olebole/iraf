@@ -5,6 +5,14 @@
 #include <ctype.h>
 #include <pwd.h>
 
+#ifdef LINUX
+#undef SOLARIS
+#endif
+
+#ifdef SOLARIS
+#include <sys/systeminfo.h>
+#endif
+
 #define	import_spp
 #define	import_error
 #include <iraf.h>
@@ -76,7 +84,9 @@ struct sgi_inst {
 /* Commands to setup Postscript environment.
  */
 static char *ps_init[] = {
-	"%! IRAF SGI plot",
+	"%!PS-Adobe-1.0",
+	"%%Creator: sgi2uapl (IRAF Graphics)",
+	"",
 	"/devppi 300 def",
 	"/userppi 72 def",
 	"/pagewidth 8.5 def",
@@ -370,7 +380,12 @@ FILE	*out;
 	 */
 	if (!omit_logo) {
 	    fprintf (out, "/Times-Roman findfont 24 scalefont setfont\n");
-	    fprintf (out, "[-1 0 0 -1 2350 3180] setmatrix\n");
+
+	    /* fprintf (out, "[-1 0 0 -1 2350 3180] setmatrix\n"); */
+	    fprintf (out, "initmatrix\n");
+	    fprintf (out, "-1 72 mul 300 div 1 72 mul 300 div scale\n");
+	    fprintf (out, "-2409 88 translate\n");
+
 	    fprintf (out, "%d %d moveto\n", 1600, 3150);
 	    fprintf (out, "[1 0 0 -1 0 0] concat\n");
 	    fprintf (out, "(%s) show\n", make_label());
@@ -384,7 +399,7 @@ FILE	*out;
  * 7 byte encoding scheme.
  */
 xy_point (out, x, y, flag)
-int	out;			/* output file */
+FILE	*out;			/* output file */
 register int x, y;		/* coords to move to */
 int	flag;			/* move or draw? */
 {
@@ -430,7 +445,7 @@ int	flag;			/* move or draw? */
  * stroke command to Postscript to draw the buffered points.
  */
 xy_flush (out)
-int	out;
+FILE	*out;
 {
 	if (npts > 0) {
 	    if (fourbyte)
@@ -496,7 +511,7 @@ int	val;			/* device line width 		*/
 /* TEXTOUT -- Output lines of text to a file.
  */
 textout (out, text)
-int	out;			/* output file */
+FILE	*out;			/* output file */
 char	*text[];		/* array of lines of text */
 {
 	register char **lp;
@@ -519,8 +534,13 @@ make_label()
 	struct	passwd *pw;
 	long	clock;
 
-	clock = time(0);
+#ifdef SOLARIS
+	sysinfo (SI_HOSTNAME, hostname, 32);
+#else
 	gethostname (hostname, 32);
+#endif
+
+	clock = time(0);
 	pw = getpwuid (getuid());
 	strcpy (username, pw->pw_name);
 	endpwent();

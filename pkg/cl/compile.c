@@ -3,6 +3,7 @@
 
 #define import_spp
 #define import_libc
+#define import_stdio
 #include <iraf.h>
 
 #include "config.h"
@@ -16,9 +17,9 @@
  * params and misc at runtime on stacks or dictionary.
  */
 
-unsigned pc;			/* program-counter			*/
-unsigned *dictionary;		/* base of dictionary			*/
-unsigned topd, maxd;		/* current top and highest d. indices	*/
+memel *dictionary;		/* base of dictionary			*/
+int pc;				/* program-counter			*/
+int topd, maxd;			/* current top and highest d. indices	*/
 
 extern	int	cldebug;
 
@@ -36,7 +37,7 @@ compile (opcode, args, args2)
 int opcode, args, args2;
 {
 	register struct codeentry *cep;
-	register status;
+	register status = OK;
 
 	if (pc > topcs - 20) {
 	    eprintf ("INTERNAL ERROR: pc/topcs collision: %d/%d\n", pc, topcs);
@@ -81,11 +82,11 @@ int opcode, args, args2;
 	 * the operand and change o_val.v_s to point to it.
 	 */
 	case PUSHCONST: {
-		register unsigned *argsaddr;
+		register memel *argsaddr;
 		struct operand *op, *dp;
 
 		op = (struct operand *) args;
-		argsaddr = &cep->c_args;
+		argsaddr = (memel *) &cep->c_args;
 		dp = (struct operand *) argsaddr;
 		*dp = *op;
 		argsaddr += OPSIZ;
@@ -114,6 +115,7 @@ int opcode, args, args2;
 	case EQ:
 	case EXEC:
 	case FSCAN:
+	case FSCANF:
 	case GE:
 	case GT:
 	case IMMED:
@@ -129,6 +131,7 @@ int opcode, args, args2;
 	case REDIRIN:
 	case RETURN:
 	case SCAN:
+	case SCANF:
 	case SUB:
 	case FIXLANGUAGE:
 		break;
@@ -167,10 +170,10 @@ int opcode, args, args2;
 
 	/* The INDXINCR statment has two integer args. */
 	case INDXINCR: {
-		unsigned int	*pargs;
+		memel *pargs;
 
 		cep->c_length += 2;
-		pargs = & (cep->c_args);
+		pargs = (memel *) &(cep->c_args);
 		*pargs++ = args;
 		*pargs = args2;
 		break;
@@ -182,7 +185,7 @@ int opcode, args, args2;
 	}
 
 	if (status != ERR) {
-		unsigned oldpc = pc;
+		int oldpc = pc;
 		pc += cep->c_length;
 		return (oldpc);
 	}
@@ -198,14 +201,14 @@ int opcode, args, args2;
  */
 comstr (s, loc)
 register char *s;
-unsigned *loc;
+memel *loc;
 {
 	register char *to, *from;
 
 	from = to = (char *)loc;
 	while (*to++ = *s++)
 	    ;
-	return (btoi((unsigned)to - (unsigned)from));
+	return (btoi((memel)to - (memel)from));
 }
 
 /* copy string s into the dictionary at topd, returning pointer to its

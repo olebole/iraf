@@ -76,7 +76,7 @@
 #define	XBOOL		int	
 #define	XSHORT		short
 #define	XUSHORT		unsigned short
-#define	XLONG		long
+#define	XLONG		int
 #define	XREAL		float
 #define	XDOUBLE		double
 #define XCOMPLEX	struct cplx

@@ -3,13 +3,14 @@ include	<error.h>
 include	<gset.h>
 include	<mach.h>
 include	<pkg/gtools.h>
+include	<smw.h>
+include	<units.h>
 include	"specplot.h"
 
 # Define the help information.
-define	HELP		"noao$lib/scr/specplot.key"
+define	HELP		"noao$onedspec/specplot.key"
 define	PROMPT		"specplot options"
 
-define	VLIGHT		2.997925e5	# Velocity of light in Km/sec
  
 # T_SPECPLOT -- Plot multiple spectra in a variety of formats and layouts.
 # The spectra may be individually scaled and offset in intensity, shifted
@@ -25,34 +26,42 @@ pointer	list			# List of input spectra
 real	step			# Initial separation step
 int	labels			# Labeling mode
 real	fraction		# Fraction of minimum step
+bool	yscale			# Draw y scale?
 
-int	i, j, fd, nspec, wcs, key, redraw
+int	i, j, n, fd, nspec, wcs, key, redraw
 real	wx, wy, wx1, wy1, wx2, wy2
-pointer	stack, cmd, sp, sps, gp, gt
+pointer	stack, units, cmd, sp, sh, spsave, sps, gp, gt
 
 bool	clgetb()
-int	clgwrd(), open(), imtgetim(), getline(), clgcur(), scan(), nscan()
-int	stridxs()
+int	clgwrd(), clgcur()
+int	open(), imtgetim(), getline(), scan(), nscan()
+int	stridxs(), nowhite(), btoi(), gt_geti()
 real	clgetr()
 pointer	sp_nearest(), imtopenp(), gopen(), gt_init()
-errchk	sp_gdata()
+errchk	sp_gdata, un_changer
 
 define	nospec_	99
 
 begin
 	call smark (stack)
+	call salloc (units, SZ_LINE, TY_CHAR)
 	call salloc (cmd, SZ_LINE, TY_CHAR)
 	call calloc (sps, 100, TY_POINTER)
+	spsave = NULL
 
 	# Read the input spectrum list into an array of structures.
 	i = 0
 	nspec = 0
 	list = imtopenp ("spectra")
+	call clgstr ("units", Memc[units], SZ_LINE)
+	if (nowhite (Memc[units], Memc[units], SZ_LINE) == 0)
+	    call strcpy ("display", Memc[units], SZ_LINE)
 	while (imtgetim (list, Memc[cmd], SZ_FNAME) != EOF) {
-	    iferr (call sp_gdata (Memc[cmd], i, sps, nspec))
+	    iferr (call sp_gdata (Memc[cmd], Memc[units], i, sps, nspec))
 		call erract (EA_WARN)
 	}
 	call imtclose (list)
+
 
 	# Set the layout of the spectra.
 	step = clgetr ("step")
@@ -70,7 +79,9 @@ begin
 	ifnoerr (fd = open (Memc[cmd], READ_ONLY, TEXT_FILE)) {
 	    do i = 1, nspec {
 		sp = Memi[sps+i-1]
-		if (getline (fd, SP_ULABEL(sp), SP_SZULABEL) == EOF)
+		if (getline (fd, Memc[cmd]) != EOF)
+		    call strcpy (Memc[cmd], SP_ULABEL(sp), SP_SZULABEL)
+		else
 		    SP_ULABEL(sp) = EOS
 		j = stridxs ("\n", SP_ULABEL(sp))
 		if (j > 0)
@@ -86,10 +97,22 @@ begin
 	gp = gopen (Memc[cmd], NEW_FILE, STDGRAPH)
 
 	gt = gt_init ()
+	call gt_seti (gt, GTSYSID, btoi (clgetb ("sysid")))
 	call clgstr ("title", Memc[cmd], SZ_LINE)
 	call gt_sets (gt, GTTITLE, Memc[cmd])
 	call clgstr ("xlabel", Memc[cmd], SZ_LINE)
-	call gt_sets (gt, GTXLABEL, Memc[cmd])
+	if (Memc[cmd] != EOS) {
+	    call gt_sets (gt, GTXLABEL, Memc[cmd])
+	    call gt_sets (gt, GTXUNITS, "")
+	} else if (nspec > 0) {
+	    if (UN_LABEL(UN(SP_SH(Memi[sps]))) != EOS) {
+		call gt_sets (gt, GTXLABEL, UN_LABEL(UN(SP_SH(Memi[sps]))))
+		call gt_sets (gt, GTXUNITS, UN_UNITS(UN(SP_SH(Memi[sps]))))
+	    } else {
+		call gt_sets (gt, GTXLABEL, LABEL(SP_SH(Memi[sps])))
+		call gt_sets (gt, GTXUNITS, UNITS(SP_SH(Memi[sps])))
+	    }
+	}
 	call clgstr ("ylabel", Memc[cmd], SZ_LINE)
 	call gt_sets (gt, GTYLABEL, Memc[cmd])
 	wx = clgetr ("xmin")
@@ -100,6 +123,9 @@ begin
 	call gt_setr (gt, GTYMIN, wx)
 	wx = clgetr ("ymax")
 	call gt_setr (gt, GTYMAX, wx)
+	yscale = clgetb ("yscale")
+	#if (!scale)
+	#    call gseti (gp, G_YDRAWTICKS, NO)
 
 	# Draw the graph on the first pass and then read the cursor.
 	key = 'r'
@@ -112,8 +138,8 @@ begin
 		    call gt_colon (Memc[cmd], gp, gt, redraw)
 		else {
 		    i = sp_nearest (gp, wx, wy, Memi[sps], nspec)
-		    call sp_colon (Memc[cmd], gp, Memi[sps], nspec, labels,
-			i, step, fraction, redraw)
+		    call sp_colon (Memc[cmd], gp, gt, Memi[sps], nspec,
+			Memc[units], labels, i, step, fraction, redraw)
 		    if (nspec == 0) {
 			redraw = NO
 			goto nospec_
@@ -129,7 +155,8 @@ begin
 		    call gargwrd (Memc[cmd], SZ_LINE)
 		    if (nscan() == 1) {
 			iferr {
-	    		    call sp_gdata (Memc[cmd], i, sps, nspec)
+	    		    call sp_gdata (Memc[cmd], Memc[units],
+				i, sps, nspec)
 	    	    	    call sp_labels (Memi[sps], nspec, labels)
 	    	    	    call sp_scale (Memi[sps], nspec, step)
 		    	    redraw = YES
@@ -142,10 +169,27 @@ begin
 		    goto nospec_
 
 		i = sp_nearest (gp, wx, wy, Memi[sps], nspec)
+		sp = Memi[sps+i-1]
+	    	call sp_ptype (SP_PTYPE(sp), SP_COLOR(sp), YES, gp, gt)
+	    	call gt_plot (gp, gt, SP_X(sp), SP_Y(sp), SP_NPTS(sp))
+		call gline (gp, SP_X(sp), SP_Y(sp), SP_X(sp), SP_Y(SP))
 		call sp_delete (i, sps, nspec)
 	    	call sp_labels (Memi[sps], nspec, labels)
 	    	call sp_scale (Memi[sps], nspec, step)
-		redraw = YES
+		if (spsave != NULL)
+		    call sp_free (spsave)
+		spsave = sp
+#		redraw = YES
+	    case 'e': # Undelete a spectrum
+		if (spsave != NULL) {
+		    i = sp_nearest (gp, wx, wy, Memi[sps], nspec)
+		    i = max (0, i - 1)
+		    call sp_add (spsave, i, sps, nspec)
+		    call sp_labels (Memi[sps], nspec, labels)
+		    call sp_scale (Memi[sps], nspec, step)
+		    spsave = NULL
+		    redraw = YES
+		}
 	    case 'l', 'p': # Mark label position and enter label.
 		if (nspec == 0)
 		    goto nospec_
@@ -211,74 +255,93 @@ begin
 		    switch (key) {
 		    case 's':
 			if (wy != SP_OFFSET(sp)) {
-	    	            call sp_ptype (SP_PTYPE(sp), YES, gp, gt)
+	    	            call sp_ptype (SP_PTYPE(sp), SP_COLOR(sp),
+				YES, gp, gt)
 	    		    call gt_plot (gp, gt, SP_X(sp), SP_Y(sp),
 				SP_NPTS(sp))
 			    call gline (gp, SP_X(sp), SP_Y(sp), SP_X(sp),
-				SP_Y(SP))
+				SP_Y(sp))
 			    SP_SCALE(sp) = SP_SCALE(sp) *
 				(wy1 - SP_OFFSET(sp)) / (wy - SP_OFFSET(sp))
 		            call sp_scale (sp, 1, step)
-	    	            call sp_ptype (SP_PTYPE(sp), NO, gp, gt)
+	    	            call sp_ptype (SP_PTYPE(sp), SP_COLOR(sp),
+				NO, gp, gt)
 	    		    call gt_plot (gp, gt, SP_X(sp), SP_Y(sp),
 				SP_NPTS(sp))
 			    wy = wy1
 			}
 		    case 't':
 			if (wy != SP_OFFSET(sp)) {
-	    	            call sp_ptype (SP_PTYPE(sp), YES, gp, gt)
+	    	            call sp_ptype (SP_PTYPE(sp), SP_COLOR(sp),
+				YES, gp, gt)
 	    		    call gt_plot (gp, gt, SP_X(sp), SP_Y(sp),
 				SP_NPTS(sp))
 			    call gline (gp, SP_X(sp), SP_Y(sp), SP_X(sp),
-				SP_Y(SP))
-			    SP_W0(sp) = SP_W0(sp) * wx1 / wx
-			    SP_WPC(sp) = SP_WPC(sp) * wx1 / wx
+				SP_Y(sp))
+			    if (UN_CLASS(UN(SP_SH(sp))) == UN_VEL)
+				SP_XOFFSET(sp) = SP_XOFFSET(sp) + wx1 - wx
+			    else
+				SP_XSCALE(sp) = SP_XSCALE(sp) * wx1 / wx
 			    SP_SCALE(sp) = SP_SCALE(sp) *
 				(wy1 - SP_OFFSET(sp)) / (wy - SP_OFFSET(sp))
 		            call sp_scale (sp, 1, step)
-	    	            call sp_ptype (SP_PTYPE(sp), NO, gp, gt)
+	    	            call sp_ptype (SP_PTYPE(sp), SP_COLOR(sp),
+				NO, gp, gt)
 	    		    call gt_plot (gp, gt, SP_X(sp), SP_Y(sp),
 				SP_NPTS(sp))
 			    wx = wx1
 			    wy = wy1
 			}
 		    case 'x':
-	    	        call sp_ptype (SP_PTYPE(sp), YES, gp, gt)
+	    	        call sp_ptype (SP_PTYPE(sp), SP_COLOR(sp),
+			    YES, gp, gt)
 	    		call gt_plot (gp, gt, SP_X(sp), SP_Y(sp), SP_NPTS(sp))
 			call gline (gp, SP_X(sp), SP_Y(sp), SP_X(sp), SP_Y(SP))
-			SP_W0(sp) = SP_W0(sp) * wx1 / wx
-			SP_WPC(sp) = SP_WPC(sp) * wx1 / wx
+			if (UN_CLASS(UN(SP_SH(sp))) == UN_VEL)
+			    SP_XOFFSET(sp) = SP_XOFFSET(sp) + wx1 - wx
+			else
+			    SP_XSCALE(sp) = SP_XSCALE(sp) * wx1 / wx
 		        call sp_scale (sp, 1, step)
-	    	        call sp_ptype (SP_PTYPE(sp), NO, gp, gt)
+	    	        call sp_ptype (SP_PTYPE(sp), SP_COLOR(sp),
+			    NO, gp, gt)
 	    		call gt_plot (gp, gt, SP_X(sp), SP_Y(sp), SP_NPTS(sp))
 			wx = wx1
 		    case 'y':
-	    	        call sp_ptype (SP_PTYPE(sp), YES, gp, gt)
+	    	        call sp_ptype (SP_PTYPE(sp), SP_COLOR(sp),
+			    YES, gp, gt)
 	    		call gt_plot (gp, gt, SP_X(sp), SP_Y(sp), SP_NPTS(sp))
 			call gline (gp, SP_X(sp), SP_Y(sp), SP_X(sp), SP_Y(SP))
 			SP_OFFSET(sp) = SP_OFFSET(sp) + wy1 - wy
 		        call sp_scale (sp, 1, step)
-	    	        call sp_ptype (SP_PTYPE(sp), NO, gp, gt)
+	    	        call sp_ptype (SP_PTYPE(sp), SP_COLOR(sp),
+			    NO, gp, gt)
 	    		call gt_plot (gp, gt, SP_X(sp), SP_Y(sp), SP_NPTS(sp))
 			wy = wy1
 		    case 'z':
-	    	        call sp_ptype (SP_PTYPE(sp), YES, gp, gt)
+	    	        call sp_ptype (SP_PTYPE(sp), SP_COLOR(sp),
+			    YES, gp, gt)
 	    		call gt_plot (gp, gt, SP_X(sp), SP_Y(sp), SP_NPTS(sp))
 			call gline (gp, SP_X(sp), SP_Y(sp), SP_X(sp), SP_Y(SP))
-			SP_W0(sp) = SP_W0(sp) * wx1 / wx
-			SP_WPC(sp) = SP_WPC(sp) * wx1 / wx
+			if (UN_CLASS(UN(SP_SH(sp))) == UN_VEL)
+			    SP_XOFFSET(sp) = SP_XOFFSET(sp) + wx1 - wx
+			else
+			    SP_XSCALE(sp) = SP_XSCALE(sp) * wx1 / wx
 			SP_OFFSET(sp) = SP_OFFSET(sp) + wy1 - wy
 		        call sp_scale (sp, 1, step)
-	    	        call sp_ptype (SP_PTYPE(sp), NO, gp, gt)
+	    	        call sp_ptype (SP_PTYPE(sp), SP_COLOR(sp),
+			    NO, gp, gt)
 	    		call gt_plot (gp, gt, SP_X(sp), SP_Y(sp), SP_NPTS(sp))
 			wx = wx1
 			wy = wy1
 		    case 'r':
-			call sprintf (Memc[cmd], SZ_LINE,
-			    "Separation step = %g")
-			    call pargr (step)
-			call gt_sets (gt, GTPARAMS, Memc[cmd])
-			call sp_plot (gp, gt, Memi[sps], nspec)
+			if (gt_geti (gt, GTSYSID) == YES) {
+			    call sprintf (Memc[cmd], SZ_LINE,
+				"Separation step = %g")
+			        call pargr (step)
+			    call gt_sets (gt, GTPARAMS, Memc[cmd])
+			} else
+			    call gt_sets (gt, GTPARAMS, "")
+			call sp_plot (gp, gt, Memi[sps], nspec, yscale)
 		    case 'q':
 			break
 		    }
@@ -286,24 +349,7 @@ begin
 		        call pargi (SP_INDEX(sp))
 		}
 		call printf ("\n")
-	    case 'u': # Set a wavelength point using the cursor.
-		if (nspec == 0)
-		    goto nospec_
-
-		i = sp_nearest (gp, wx, wy, Memi[sps], nspec)
-		sp = Memi[sps+i-1]
-		call printf ("X coordinate (%g): ")
-		    call pargr (wx)
-		    call flush (STDOUT)
-		if (scan() != EOF) {
-		    call gargr (wx1)
-		    if (nscan() == 1) {
-		        SP_W0(sp) = SP_W0(sp) + wx1 - wx
-			call sp_scale (sp, 1, step)
-			redraw = YES
-		    }
-		}
-	    case 'v': # Set a wavelength scale using the cursor.
+	    case 't': # Set a wavelength scale using the cursor.
 		if (nspec == 0)
 		    goto nospec_
 
@@ -330,11 +376,74 @@ begin
 		} else
 		    wy1 = wx1
 		if (wx != wx1) {
-		    SP_WPC(sp) = (wy - wy1) / (wx - wx1) * SP_WPC(sp)
-		    SP_W0(sp) = wy - (wy - wy1) / (wx - wx1) * (wx - SP_W0(sp))
+		    n = SP_NPTS(sp) - 1
+		    sh = SP_PX(sp) - 1
+		    if (SP_WPC(sp) > 0.) {
+			for (i=1; i<n && wx<Memr[sh+i]; i=i+1)
+			    ;
+			for (j=1; j<n && wx1<Memr[sh+j]; j=j+1)
+			    ;
+		    } else {
+			for (i=1; i>n && wx>Memr[sh+i]; i=i+1)
+			    ;
+			for (j=1; j>n && wx1>Memr[sh+j]; j=j+1)
+			    ;
+		    }
+		    wx = i + (wx - Memr[sh+i]) / (Memr[sh+i+1] - Memr[sh+i])
+		    wx1 = j + (wx1 - Memr[sh+j]) / (Memr[sh+j+1] - Memr[sh+j])
+		    SP_WPC(sp) = (wy - wy1) / (wx - wx1)
+		    SP_W0(sp) = wy - SP_WPC(sp) * (wx - 1)
+		    call sp_linear (sp)
 		    call sp_scale (sp, 1, step)
 		    redraw = YES
 		}
+	    case 'u': # Set a wavelength point using the cursor.
+		if (nspec == 0)
+		    goto nospec_
+
+		i = sp_nearest (gp, wx, wy, Memi[sps], nspec)
+		sp = Memi[sps+i-1]
+		call printf ("X coordinate (%g): ")
+		    call pargr (wx)
+		    call flush (STDOUT)
+		if (scan() != EOF) {
+		    call gargr (wx1)
+		    if (nscan() == 1) {
+		        SP_XOFFSET(sp) = SP_XOFFSET(sp) + wx1 - wx
+			call sp_scale (sp, 1, step)
+			redraw = YES
+		    }
+		}
+	    case 'v': # Change to velocity scale
+		if (nspec == 0)
+		    goto nospec_
+
+		iferr {
+		    do i = 1, nspec {
+			sp = Memi[sps+i-1]
+			sh = SP_SH(sp) 
+			if (i == 1) {
+			    call un_changer (UN(sh), "angstroms", wx, 1, NO)
+			    call sprintf (Memc[units], SZ_LINE,
+				"km/s %g angstroms")
+				call pargr (wx)
+			    call un_changer (UN(sh), Memc[units], Memr[SX(sh)],
+				SN(sh), YES)
+			    call gt_sets (gt, GTXLABEL, UN_LABEL(UN(sh)))
+			    call gt_sets (gt, GTXUNITS, UN_UNITS(UN(sh)))
+			    redraw = YES
+			} else
+			    call un_changer (UN(sh), Memc[units], Memr[SX(sh)],
+				SN(sh), YES)
+			SP_W0(sp) = Memr[SX(sh)]
+			SP_WPC(sp) = (Memr[SX(sh)+SN(sh)-1] - Memr[SX(sh)]) /
+			    (SN(sh) - 1)
+			SP_XSCALE(sp) = 1.
+			SP_XOFFSET(sp) = 0.
+			call sp_scale (sp, 1, step)
+		    }
+		} then
+		    call erract (EA_WARN)
 	    case 'w': # Window the graph
 		call gt_window (gt, gp, "cursor", redraw)
 	    case 'x': # No layout
@@ -366,12 +475,15 @@ begin
 		call printf ("\007")
 	    }
 
-	    # Redraw the graph is needed.
+	    # Redraw the graph as needed.
 	    if (redraw == YES) {
-		call sprintf (Memc[cmd], SZ_LINE, "Separation step = %g")
-		    call pargr (step)
-		call gt_sets (gt, GTPARAMS, Memc[cmd])
-		call sp_plot (gp, gt, Memi[sps], nspec)
+		if (gt_geti (gt, GTSYSID) == YES) {
+		    call sprintf (Memc[cmd], SZ_LINE, "Separation step = %g")
+		        call pargr (step)
+		    call gt_sets (gt, GTPARAMS, Memc[cmd])
+		} else
+		    call gt_sets (gt, GTPARAMS, "")
+		call sp_plot (gp, gt, Memi[sps], nspec, yscale)
 		redraw = NO
 	    }
 nospec_
@@ -379,6 +491,12 @@ nospec_
 		call printf ("No spectra defined\007")
 
 	} until (clgcur ("cursor", wx, wy, wcs, key, Memc[cmd], SZ_LINE) == EOF)
+
+	
+	call clgstr ("logfile", Memc[cmd], SZ_LINE)
+	if (nowhite (Memc[cmd], Memc[cmd], SZ_LINE) > 0)
+	    iferr (call sp_vshow (Memc[cmd], NULL, Memi[sps], nspec, step))
+		call erract (EA_WARN)
 
 	# Close the graphics device and free memory.
 	call gclose (gp)
@@ -388,6 +506,8 @@ nospec_
 	    do i = 1, nspec
 		call sp_free (Memi[sps+i-1])
 	}
+	if (spsave != NULL)
+	    call sp_free (spsave)
 	call mfree (sps, TY_POINTER)
 	call sfree (stack)
 end
@@ -402,31 +522,24 @@ pointer	sps[ARB]	# Spectrum structures
 int	nspec		# Number of spectra
 real	step		# Final step
 
-int	i, j, npts
+int	i, npts
 real	scale, offset
-pointer	sp, ptr
+pointer	sp, sh
 
 begin
 	do i = 1, nspec {
 	    sp = sps[i]
+	    sh = SP_SH(sp)
 	    npts = SP_NPTS(sp)
+
+	    scale = SP_XSCALE(sp)
+	    offset = SP_XOFFSET(sp)
+	    call altmr (Memr[SX(sh)], SP_X(sp), npts, scale, offset)
+
 	    scale = SP_SCALE(sp)
 	    offset = SP_OFFSET(sp) + (SP_INDEX(sp) - 1) * step
+	    call altmr (Memr[SY(sh)], SP_Y(sp), npts, scale, offset)
 
-	    ptr = SP_PX(sp) - 1
-	    do j = 1, npts
-		Memr[ptr+j] = SP_W0(sp) + (j - 1) * SP_WPC(sp)
-
-	    if (scale == 1.) {
-	        if (offset == 0.)
-		    call amovr (SP_DATA(sp), SP_Y(sp), npts)
-		else
-		    call aaddkr (SP_DATA(sp), offset, SP_Y(sp), npts)
-	    } else {
-		call amulkr (SP_DATA(sp), scale, SP_Y(sp), npts)
-	        if (offset != 0.)
-		    call aaddkr (SP_Y(sp), offset, SP_Y(sp), npts)
-	    }
 	    SP_MEAN(sp) = SP_OMEAN(sp) * scale + offset
 	    SP_MIN(sp) = SP_OMIN(sp) * scale + offset
 	    SP_MAX(sp) = SP_OMAX(sp) * scale + offset
@@ -503,12 +616,13 @@ end
 # SP_PLOT -- Determine the range of all the data and then make a plot with
 # specified labels.  The GTOOLS procedures are used to allow user adjustment.
 
-procedure sp_plot (gp, gt, sps, nspec)
+procedure sp_plot (gp, gt, sps, nspec, yscale)
 
 pointer	gp		# GIO pointer
 pointer	gt		# GTOOLS pointer
 pointer	sps[ARB]	# Spectrum structures
 int	nspec		# Number of spectra
+bool	yscale		# Draw Y scale?
 
 int	i
 real	x, y, xmin, xmax, ymin, ymax
@@ -538,7 +652,10 @@ begin
 	}
 
 	# Draw the axes with GTOOLS limits override.
+	#call gframe (gp)
 	call gclear (gp)
+	if (!yscale)
+	    call gseti (gp, G_YDRAWTICKS, NO)
 	call gswind (gp, xmin, xmax, ymin, ymax)
 	call gt_swind (gp, gt)
 	call gt_labax (gp, gt)
@@ -550,7 +667,7 @@ begin
 
 	do i = 1, nspec {
 	    sp = sps[i]
-	    call sp_ptype (SP_PTYPE(sp), NO, gp, gt)
+	    call sp_ptype (SP_PTYPE(sp), SP_COLOR(sp), NO, gp, gt)
 	    call gt_plot (gp, gt, SP_X(sp), SP_Y(sp), SP_NPTS(sp))
 	    x = SP_XLPOS(sp) * xmax + xmin
 	    y = SP_YLPOS(sp) * ymax + SP_MEAN(sp)
@@ -561,23 +678,32 @@ end
 
 # SP_PTYPE -- Decode the plotting type and set the GTOOLS structure.
 
-procedure sp_ptype (ptype, erase, gp, gt)
+procedure sp_ptype (ptype, color, erase, gp, gt)
 
 char	ptype[ARB]		# Plotting type string
+int	color			# Color
 int	erase			# Erase plot?
 pointer	gp			# GIO pointer
 pointer	gt			# GTOOLS pointer
 
 int	i, j, ctoi()
+pointer	sp, gttype
 
 begin
+	call smark (sp)
+	call salloc (gttype, SZ_LINE, TY_CHAR)
+	call gt_gets (gt, GTTYPE, Memc[gttype], SZ_LINE)
+
 	i = 1
 	if (ctoi (ptype, i, j) > 0) {
-	    call gt_sets (gt, GTTYPE, "line")
+	    if (j < 0)
+		call gt_sets (gt, GTTYPE, "histogram")
+	    else
+		call gt_sets (gt, GTTYPE, "line")
 	    if (erase == YES)
 	        call gt_seti (gt, GTLINE, 0)
 	    else
-	        call gt_seti (gt, GTLINE, j)
+	        call gt_seti (gt, GTLINE, abs(j))
 	} else {
 	    call gt_sets (gt, GTTYPE, "mark")
 	    call gt_sets (gt, GTMARK, ptype)
@@ -586,12 +712,15 @@ begin
 	    else
 		call gseti (gp, G_PMLTYPE, 1)
 	}
+	call gt_seti (gt, GTCOLOR, color)
+
+	call sfree (sp)
 end
 
 
 # List of colon commands.
-define	CMDS "|show|vshow|step|fraction|move|shift|w0|wpc|velocity|redshift|\
-		|offset|scale|xlpos|ylpos|label|ulabel|ptype|"
+define	CMDS "|show|vshow|step|fraction|move|shift|w0|wpc|velocity|redshift\
+		|offset|scale|xlpos|ylpos|label|ulabel|ptype|units|color|"
 
 define	SHOW		1	# Show
 define	VSHOW		2	# Verbose show
@@ -599,28 +728,31 @@ define	STEP		3	# Separation step
 define	FRACTION	4	# Fraction for autolayout
 define	MOVE		5	# Move spectrum index
 define	SHIFT		6	# Shift spectrum indices
-define	W0		7	# Wavelength zero point
+define	WZP		7	# Wavelength zero point
 define	WPC		8	# Wavelength per channel
 define	VELOCITY	9	# Radial velocity
 define	REDSHIFT	10	# Redshift
-# newline
-define	OFFSET		12	# Intensity offset
-define	SCALE		13	# Intensity scale
-define	XLPOS		14	# X label position
-define	YLPOS		15	# Y label position
-define	LABEL		16	# Type of labels
-define	ULABEL		17	# User label
-define	PTYPE		18	# Plot type
+define	OFFSET		11	# Intensity offset
+define	SCALE		12	# Intensity scale
+define	XLPOS		13	# X label position
+define	YLPOS		14	# Y label position
+define	LABEL		15	# Type of labels
+define	ULABEL		16	# User label
+define	PTYPE		17	# Plot type
+define	UNITS		18	# Plot units
+define	COLOR		19	# Color
 
 # SP_COLON -- Interpret colon commands.
 
-procedure sp_colon (cmdstr, gp, sps, nspec, labels, current, step, fraction,
-	redraw)
+procedure sp_colon (cmdstr, gp, gt, sps, nspec, units, labels, current, step,
+	fraction, redraw)
 
 char	cmdstr[ARB]		# Colon command
 pointer	gp			# GIO pointer (used for paging screen)
+pointer	gt			# GTOOLS pointer
 pointer	sps[ARB]		# Array of spectra structures
 int	nspec			# Number of spectra
+char	units[SZ_LINE]		# Units string
 int	labels			# Label type
 int	current			# Current spectrum element (0 if not defined)
 real	step			# Separation step
@@ -629,10 +761,12 @@ int	redraw			# Redraw graph
 
 int	i, j, index, ncmd
 real	rval
-pointer	stack, cmd, sp
+pointer	stack, cmd, sp, sh, un1, un2
 
 int	nscan(), strdic(), ctoi(), stridxs()
-errchk	sp_gdata
+pointer	un_open()
+
+define	done_	10
 
 begin
 	call smark (stack)
@@ -647,6 +781,7 @@ begin
 	# If an index number is given find the appropriate element and print
 	# an error if the spectrum index is not defined.
 	i = stridxs ("[", Memc[cmd])
+	j = 0
 	if (i > 0) {
 	    Memc[cmd+i-1] = EOS
 	    current = 0
@@ -664,6 +799,7 @@ begin
 		    return
 		}
 	    }
+	    j = current
 	}
 
 	# Parse the command.  Print the command if unknown.
@@ -769,16 +905,16 @@ begin
 		    }
 		}
 	    }
-	case W0: # set or show zero point wavelength
+	case WZP: # set or show zero point wavelength
 	    call gargr (rval)
 	    if (current > 0) {
 		sp = sps[current]
 	        if (nscan() == 1) {
 		    call printf ("w0[%d] %g")
 			call pargi (SP_INDEX(sp))
-			call pargr (SP_W0(sp))
+			call pargr (SP_W0(sp)*SP_XSCALE(sp)+SP_XOFFSET(sp))
 		} else {
-		    SP_W0(sp) = rval
+		    SP_XOFFSET(sp) = rval - SP_W0(sp) * SP_XSCALE(sp)
 		    call sp_scale (sp, 1, step)
 		    redraw = YES
 		}
@@ -789,12 +925,13 @@ begin
 			sp = sps[i]
 			call printf (" %d=%g")
 			    call pargi (SP_INDEX(sp))
-			    call pargr (SP_W0(sp))
+			    call pargr (SP_W0(sp)*SP_XSCALE(sp)+SP_XOFFSET(sp))
 		    }
 		} else {
 		    do i = 1, nspec {
-			SP_W0(sps[i]) = rval
-		        call sp_scale (sps[i], 1, step)
+			sp = sps[i]
+			SP_XOFFSET(sp) = rval - SP_W0(sp) * SP_XSCALE(sp)
+		        call sp_scale (sp, 1, step)
 		        redraw = YES
 		    }
 		}
@@ -806,9 +943,10 @@ begin
 	        if (nscan() == 1) {
 		    call printf ("wpc[%d] %g")
 			call pargi (SP_INDEX(sp))
-			call pargr (SP_WPC(sp))
+			call pargr (SP_WPC(sp)*SP_XSCALE(sp))
 		} else {
 		    SP_WPC(sp) = rval
+		    call sp_linear (sp)
 		    call sp_scale (sp, 1, step)
 		    redraw = YES
 		}
@@ -819,87 +957,203 @@ begin
 			sp = sps[i]
 			call printf (" %d=%g")
 			    call pargi (SP_INDEX(sp))
-			    call pargr (SP_WPC(sp))
+			    call pargr (SP_WPC(sp)*SP_XSCALE(sp))
 		    }
 		} else {
 		    do i = 1, nspec {
-			SP_WPC(sps[i]) = rval
-		        call sp_scale (sps[i], 1, step)
+			sp = sps[i]
+			SP_WPC(sp) = rval
+			call sp_linear (sp)
+		        call sp_scale (sp, 1, step)
 		        redraw = YES
 		    }
 		}
 	    }
 	case VELOCITY: # set or show radial velocity
+	    if (nspec < 0)
+		goto done_
 	    call gargr (rval)
-	    if (current > 0) {
-		sp = sps[current]
-	        if (nscan() == 1) {
-		    rval = (SP_W0(sp) / SP_OW0(sp)) ** 2
-		    rval = VLIGHT * (rval - 1) / (rval + 1)
-		    call printf ("velocity[%d] %g")
-			call pargi (SP_INDEX(sp))
-			call pargr (rval)
-		} else {
-		    rval = sqrt ((VLIGHT + rval) / (VLIGHT - rval))
-		    SP_W0(sp) = SP_OW0(sp) * rval
-		    SP_WPC(sp) = SP_OWPC(sp) * rval
-		    call sp_scale (sp, 1, step)
-		    redraw = YES
-		}
-	    } else {
-		if (nscan() == 1) {
-		    call printf ("velocity:")
-		    do i = 1, nspec {
-			sp = sps[i]
-		        rval = (SP_W0(sp) / SP_OW0(sp)) ** 2
-		        rval = VLIGHT * (rval - 1) / (rval + 1)
-			call printf (" %d=%g")
+	    un1 = UN(SP_SH(sps[1]))
+	    if (UN_CLASS(un1) == UN_VEL) {
+		if (current > 0) {
+		    sp = sps[current]
+		    if (nscan() == 1) {
+			call printf ("velocity[%d] %g")
 			    call pargi (SP_INDEX(sp))
-			    call pargr (rval)
+			    call pargr (SP_XOFFSET(sp))
+		    } else {
+			SP_XOFFSET(sp) = rval
+			call sp_scale (sp, 1, step)
+			redraw = YES
 		    }
 		} else {
-		    rval = sqrt ((VLIGHT + rval) / (VLIGHT - rval))
-		    do i = 1, nspec {
-			SP_W0(sps[i]) = SP_OW0(sps[i]) * rval
-			SP_WPC(sps[i]) = SP_OWPC(sps[i]) * rval
-		        call sp_scale (sps[i], 1, step)
-		        redraw = YES
+		    if (nscan() == 1) {
+			call printf ("velocity:")
+			do i = 1, nspec {
+			    sp = sps[i]
+			    call printf (" %d=%g")
+				call pargi (SP_INDEX(sp))
+				call pargr (SP_XOFFSET(sp))
+			}
+		    } else {
+			do i = 1, nspec {
+			    sp = sps[i]
+			    SP_XOFFSET(sp) = rval
+			    call sp_scale (sp, 1, step)
+			    redraw = YES
+			}
+		    }
+		}
+	    } else if (UN_CLASS(un1) != UN_UNKNOWN) {
+		if (current > 0) {
+		    sp = sps[current]
+		    call sprintf (Memc[cmd], SZ_LINE, "km/s %g %s")
+			call pargr (SP_W0(sp))
+			call pargstr (UN_UNITS(un1))
+		    if (nscan() == 1) {
+			if (SP_XSCALE(sp) != 1.) {
+			    rval = SP_W0(sp) * SP_XSCALE(sp)
+			    call un_changer (un1, Memc[cmd], rval, 1, NO)
+			} else
+			    rval = 0.
+			call printf ("velocity[%d] %g")
+			    call pargi (SP_INDEX(sp))
+			    call pargr (rval)
+		    } else {
+			un2 = un_open (Memc[cmd])
+			call un_ctranr (un2, un1, rval, rval, 1)
+			call un_close (un2)
+			SP_XSCALE(sp) = rval / SP_W0(sp)
+			call sp_scale (sp, 1, step)
+			redraw = YES
+		    }
+		} else {
+		    if (nscan() == 1) {
+			call printf ("velocity:")
+			do i = 1, nspec {
+			    sp = sps[i]
+			    if (SP_XSCALE(sp) != 1.) {
+				call sprintf (Memc[cmd], SZ_LINE, "km/s %g %s")
+				    call pargr (SP_W0(sp))
+				    call pargstr (UN_UNITS(un1))
+				rval = SP_W0(sp) * SP_XSCALE(sp)
+				call un_changer (un1, Memc[cmd], rval, 1, NO)
+			    } else
+				rval = 0.
+			    call printf (" %d=%g")
+				call pargi (SP_INDEX(sp))
+				call pargr (rval)
+			}
+		    } else {
+			do i = 1, nspec {
+			    sp = sps[i]
+			    call sprintf (Memc[cmd], SZ_LINE, "km/s %g %s")
+				call pargr (SP_W0(sp))
+				call pargstr (UN_UNITS(un1))
+			    un2 = un_open (Memc[cmd])
+			    call un_ctranr (un2, un1, rval, rval, 1)
+			    call un_close (un1)
+			    SP_XSCALE(sp) = rval / SP_W0(sp)
+			    call sp_scale (sps[i], 1, step)
+			    redraw = YES
+			}
 		    }
 		}
 	    }
 	case REDSHIFT: # set or show redshift
+	    if (nspec < 0)
+		goto done_
 	    call gargr (rval)
-	    if (current > 0) {
-		sp = sps[current]
-	        if (nscan() == 1) {
-		    rval = SP_W0(sp) / SP_OW0(sp) - 1.
-		    call printf ("redshift[%d] %g")
-			call pargi (SP_INDEX(sp))
-			call pargr (rval)
-		} else {
-		    rval = 1. + rval
-		    SP_W0(sp) = SP_OW0(sp) * rval
-		    SP_WPC(sp) = SP_OWPC(sp) * rval
-		    call sp_scale (sp, 1, step)
-		    redraw = YES
-		}
-	    } else {
-		if (nscan() == 1) {
-		    call printf ("velocity:")
-		    do i = 1, nspec {
-			sp = sps[i]
-		        rval = SP_W0(sp) / SP_OW0(sp) - 1.
-			call printf (" %d=%g")
+	    un1 = UN(SP_SH(sps[1]))
+	    if (UN_CLASS(un1) == UN_VEL) {
+		if (current > 0) {
+		    sp = sps[current]
+		    if (nscan() == 1) {
+			call printf ("redshift[%d] %g")
 			    call pargi (SP_INDEX(sp))
-			    call pargr (rval)
+			    call pargr (SP_XOFFSET(sp)/UN_SCALE(un1))
+		    } else {
+			SP_XOFFSET(sp) = rval * UN_SCALE(un1)
+			call sp_scale (sp, 1, step)
+			redraw = YES
 		    }
 		} else {
-		    rval = 1. + rval
-		    do i = 1, nspec {
-			SP_W0(sps[i]) = SP_OW0(sps[i]) * rval
-			SP_WPC(sps[i]) = SP_OWPC(sps[i]) * rval
-		        call sp_scale (sps[i], 1, step)
-		        redraw = YES
+		    if (nscan() == 1) {
+			call printf ("redshift:")
+			do i = 1, nspec {
+			    sp = sps[i]
+			    call printf (" %d=%g")
+				call pargi (SP_INDEX(sp))
+				call pargr (SP_XOFFSET(sp)/UN_SCALE(un1))
+			}
+		    } else {
+			do i = 1, nspec {
+			    SP_XOFFSET(sp) = rval * UN_SCALE(un1)
+			    call sp_scale (sps[i], 1, step)
+			    redraw = YES
+			}
+		    }
+		}
+	    } else if (UN_CLASS(un1) == UN_WAVE) {
+		if (current > 0) {
+		    sp = sps[current]
+		    if (nscan() == 1) {
+			call printf ("redshift[%d] %g")
+			    call pargi (SP_INDEX(sp))
+			    call pargr (SP_XSCALE(sp)-1)
+		    } else {
+			rval = 1. + rval
+			SP_XSCALE(sp) = rval
+			call sp_scale (sp, 1, step)
+			redraw = YES
+		    }
+		} else {
+		    if (nscan() == 1) {
+			call printf ("redshift:")
+			do i = 1, nspec {
+			    sp = sps[i]
+			    call printf (" %d=%g")
+				call pargi (SP_INDEX(sp))
+				call pargr (SP_XSCALE(sp)-1)
+			}
+		    } else {
+			rval = 1. + rval
+			do i = 1, nspec {
+			    SP_XSCALE(sps[i]) = rval
+			    call sp_scale (sps[i], 1, step)
+			    redraw = YES
+			}
+		    }
+		}
+	    } else if (UN_CLASS(un1) == UN_FREQ || UN_CLASS(un1) == UN_ENERGY) {
+		if (current > 0) {
+		    sp = sps[current]
+		    if (nscan() == 1) {
+			call printf ("redshift[%d] %g")
+			    call pargi (SP_INDEX(sp))
+			    call pargr (1./SP_XSCALE(sp)-1)
+		    } else {
+			rval = 1. / (1. + rval)
+			SP_XSCALE(sp) = rval
+			call sp_scale (sp, 1, step)
+			redraw = YES
+		    }
+		} else {
+		    if (nscan() == 1) {
+			call printf ("redshift:")
+			do i = 1, nspec {
+			    sp = sps[i]
+			    call printf (" %d=%g")
+				call pargi (SP_INDEX(sp))
+				call pargr (1./SP_XSCALE(sp)-1)
+			}
+		    } else {
+			rval = 1./ (1. + rval)
+			do i = 1, nspec {
+			    SP_XSCALE(sps[i]) = rval
+			    call sp_scale (sps[i], 1, step)
+			    redraw = YES
+			}
 		    }
 		}
 	    }
@@ -1107,22 +1361,75 @@ begin
 			    SP_SZPTYPE)
 		}
 	    }
+	case UNITS: # Change plotting units
+	    # Any change of units resets the offset and scale parametes.
+	    call gargstr (Memc[cmd], SZ_LINE)
+	    iferr {
+		do i = 1, nspec {
+		    if (j > 0 && i != j)
+			next
+		    sp = sps[i]
+		    sh = SP_SH(sp) 
+		    call un_changer (UN(sh), Memc[cmd], Memr[SX(sh)],
+			SN(sh), YES)
+		    SP_W0(sp) = Memr[SX(sh)]
+		    SP_WPC(sp) = (Memr[SX(sh)+SN(sh)-1] - Memr[SX(sh)]) /
+			(SN(sh) - 1)
+		    SP_XSCALE(sp) = 1.
+		    SP_XOFFSET(sp) = 0.
+		    call sp_scale (sp, 1, step)
+		    if (i == 1) {
+			call strcpy (Memc[cmd], units, SZ_FNAME)
+			call gt_sets (gt, GTXLABEL, UN_LABEL(UN(sh)))
+			call gt_sets (gt, GTXUNITS, UN_UNITS(UN(sh)))
+		    }
+		    redraw = YES
+		}
+	    } then
+		call erract (EA_WARN)
+	case COLOR: # Set or show color
+	    call gargi (j)
+	    if (current > 0) {
+		sp = sps[current]
+	        if (nscan() == 1) {
+		    call printf ("color[%d] %d")
+			call pargi (SP_INDEX(sp))
+			call pargi (SP_COLOR(sp))
+		} else {
+		    SP_COLOR(sp) = j
+		}
+	    } else {
+		if (nscan() == 1) {
+		    call printf ("color:")
+		    do i = 1, nspec {
+			sp = sps[i]
+			call printf (" %d=%d")
+			    call pargi (SP_INDEX(sp))
+			    call pargi (SP_COLOR(sp))
+		    }
+		} else {
+		    do i = 1, nspec
+			SP_COLOR(sps[i]) = j
+		}
+	    }
 	default: # Print unknown command
 	    call printf ("Unknown command: %s\007")
 		call pargstr (cmdstr)
 	}
 
-	call sfree (stack)
+done_	call sfree (stack)
 end
 
 
 # SP_GDATA -- Get spectrum and add it to the array of spectrum structures.
-# Return an error if the image is not found.  If a two dimensional image
-# enter each line.  The spectrum data kept in memory and the image is closed.
+# Return an error if the image is not found.  If a two or three dimensional
+# image enter each line.  The spectrum data kept in memory and the image is
+# closed.
 
-procedure sp_gdata (image, current, sps, nspec)
+procedure sp_gdata (image, units, current, sps, nspec)
 
 char	image[ARB]		# Image name
+char	units[ARB]		# Coordinate units
 int	current			# Element to append
 pointer	sps			# Pointer to array of spectra structures
 int	nspec			# Number of spectra
@@ -1132,24 +1439,22 @@ real	offset			# Default intensity offset
 real	xlpos, ylpos		# Default position of labels
 char	ptype[SP_SZPTYPE]	# Default plot type
 
-int	i, j, ap, npts
-real	w0, w1, wpc
-pointer	sp, im, stack, apformat, apnum, str
+int	i, j, k, l
+pointer	sp, im, mw, sh, stack, aps, bands, str, ptr
 
-bool	streq()
-real	clgetr(), imgetr(), asumr()
-pointer	immap(), imgl2r()
+bool	rng_elementi()
+real	clgetr(), asumr()
+pointer	immap(), smw_openim(), rng_open()
 
-errchk	immap
+errchk	immap, smw_openim
 
 begin
 	call smark (stack)
-	call salloc (apformat, SZ_LINE, TY_CHAR)
-	call salloc (apnum, SZ_LINE, TY_CHAR)
 	call salloc (str, SZ_LINE, TY_CHAR)
  
 	# Map the image and return an error if this fails.
 	im = immap (image, READ_ONLY, 0)
+	mw = smw_openim (im)
 
 	# Get the default parameters.
 	if (nspec == 0) {
@@ -1160,92 +1465,90 @@ begin
 	    call clgstr ("ptype", ptype, SP_SZPTYPE)
 	}
 
-	# Determine the wavelength scale based on the APFORMAT.
-	# First look for W0 and WPC and if not found look for CRPIX1,
-	# CRVAL1, CDELT1.  Apply a simple test for values in meters or
-	# angstroms.
+	call clgstr ("apertures", Memc[str], SZ_LINE)
+	iferr (aps = rng_open (Memc[str], INDEF, INDEF, INDEF))
+	    call error (0, "Bad aperture/record list")
+	call clgstr ("bands", Memc[str], SZ_LINE)
+	iferr (bands = rng_open (Memc[str], INDEF, INDEF, INDEF))
+	    call error (0, "Bad band list")
 
-	iferr (call imgstr (im, "apformat", Memc[apformat], SZ_LINE))
-	    call strcpy ("onedspec", Memc[apformat], SZ_LINE)
- 
-	if (streq (Memc[apformat], "onedspec")) {
-	    npts = IM_LEN(im,1)
-	    w1 = 1.
-	    iferr (w0 = imgetr (im, "w0")) {
-		iferr (w1 = imgetr (im, "crpix1"))
-		    w1 = 1.
-		iferr (w0 = imgetr (im, "crval1"))
-		    w0 = 1.
-	    }
-	    iferr (wpc = imgetr (im, "wpc")) {
-	        iferr (wpc = imgetr (im, "cdelt1")) {
-	            iferr (wpc = imgetr (im, "cd1_1"))
-		        wpc = 1.
-		}
-	    }
-	    
-	    w0 = w0 - wpc * (w1 - 1.)
-	    if (abs (w0) < 0.001) {
-	        w0 = w0 * 1e10
-	        wpc = wpc * 1e10
-	    }
-	}
-	
 	# For each line in the image, allocate memory for the spectrum
 	# structure, get the pixel data, compute the mean and limits,
 	# set the structure parameters, and add the structure to the
 	# array of structures.
 
-	do i = 1, IM_LEN(im,2) {
-	    if (streq (Memc[apformat], "multispec") ||
-		streq (Memc[apformat], "echelle")) {
-		call sprintf (Memc[str], SZ_LINE, "apnum%d")
-		    call pargi (i)
-	        call imgstr (im, Memc[str], Memc[apnum], SZ_LINE)
-	        call sscan (Memc[apnum])
-	        call gargi (ap)
-	        call gargi (j)
-		call gargr (w0)
-		call gargr (wpc)
-		call gargi (npts)
-	        if (abs (w0) < 0.001) {
-	            w0 = w0 * 1e10
-	            wpc = wpc * 1e10
-	        }
+	do j = 1, SMW_NBANDS(mw) {
+	    if (SMW_FORMAT(mw) != SMW_ND)
+		if (!rng_elementi (bands, j))
+		    next
+	    do i = 1, SMW_NSPEC(mw) {
+		if (SMW_FORMAT(mw) == SMW_ND) {
+		    call smw_mw (mw, i, j, ptr, k, l)
+		    if (!rng_elementi (aps, k) || !rng_elementi (bands, l))
+			next
+		} else {
+		    call shdr_open (im, mw, i, j, INDEFI, SHHDR, sh)
+		    if (!rng_elementi (aps, AP(sh)))
+			next
+		}
+		call shdr_open (im, mw, i, j, INDEFI, SHDATA, sh)
+		iferr (call shdr_units (sh, units))
+		    ;
+
+	        call sp_alloc (sp, sh)
+	        SP_NPTS(sp) = SN(sh)
+		SP_W0(sp) = Memr[SX(sh)]
+		SP_WPC(sp) = (Memr[SX(sh)+SN(sh)-1] - Memr[SX(sh)]) /
+		    (SN(sh) - 1)
+	        SP_OMEAN(sp) = asumr (Memr[SY(sh)], SN(sh)) / SN(sh)
+	        call alimr (Memr[SY(sh)], SN(sh), SP_OMIN(sp), SP_OMAX(sp))
+
+		SP_XSCALE(sp) = 1.
+		SP_XOFFSET(sp) = 0.
+	        SP_SCALE(sp) = scale
+	        SP_OFFSET(sp) = offset
+	        SP_XLPOS(sp) = xlpos
+	        SP_YLPOS(sp) = ylpos
+		SP_COLOR(sp) = 1
+
+		call sprintf (SP_IMNAME(sp), SP_SZNAME, "%s%s(%d)")
+		    call pargstr (IMNAME(sh))
+		    call pargstr (IMSEC(sh))
+		    call pargi (AP(sh))
+		call strcpy (TITLE(sh), SP_IMTITLE(sp), SP_SZTITLE)
+	        call strcpy (ptype, SP_PTYPE(sp), SP_SZPTYPE)
+	        SP_ULABEL(sp) = EOS
+
+	        call sp_add (sp, current, sps, nspec)
 	    }
-
-	    call sp_alloc (sp, npts)
-	    call amovr (Memr[imgl2r (im,i)], SP_DATA(sp), npts)
-	    SP_NPTS(sp) = npts
-	    SP_OW0(sp) = w0
-	    SP_OWPC(sp) = wpc
-	    SP_OMEAN(sp) = asumr (SP_DATA(sp), npts) / npts
-	    call alimr (SP_DATA(sp), npts, SP_OMIN(sp), SP_OMAX(sp))
-
-	    SP_W0(sp) = w0
-	    SP_WPC(sp) = wpc
-	    SP_SCALE(sp) = scale
-	    SP_OFFSET(sp) = offset
-	    SP_XLPOS(sp) = xlpos
-	    SP_YLPOS(sp) = ylpos
-
-	    if (IM_LEN(im,2) > 1) {
-	        call sprintf (SP_IMNAME(sp), SP_SZNAME, "%s[%d]")
-	    	call pargstr (image)
-	    	call pargi (ap)
-	    } else
-	        call strcpy (image, SP_IMNAME(sp), SP_SZNAME)
-	    call strcpy (IM_TITLE(im), SP_IMTITLE(sp), SP_SZTITLE)
-	    call strcpy (ptype, SP_PTYPE(sp), SP_SZPTYPE)
-	    SP_ULABEL(sp) = EOS
-
-	    call sp_add (sp, current, sps, nspec)
 	}
 
 	# Close the image.
+	call shdr_close (sh)
+	call rng_close (bands)
+	call rng_close (aps)
+	call smw_close (mw)
 	call imunmap (im)
  
 	call sfree (stack)
+end
+
+
+# SP_LINEAR -- Reset linear coordinates
+
+procedure sp_linear (sp)
+
+pointer	sp			# SPECPLOT pointer
+
+int	i
+pointer	x
+
+begin
+	x = SX(SP_SH(sp))
+	do i = 0, SP_NPTS(sp)-1
+	    Memr[x+i] = SP_W0(sp) + i * SP_WPC(sp)
+	SP_XSCALE(sp) = 1.
+	SP_XOFFSET(sp) = 0.
 end
 
 
@@ -1264,7 +1567,6 @@ begin
 	if (nspec == 0)
 	    return
 
-	call sp_free (Memi[sps+current-1])
 	for (i = current; i < nspec; i = i + 1) {
 	    Memi[sps+i-1] = Memi[sps+i]
 	    SP_INDEX(Memi[sps+i-1]) = SP_INDEX(Memi[sps+i-1]) - 1
@@ -1347,18 +1649,20 @@ end
 
 
 # SP_ALLOC -- Allocate memory for a spectrum structure with given number of
-# data points.
+# data points.  The MWCS is not used.
 
-procedure sp_alloc (sp, npts)
+procedure sp_alloc (sp, sh)
 
 pointer	sp		# Spectrum structure pointer to be allocated
-int	npts		# Number of points in the spectrum
+pointer	sh		# Spectrum header pointer
 
 begin
 	call calloc (sp, SP_LEN, TY_STRUCT)
-	call calloc (SP_PDATA(sp), npts, TY_REAL)
-	call calloc (SP_PX(sp), npts, TY_REAL)
-	call calloc (SP_PY(sp), npts, TY_REAL)
+	call calloc (SP_PX(sp), SN(sh), TY_REAL)
+	call calloc (SP_PY(sp), SN(sh), TY_REAL)
+
+	call shdr_copy (sh, SP_SH(sp), NO)
+	MW(SP_SH(sp)) = NULL
 end
 
 
@@ -1366,10 +1670,12 @@ end
 
 procedure sp_free (sp)
 
-pointer	sp		# Spectrum structure pointer
+pointer	sp, sh		# Spectrum structure pointers
 
 begin
-	call mfree (SP_PDATA(sp), TY_REAL)
+	sh = SP_SH(sp)
+	call shdr_close (sh)
+
 	call mfree (SP_PX(sp), TY_REAL)
 	call mfree (SP_PY(sp), TY_REAL)
 	call mfree (sp, TY_STRUCT)
@@ -1460,8 +1766,8 @@ begin
 	    call fprintf (fd, "%2d %16s %7g %7g %7g %7g   %s\n")
 		call pargi (SP_INDEX(sp))
 		call pargstr (SP_IMNAME(sp))
-		call pargr (SP_W0(sp))
-		call pargr (SP_WPC(sp))
+		call pargr (SP_W0(sp)*SP_XSCALE(sp)+SP_XOFFSET(sp))
+		call pargr (SP_WPC(sp)*SP_XSCALE(sp))
 		call pargr (SP_OFFSET(sp))
 		call pargr (SP_SCALE(sp))
 		call pargstr (SP_IMTITLE(sp))
@@ -1488,7 +1794,7 @@ real	step			# Separation step
 
 int	i, fd
 real	z, v
-pointer	stack, line, sp
+pointer	stack, line, sp, un
 
 int	open()
 errchk	open()
@@ -1519,8 +1825,8 @@ begin
 	    call fprintf (fd, "%2d %16s %7g %7g %7g %7g   %s\n")
 		call pargi (SP_INDEX(sp))
 		call pargstr (SP_IMNAME(sp))
-		call pargr (SP_W0(sp))
-		call pargr (SP_WPC(sp))
+		call pargr (SP_W0(sp)*SP_XSCALE(sp)+SP_XOFFSET(sp))
+		call pargr (SP_WPC(sp)*SP_XSCALE(sp))
 		call pargr (SP_OFFSET(sp))
 		call pargr (SP_SCALE(sp))
 		call pargstr (SP_IMTITLE(sp))
@@ -1533,18 +1839,64 @@ begin
 	    call pargstr ("Z")
 	    call pargstr ("V(km/s)")
 
-	do i = 1, nspec {
-	    sp = sps[i]
-	    z = (SP_W0(sp) - SP_OW0(sp)) / SP_OW0(sp)
-	    v = (1. + z) ** 2
-	    v = VLIGHT * (v - 1.) / (v + 1.)
-	    call fprintf (fd, "%2d %16s %9g %9g %9g %9g\n")
-		call pargi (SP_INDEX(sp))
-		call pargstr (SP_IMNAME(sp))
-		call pargr (SP_OMEAN(sp))
-		call pargr (SP_W0(sp) - SP_OW0(sp))
-		call pargr (z)
-		call pargr (v)
+	un = UN(SP_SH(sps[1]))
+	if (UN_CLASS(un) == UN_VEL) {
+	    do i = 1, nspec {
+		sp = sps[i]
+		z = SP_XOFFSET(sp) / UN_SCALE(un)
+		v = SP_XOFFSET(sp)
+		call fprintf (fd, "%2d %16s %9g %9g %9g %9g\n")
+		    call pargi (SP_INDEX(sp))
+		    call pargstr (SP_IMNAME(sp))
+		    call pargr (SP_OMEAN(sp))
+		    call pargr (SP_XOFFSET(sp))
+		    call pargr (z)
+		    call pargr (v)
+	    }
+	} else if (UN_CLASS(un) == UN_WAVE) {
+	    do i = 1, nspec {
+		sp = sps[i]
+		if (SP_XSCALE(sp) != 1.) {
+		    call sprintf (Memc[line], SZ_LINE, "km/s %g %s")
+			call pargr (SP_W0(sp))
+			call pargstr (UN_UNITS(un))
+		    z = SP_XSCALE(sp) - 1
+		    v = SP_W0(sp) * SP_XSCALE(sp)
+		    call un_changer (un, Memc[line], v, 1, NO)
+		} else {
+		    z = 0.
+		    v = 0.
+		}
+		call fprintf (fd, "%2d %16s %9g %9g %9g %9g\n")
+		    call pargi (SP_INDEX(sp))
+		    call pargstr (SP_IMNAME(sp))
+		    call pargr (SP_OMEAN(sp))
+		    call pargr (SP_XOFFSET(sp))
+		    call pargr (z)
+		    call pargr (v)
+	    }
+	} else if (UN_CLASS(un) == UN_FREQ || UN_CLASS(un) == UN_ENERGY) {
+	    do i = 1, nspec {
+		sp = sps[i]
+		if (SP_XSCALE(sp) != 1.) {
+		    call sprintf (Memc[line], SZ_LINE, "km/s %g %s")
+			call pargr (SP_W0(sp))
+			call pargstr (UN_UNITS(un))
+		    z = 1. / SP_XSCALE(sp) - 1
+		    v = SP_W0(sp) * SP_XSCALE(sp)
+		    call un_changer (un, Memc[line], v, 1, NO)
+		} else {
+		    z = 0.
+		    v = 0.
+		}
+		call fprintf (fd, "%2d %16s %9g %9g %9g %9g\n")
+		    call pargi (SP_INDEX(sp))
+		    call pargstr (SP_IMNAME(sp))
+		    call pargr (SP_OMEAN(sp))
+		    call pargr (SP_XOFFSET(sp))
+		    call pargr (z)
+		    call pargr (v)
+	    }
 	}
 
 	call sfree (stack)

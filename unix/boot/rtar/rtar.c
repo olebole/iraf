@@ -26,12 +26,14 @@
  *		e	exclude, rather than include, listed files
  *		f	read from named file rather than stdin
  *		l	do not try to resolve links by a file copy
+ *		m	do not restore file modify times
  *		n	do not strip tailing blank lines from text files
  *		o	omit binary files (e.g. when foreign host has
  *			  incompatible binary file format)
  *		p	omit the given pathname prefix when creating files
  *		r	replace existing file at extraction
  *		t	print name of each file matched
+ *		u	do not attempt to restore user id
  *		v	verbose; print full description of each file
  *		x	extract files (extract everything if no files
  *			  listed or if -e is set)
@@ -99,27 +101,29 @@ struct fheader {
 };
 
 
-int	advance;		/* Advance to named file		*/
-int	stripblanks;		/* strip blank padding at end of file	*/
-int	debug;			/* Print debugging messages		*/
-int	binaryout;		/* make only binary byte stream files	*/
-int	omitbinary;		/* omit binary files (do not write)	*/
-int	extract;		/* Extract files from the tape		*/
-int	replace;		/* Replace existing files		*/
-int	exclude;		/* Excluded named files			*/
-int	printfnames;		/* Print file names			*/
-int	verbose;		/* Print everything			*/
-int	links;			/* Defeat copy to resolve link		*/
+static int advance;		/* Advance to named file		*/
+static int stripblanks;		/* strip blank padding at end of file	*/
+static int debug;			/* Print debugging messages		*/
+static int binaryout;		/* make only binary byte stream files	*/
+static int omitbinary;		/* omit binary files (do not write)	*/
+static int extract;		/* Extract files from the tape		*/
+static int replace;		/* Replace existing files		*/
+static int exclude;		/* Excluded named files			*/
+static int printfnames;		/* Print file names			*/
+static int verbose;		/* Print everything			*/
+static int links;			/* Defeat copy to resolve link		*/
+static int setmtime;		/* Restore file modify times		*/
+static int setuid;			/* Restore file user id			*/
 
-char	*pathprefix = NULL;
-int	len_pathprefix = 0;
-struct	fheader *curfil;
-int	eof;
-int	nerrs;
-char	*first_file;
-char	tapeblock[SZ_TAPEBUFFER];
-char	*nextblock;
-int	nblocks;
+static char *pathprefix = NULL;
+static int len_pathprefix = 0;
+static struct fheader *curfil;
+static int eof;
+static int nerrs;
+static char *first_file;
+static char tapeblock[SZ_TAPEBUFFER];
+static char *nextblock;
+static int nblocks;
 
 char	*getblock();
 
@@ -150,6 +154,8 @@ char	*argv[];
 	printfnames	= 0;
 	verbose		= 0;
 	links		= 0;
+	setmtime	= 1;
+	setuid		= 1;
 	stripblanks	= 1;	/* strip blanks at end of file by default */
 
 	/* Get parameters.  Argp is left pointing at the list of files to be
@@ -192,6 +198,12 @@ char	*argv[];
 			break;
 		    case 'l':
 			links++;
+			break;
+		    case 'm':
+			setmtime = 0;
+			break;
+		    case 'u':
+			setuid = 0;
 			break;
 		    case 'o':
 			omitbinary++;
@@ -285,8 +297,10 @@ char	*argv[];
 				fh.linkname, fh.name);
 			} else {
 			    os_setfmode (fh.name, fh.mode);
-			    os_setowner (fh.name, fh.uid, fh.gid);
-			    os_setmtime (fh.name, fh.mtime);
+			    if (setuid)
+				os_setowner (fh.name, fh.uid, fh.gid);
+			    if (setmtime)
+				os_setmtime (fh.name, fh.mtime);
 			}
 		    } else {
 			fprintf (stderr,
@@ -316,8 +330,10 @@ char	*argv[];
 		    os_close (out);
 		}
 		os_setfmode (fh.name, fh.mode);
-		os_setowner (fh.name, fh.uid, fh.gid);
-		os_setmtime (fh.name, fh.mtime);
+		if (setuid)
+		    os_setowner (fh.name, fh.uid, fh.gid);
+		if (setmtime)
+		    os_setmtime (fh.name, fh.mtime);
 	    } else
 		skipfile (in, &fh);
 	}

@@ -7,7 +7,6 @@
 #include <stdio.h>
 #include <pwd.h>
 
-#define	R_DISPOSE "lpr -Plw -r %s"	/* printer dispose command	*/
 #define	SEGSIZE		16		/* output segment size (bytes)	*/
 #define	SEGBITS		(SEGSIZE*8)
 #define	BITFLIP		0		/* bit-flip each byte for P.S.?	*/
@@ -27,6 +26,13 @@
 #define	BKGPAT_1	"22"		/* atom for stipple pattern	*/
 #define	BKGPAT_2	"88"		/* atom for stipple pattern	*/
 
+/* The following are provided by the calling program and specify what type
+ * of output is desired.
+ */
+extern	int  r_type;			/* 0=postscript, 1=rasterfile */
+extern	char r_dispose[];		/* dispose command */
+extern	char r_filename[];		/* output file template */
+
 int	gt_bitflip_postscript = BITFLIP;
 static	unsigned char	red[NGREY], green[NGREY], blue[NGREY];
 static	void bitmap_to_postscript();
@@ -35,17 +41,8 @@ static	char *make_label();
 
 /* SCREENDUMP -- Make a hardcopy of the indicated region of the screen on a
  * hardcopy device.  Currently only two output formats are supported, Sun
- * rasterfile output, or Postscript output for devices such as the Apple laser
- * writer.  Postscript output is the default; rasterfile output is enabled
- * if the variable 'R_RASTERFILE' is defined in the environment, with the
- * string value being an sprintf format string with one decimal integer
- * argument, used to create the rasterfile filename (e.g., "frame.%d").
- * The variable 'R_DISPOSE' may be defined to specify how the Postscript or
- * Sun rasterfile is to be disposed of.  If 'R_DISPOSE' is not defined and
- * rasterfile output is specified, no dispose command will be issued.  If the
- * variable is not defined and Postscript output is specified, the default
- * dispose command defined above will be executed.
- *
+ * rasterfile output, or Postscript.  A dispose command may be given to
+ * postprocess the output file, e.g., send it to the printer.
  */
 screendump (win_fd, pw, width, height, left, top, nbits_out)
 int	win_fd;			/* window fd, for bell */
@@ -133,7 +130,7 @@ int	nbits_out;		/* output 1 bit or 8 bit postscript image? */
 	/* Output can be either Postscript or a Sun rasterfile.  Rasterfile
 	 * output is handled here.
 	 */
-	if (rasterout = ((str = getenv ("R_RASTERFILE")) != NULL)) {
+	if (rasterout = (r_type && r_filename[0])) {
 	    colormap_t cmap;
 
 	    /* Setup colormap descriptor. */
@@ -144,7 +141,7 @@ int	nbits_out;		/* output 1 bit or 8 bit postscript image? */
 	    cmap.map[2] = blue;
 
 	    /* Open raster file. */
-	    sprintf (tempfile, str, filenum++);
+	    sprintf (tempfile, r_filename, filenum++);
 	    if ((fp = fopen (tempfile, "w")) == NULL) {
 		fprintf (stderr, "cannot create %s\n", tempfile);
 		return (-1);
@@ -266,13 +263,23 @@ int	nbits_out;		/* output 1 bit or 8 bit postscript image? */
 	    return (-1);
 	}
 
-	/* Create a temporary file to hold postscript program. */
-	strcpy (tempfile, "/tmp/psXXXXXX");
-	if ((fd = mkstemp (tempfile)) == -1) {
-	    fprintf (stderr, "cannot create temporary file %s\n", tempfile);
-	    return (-1);
-	} else
-	    fp = fdopen (fd, "a");
+	/* Create the output file to hold postscript program.  If no filename
+	 * has been specified create a unique file in /tmp.
+	 */
+	if (!r_filename[0]) {
+	    strcpy (tempfile, "/tmp/psXXXXXX");
+	    if ((fd = mkstemp (tempfile)) == -1) {
+		fprintf (stderr, "cannot create temporary file %s\n", tempfile);
+		return (-1);
+	    } else
+		fp = fdopen (fd, "a");
+	} else {
+	    sprintf (tempfile, r_filename, filenum++);
+	    if ((fp = fopen (tempfile, "w")) == NULL) {
+		fprintf (stderr, "cannot create %s\n", tempfile);
+		return (-1);
+	    }
+	}
 
 	/* Scale to fit output page.  */
 	xs = (PAGE_WIDTH  - MARGIN*2) / (float)width;
@@ -293,15 +300,11 @@ int	nbits_out;		/* output 1 bit or 8 bit postscript image? */
 	close (fd);
 
 	/* Dispose of tempfile to the printer.  We leave it up to the dispose
-	 * command to delete the temporary file when finished.  The dispose
-	 * command may be passed as an environment variable if desired, e.g.,
-	 * to specify a printer device other than "lw" (laserwriter).
+	 * command to delete the temporary file when finished.
 	 */
 dispose_:
-	if ((str = getenv ("R_DISPOSE")) == NULL && !rasterout)
-	    str = R_DISPOSE;
-	if (str) {
-	    sprintf (dispose, str, tempfile);
+	if (r_dispose[0]) {
+	    sprintf (dispose, r_dispose, tempfile);
 	    if ((status = system (dispose)) != 0)
 		fprintf (stderr, "screendump: exit status %d\n", status);
 	}
@@ -390,7 +393,14 @@ float	scale;
 	 */
 	fprintf (fp, "%%! GTERM screendump\n");
 	fprintf (fp, "erasepage initgraphics\n");
-	fprintf (fp, "[%6.3f 0 0 %6.3f 2350 3180] setmatrix\n", -scale, -scale);
+
+	/* fprintf (fp, "[%6.3f 0 0 %6.3f 2350 3180] setmatrix\n",
+	    -scale, -scale); */
+        fprintf (fp, "initmatrix\n");
+        fprintf (fp, "%6.3f 72 mul 300 div\n", -scale);
+        fprintf (fp, "%6.3f 72 mul 300 div scale\n", scale);
+        fprintf (fp, "%f %f translate\n", 2409/(-scale), (-88)/(-scale));
+
 	fprintf (fp, "%d %d translate\n", PAGE_XOFFSET, PAGE_YOFFSET);
 	fprintf (fp, "/r_data %d string def\n", SEGSIZE);
 	fprintf (fp, "/r_zero %d string def\n", SEGSIZE);
@@ -502,7 +512,12 @@ float	scale;
 	 */
 	fprintf (fp, "\n");
 	fprintf (fp, "/Times-Roman findfont 24 scalefont setfont\n");
-	fprintf (fp, "[-1 0 0 -1 2350 3180] setmatrix\n");
+
+	/* fprintf (fp, "[-1 0 0 -1 2350 3180] setmatrix\n"); */
+        fprintf (fp, "initmatrix\n");
+        fprintf (fp, "-1 72 mul 300 div 1 72 mul 300 div scale\n");
+        fprintf (fp, "-2409 88 translate\n");
+
 	fprintf (fp, "%d %d moveto\n", 1600, 3150);
 	fprintf (fp, "[1 0 0 -1 0 0] concat\n");
 	fprintf (fp, "(%s) show\n", make_label());

@@ -1,11 +1,13 @@
 # Copyright(c) 1986 Association of Universities for Research in Astronomy Inc.
 
 include	<qpexset.h>
+include	<mach.h>
 include	"qpex.h"
 include	"qpoe.h"
 
 define	NLUTPERLINE	15
 define	SZ_TEXT		4
+define	SZ_FILTERBUF	32768
 
 # QPEX_DEBUG -- Output text describing the state and contents of the QPEX
 # descriptor (compiled event attribute filter).
@@ -67,10 +69,10 @@ begin
 
 	# Regenerate and print the compiled expression.
 	if (and (what, QPEXD_SHOWEXPR) != 0) {
-	    call salloc (text, SZ_TEXTBUF, TY_CHAR)
+	    call salloc (text, SZ_FILTERBUF, TY_CHAR)
 	    call fprintf (out,
 		"==================== expr ========================\n")
-	    if (qpex_getfilter (ex, Memc[text], SZ_TEXTBUF) > 0) {
+	    if (qpex_getfilter (ex, Memc[text], SZ_FILTERBUF) > 0) {
 		call putline (out, Memc[text])
 		call fprintf (out, "\n")
 	    }
@@ -336,7 +338,7 @@ lut_		    call fprintf (out, "lutx%c\t(%d), %xX, L%d")
 		for (et=EX_ETHEAD(ex);  et != NULL;  et=ET_NEXT(et)) {
 		    neterms = neterms + 1
 		    call fprintf (out,
-			"%2d %4d %3d %3d %4d %3d %9.9s %2s %s\n")
+			"%2d %4d %3d %3d %4d %3d %9.9s %2s ")
 			call pargi (neterms)
 			call pargi (ET_ATTTYPE(et))
 			call pargi (ET_ATTOFF(et))
@@ -345,7 +347,8 @@ lut_		    call fprintf (out, "lutx%c\t(%d), %xX, L%d")
 			call pargi (ET_DELETED(et))
 			call pargstr (Memc[ET_ATNAME(et)])
 			call pargstr (Memc[ET_ASSIGNOP(et)])
-			call pargstr (Memc[ET_EXPRTEXT(et)])
+		    call putline (out, Memc[ET_EXPRTEXT(et)])
+		    call putline (out, "\n")
 		}
 	    }
 	}
@@ -355,13 +358,20 @@ lut_		    call fprintf (out, "lutx%c\t(%d), %xX, L%d")
 	    if (EX_LTHEAD(ex) != NULL) {
 		call fprintf (out,
 		    "==================== lutlist =====================\n")
-		call fprintf (out,
-		    " N     LT   LUTP TYPE NBINS  L R   ZERO  SCALE\n")
 
+		# Output column labels.
+		call fprintf (out,
+		    " N     LT   LUTP TYPE NBINS  L R %*wZERO  SCALE\n")
+		    if (LT_TYPE(EX_LTHEAD(ex)) == TY_DOUBLE)
+			call pargi (NDIGITS_DP - 4)
+		    else
+			call pargi (NDIGITS_RP - 4)
+
+		# Output lookup table descriptors.
 		lutno = 0
 		for (lt=EX_LTHEAD(ex);  lt != NULL;  lt=LT_NEXT(lt)) {
 		    lutno = lutno + 1
-		    call fprintf (out, "%2d %6x %6x %4d %5d  %d %d %6g  %g\n")
+		    call fprintf (out, "%2d %6x %6x %4d %5d  %d %d %*g  %g\n")
 			call pargi (lutno)
 			call pargi (lt)
 			call pargi (LT_LUTP(lt))
@@ -372,12 +382,15 @@ lut_		    call fprintf (out, "lutx%c\t(%d), %xX, L%d")
 
 			switch (LT_TYPE(lt)) {
 			case TY_INT:
+			    call pargi (NDIGITS_RP)
 			    call pargr (LT_I0(lt))
 			    call pargr (LT_IS(lt))
 			case TY_REAL:
+			    call pargi (NDIGITS_RP)
 			    call pargr (LT_R0(lt))
 			    call pargr (LT_RS(lt))
 			case TY_DOUBLE:
+			    call pargi (NDIGITS_DP)
 			    call pargd (LT_D0(lt))
 			    call pargd (LT_DS(lt))
 			}

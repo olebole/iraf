@@ -17,11 +17,11 @@ pointer	ap		# pointer to the apphot structure
 pointer	im		# pointer to the IRAF image
 real	wx, wy		# object coordinates
 
-int	niter, ier, fier, lowsnr
+int	i, niter, ier, fier, lowsnr
 pointer	ctr, nse
-real	datamin, datamax, owx, owy, xshift, yshift
+real	cthreshold, datamin, datamax, owx, owy, xshift, yshift, med
 int	apctrbuf(), ap_ctr1d(), ap_mctr1d(), ap_gctr1d(), ap_lgctr1d()
-real	ap_csnratio()
+real	ap_csnratio(), amedr()
 
 begin
 	ctr = AP_PCENTER(ap)
@@ -39,119 +39,40 @@ begin
 	AP_YERR(ctr) = INDEFR
 
 	# Return input coordinates if centering is disabled.
-	if (IS_INDEFR(wx) || IS_INDEFR(wy))
+	if (IS_INDEFR(wx) || IS_INDEFR(wy)) {
 	    return (AP_CTR_NOAREA)
-	else if (AP_CENTERFUNCTION(ctr) == AP_NONE) {
+	} else if (AP_CENTERFUNCTION(ctr) == AP_NONE) {
 	    AP_XCENTER(ctr) = wx
 	    AP_YCENTER(ctr) = wy
 	    return (AP_OK)
 	}
 
-	# Choose which centering functions is to be used.
-	switch (AP_CENTERFUNCTION(ctr)) {
+	# Intialize.
+	owx = wx
+	owy = wy 
+	niter = 0
+	if (IS_INDEFR(AP_SKYSIGMA(nse)) || IS_INDEFR(AP_CTHRESHOLD(ctr)) ||
+	    AP_CTHRESHOLD(ctr) <= 0.0)
+	    cthreshold = 0.0
+	else
+	    cthreshold = AP_CTHRESHOLD(ctr) * AP_SKYSIGMA(nse) 
 
-	case AP_CENTROID1D:
+	repeat {
 
-	    # Intialize.
-	    owx = wx
-	    owy = wy 
-	    niter = 0
+	    # Set initial cursor position.
+	    AP_CXCUR(ctr) = owx
+	    AP_CYCUR(ctr) = owy
 
-	    repeat {
-
-		# Set initial cursor position.
-		AP_CXCUR(ctr) = owx
-	        AP_CYCUR(ctr) = owy
-
-	        # Get centering pixels.
-	        ier = apctrbuf (ap, im, owx, owy)
-		if (ier == AP_CTR_NOAREA) {
-	    	    AP_XCENTER(ctr) = wx
-	    	    AP_YCENTER(ctr) = wy
-	    	    AP_XSHIFT(ctr) = 0.0
-	    	    AP_YSHIFT(ctr) = 0.0
-	    	    AP_XERR(ctr) = INDEFR
-	    	    AP_YERR(ctr) = INDEFR
-	    	    return (ier)
-		}
-
-		# Clean the subraster.
-		if (AP_CLEAN(ctr) == YES)
-	    	    call apclean (ap, Memr[AP_CTRPIX(ctr)], AP_CNX(ctr),
-		        AP_CNY(ctr), AP_CXC(ctr), AP_CYC(ctr))
-
-		# Apply threshold and check for positive or negative features.
-		if (AP_POSITIVE(ap) == YES) {
-		    call apsetr (ap, CDATALIMIT, datamin)
-		    call asubkr (Memr[AP_CTRPIX(ctr)], datamin +
-		        AP_CTHRESHOLD(nse), Memr[AP_CTRPIX(ctr)], AP_CNX(ctr) *
-			AP_CNY(ctr))
-		    call amaxkr (Memr[AP_CTRPIX(ctr)], 0.0,
-			Memr[AP_CTRPIX(ctr)], AP_CNX(ctr) * AP_CNY(ctr))
-		} else {
-		    call apsetr (ap, CDATALIMIT, datamax)
-		    call anegr (Memr[AP_CTRPIX(ctr)], Memr[AP_CTRPIX(ctr)],
-		        AP_CNX(ctr) * AP_CNY(ctr))
-		    call aaddkr (Memr[AP_CTRPIX(ctr)], datamax -
-		        AP_CTHRESHOLD(nse), Memr[AP_CTRPIX(ctr)], AP_CNX(ctr) *
-			AP_CNY(ctr))
-		    call amaxkr (Memr[AP_CTRPIX(ctr)], 0.0,
-			Memr[AP_CTRPIX(ctr)], AP_CNX(ctr) * AP_CNY(ctr))
-		}
-
-		# Test signal to noise ratio.
-		if (ap_csnratio (ap, Memr[AP_CTRPIX(ctr)], AP_CNX(ctr),
-		    AP_CNY(ctr), 0.0) < AP_MINSNRATIO(ctr))
-	    	    lowsnr = YES
-		else
-		    lowsnr = NO
-
-	        # Compute the x and y centers.
-		if (AP_CTHRESHOLD(nse) > 0.0) {
-	            fier = ap_ctr1d (Memr[AP_CTRPIX(ctr)], AP_CNX(ctr),
-		        AP_CNY(ctr), AP_XCENTER(ctr), AP_YCENTER(ctr),
-			AP_XERR(ctr), AP_YERR(ctr))
-		    if (IS_INDEFR (AP_XERR(ctr)))
-			AP_XCENTER(ctr) = AP_CXC(ctr)
-		    if (IS_INDEFR (AP_YERR(ctr)))
-			AP_YCENTER(ctr) = AP_CYC(ctr)
-		} else {
-	            fier = ap_mctr1d (Memr[AP_CTRPIX(ctr)], AP_CNX(ctr),
-		        AP_CNY(ctr), AP_XCENTER(ctr), AP_YCENTER(ctr),
-			AP_XERR(ctr), AP_YERR(ctr))
-		    if (IS_INDEFR (AP_XERR(ctr)))
-			AP_XCENTER(ctr) = AP_CXC(ctr)
-		    if (IS_INDEFR (AP_YERR(ctr)))
-			AP_YCENTER(ctr) = AP_CYC(ctr)
-		}
-
-		xshift = AP_XCENTER(ctr) - AP_CXC(ctr)
-		yshift = AP_YCENTER(ctr) - AP_CYC(ctr)
-	        AP_XCENTER(ctr) = xshift + owx
-	        AP_YCENTER(ctr) = yshift + owy
-		AP_XSHIFT(ctr) = AP_XCENTER(ctr) - wx
-		AP_YSHIFT(ctr) = AP_YCENTER(ctr) - wy
-
-		# Setup for next iteration.
-		niter = niter + 1
-		owx = AP_XCENTER(ctr)
-		owy = AP_YCENTER(ctr)
-
-	    } until (niter >= AP_CMAXITER(ctr) || (abs (xshift) < 1.0 &&
-	        abs (yshift) < 1.0))
-
-	case AP_GAUSS1D:
-
-	    # Get centering buffer of pixels.
-	    ier = apctrbuf (ap, im, wx, wy)
+	    # Get centering pixels.
+	    ier = apctrbuf (ap, im, owx, owy)
 	    if (ier == AP_CTR_NOAREA) {
-	        AP_XCENTER(ctr) = wx
+	    	AP_XCENTER(ctr) = wx
 	    	AP_YCENTER(ctr) = wy
 	    	AP_XSHIFT(ctr) = 0.0
 	    	AP_YSHIFT(ctr) = 0.0
 	    	AP_XERR(ctr) = INDEFR
 	    	AP_YERR(ctr) = INDEFR
-	        return (ier)
+	    	return (ier)
 	    }
 
 	    # Clean the subraster.
@@ -159,24 +80,43 @@ begin
 	        call apclean (ap, Memr[AP_CTRPIX(ctr)], AP_CNX(ctr),
 		    AP_CNY(ctr), AP_CXC(ctr), AP_CYC(ctr))
 
+	    # Compute the datalimits.
+	    if (cthreshold <= 0.0)
+	        call alimr (Memr[AP_CTRPIX(ctr)], AP_CNX(ctr) * AP_CNY(ctr),
+		    datamin, datamax)
+	    else {
+		datamin = MAX_REAL
+		datamax = -MAX_REAL
+		do i = 1, AP_CNY(ctr) {
+		    med = amedr (Memr[AP_CTRPIX(ctr)+(i-1)*AP_CNX(ctr)],
+		        AP_CNX(ctr))
+		    if (med < datamin)
+			datamin = med
+		    if (med > datamax)
+			datamax = med
+		}
+	    }
+
 	    # Apply threshold and check for positive or negative features.
 	    if (AP_POSITIVE(ap) == YES) {
 		call apsetr (ap, CDATALIMIT, datamin)
-		call asubkr (Memr[AP_CTRPIX(ctr)], datamin + AP_CTHRESHOLD(nse),
-		    Memr[AP_CTRPIX(ctr)], AP_CNX(ctr) * AP_CNY(ctr))
-		call amaxkr (Memr[AP_CTRPIX(ctr)], 0.0,
-		    Memr[AP_CTRPIX(ctr)], AP_CNX(ctr) * AP_CNY(ctr))
+		call asubkr (Memr[AP_CTRPIX(ctr)], datamin +
+		    cthreshold, Memr[AP_CTRPIX(ctr)], AP_CNX(ctr) *
+		    AP_CNY(ctr))
+		call amaxkr (Memr[AP_CTRPIX(ctr)], 0.0, Memr[AP_CTRPIX(ctr)],
+		    AP_CNX(ctr) * AP_CNY(ctr))
 	    } else {
 		call apsetr (ap, CDATALIMIT, datamax)
 		call anegr (Memr[AP_CTRPIX(ctr)], Memr[AP_CTRPIX(ctr)],
 		    AP_CNX(ctr) * AP_CNY(ctr))
-		call aaddkr (Memr[AP_CTRPIX(ctr)], datamax - AP_CTHRESHOLD(nse),
-		    Memr[AP_CTRPIX(ctr)], AP_CNX(ctr) * AP_CNY(ctr))
+		call aaddkr (Memr[AP_CTRPIX(ctr)], datamax -
+		    cthreshold, Memr[AP_CTRPIX(ctr)], AP_CNX(ctr) *
+		    AP_CNY(ctr))
 		call amaxkr (Memr[AP_CTRPIX(ctr)], 0.0,
 		    Memr[AP_CTRPIX(ctr)], AP_CNX(ctr) * AP_CNY(ctr))
 	    }
 
-	    # Test the signal to noise ratio.
+	    # Test signal to noise ratio.
 	    if (ap_csnratio (ap, Memr[AP_CTRPIX(ctr)], AP_CNX(ctr),
 	        AP_CNY(ctr), 0.0) < AP_MINSNRATIO(ctr))
 	    	lowsnr = YES
@@ -184,86 +124,80 @@ begin
 		lowsnr = NO
 
 	    # Compute the x and y centers.
-	    fier = ap_gctr1d (Memr[AP_CTRPIX(ctr)], AP_CNX(ctr), AP_CNY(ctr),
-		CONVERT * AP_FWHMPSF(ap) * AP_SCALE(ap), AP_CMAXITER(ctr),
-		AP_XCENTER(ctr), AP_YCENTER(ctr), AP_XERR(ctr), AP_YERR(ctr))
-	    AP_XCENTER(ctr) = AP_XCENTER(ctr) + wx - AP_CXC(ctr)
-	    AP_YCENTER(ctr) = AP_YCENTER(ctr) + wy - AP_CYC(ctr)
-	    AP_XSHIFT(ctr) = AP_XCENTER(ctr) - wx
-	    AP_YSHIFT(ctr) = AP_YCENTER(ctr) - wy
+	    switch (AP_CENTERFUNCTION(ctr)) {
 
-	case AP_OFILT1D:
+	    case AP_CENTROID1D:
+		if (AP_CTHRESHOLD(ctr) <= 0.0) {
+	            fier = ap_mctr1d (Memr[AP_CTRPIX(ctr)], AP_CNX(ctr),
+		        AP_CNY(ctr), AP_EPADU(nse), AP_XCENTER(ctr),
+			AP_YCENTER(ctr), AP_XERR(ctr), AP_YERR(ctr))
+		    if (IS_INDEFR (AP_XERR(ctr)))
+			AP_XCENTER(ctr) = AP_CXC(ctr)
+		    if (IS_INDEFR (AP_YERR(ctr)))
+			AP_YCENTER(ctr) = AP_CYC(ctr)
+		} else {
+	            fier = ap_ctr1d (Memr[AP_CTRPIX(ctr)], AP_CNX(ctr),
+		        AP_CNY(ctr), AP_EPADU(nse), AP_XCENTER(ctr),
+			AP_YCENTER(ctr), AP_XERR(ctr), AP_YERR(ctr))
+		    if (IS_INDEFR (AP_XERR(ctr)))
+			AP_XCENTER(ctr) = AP_CXC(ctr)
+		    if (IS_INDEFR (AP_YERR(ctr)))
+			AP_YCENTER(ctr) = AP_CYC(ctr)
+		}
 
-	    # Get the centering buffer of pixels.
-	    ier = apctrbuf (ap, im, wx, wy)
-	    if (ier == AP_CTR_NOAREA) {
-	        AP_XCENTER(ctr) = wx
-	    	AP_YCENTER(ctr) = wy
-	    	AP_XSHIFT(ctr) = 0.0
-	    	AP_YSHIFT(ctr) = 0.0
-	    	AP_XERR(ctr) = INDEFR
-	    	AP_YERR(ctr) = INDEFR
-	        return (ier)
+	    case AP_GAUSS1D:
+
+	        fier = ap_gctr1d (Memr[AP_CTRPIX(ctr)], AP_CNX(ctr),
+		    AP_CNY(ctr), CONVERT * AP_FWHMPSF(ap) * AP_SCALE(ap),
+		    AP_CMAXITER(ctr), AP_XCENTER(ctr), AP_YCENTER(ctr),
+		    AP_XERR(ctr), AP_YERR(ctr))
+
+	    case AP_OFILT1D:
+
+	        fier = ap_lgctr1d (Memr[AP_CTRPIX(ctr)], AP_CNX(ctr),
+		    AP_CNY(ctr), AP_CXC(ctr), AP_CYC(ctr), CONVERT *
+		    AP_FWHMPSF(ap) * AP_SCALE(ap), AP_CMAXITER(ctr),
+		    AP_EPADU(nse), AP_SKYSIGMA(nse), AP_XCENTER(ctr),
+		    AP_YCENTER(ctr), AP_XERR(ctr), AP_YERR(ctr))
+
+	    default:
+		# do nothing gracefully
 	    }
 
-	    # Clean the subraster.
-	    if (AP_CLEAN(ctr) == YES)
-	        call apclean (ap, Memr[AP_CTRPIX(ctr)], AP_CNX(ctr),
-		    AP_CNY(ctr), AP_CXC(ctr), AP_CYC(ctr))
-
-	    # Apply threshold and check for positive or negative features.
-	    if (AP_POSITIVE(ap) == YES) {
-		call apsetr (ap, CDATALIMIT, datamin)
-		call asubkr (Memr[AP_CTRPIX(ctr)], datamin + AP_CTHRESHOLD(nse),
-		    Memr[AP_CTRPIX(ctr)], AP_CNX(ctr) * AP_CNY(ctr))
-		call amaxkr (Memr[AP_CTRPIX(ctr)], 0.0,
-		    Memr[AP_CTRPIX(ctr)], AP_CNX(ctr) * AP_CNY(ctr))
-	    } else {
-		call apsetr (ap, CDATALIMIT, datamax)
-		call anegr (Memr[AP_CTRPIX(ctr)], Memr[AP_CTRPIX(ctr)],
-		    AP_CNX(ctr) * AP_CNY(ctr))
-		call aaddkr (Memr[AP_CTRPIX(ctr)], datamax - AP_CTHRESHOLD(nse),
-		    Memr[AP_CTRPIX(ctr)], AP_CNX(ctr) * AP_CNY(ctr))
-		call amaxkr (Memr[AP_CTRPIX(ctr)], 0.0,
-		    Memr[AP_CTRPIX(ctr)], AP_CNX(ctr) * AP_CNY(ctr))
-	    }
-
-	    # Test the signal to noise ratio.
-	    if (ap_csnratio (ap, Memr[AP_CTRPIX(ctr)], AP_CNX(ctr),
-	        AP_CNY(ctr), 0.0) < AP_MINSNRATIO(ctr))
-		lowsnr = YES
-	    else
-		lowsnr = NO
-
-	    # Compute the new centers.
-	    fier = ap_lgctr1d (Memr[AP_CTRPIX(ctr)], AP_CNX(ctr), AP_CNY(ctr),
-		AP_CXC(ctr), AP_CYC(ctr), CONVERT * AP_FWHMPSF(ap) *
-		AP_SCALE(ap), AP_CMAXITER(ctr), AP_SKYSIGMA(nse),
-		AP_XCENTER(ctr), AP_YCENTER(ctr), AP_XERR(ctr), AP_YERR(ctr))
-	    AP_XCENTER(ctr) = AP_XCENTER(ctr) + wx - AP_CXC(ctr)
-	    AP_YCENTER(ctr) = AP_YCENTER(ctr) + wy - AP_CYC(ctr)
+	    # Confine the next x center to the data box.
+	    AP_XCENTER(ctr) = max (0.5, min (AP_CNX(ctr) + 0.5,
+	        AP_XCENTER(ctr)))
+	    xshift = AP_XCENTER(ctr) - AP_CXC(ctr)
+	    AP_XCENTER(ctr) = xshift + owx
 	    AP_XSHIFT(ctr) = AP_XCENTER(ctr) - wx
+
+	    # Confine the next y center to the data box.
+	    AP_YCENTER(ctr) = max (0.5, min (AP_CNY(ctr) + 0.5,
+	        AP_YCENTER(ctr)))
+	    yshift = AP_YCENTER(ctr) - AP_CYC(ctr)
+	    AP_YCENTER(ctr) = yshift + owy
 	    AP_YSHIFT(ctr) = AP_YCENTER(ctr) - wy
 
-	default:
+	    # Setup for next iteration.
+	    niter = niter + 1
+	    owx = AP_XCENTER(ctr)
+	    owy = AP_YCENTER(ctr)
 
-	    # do nothing gracefully
-        }
+	} until ((fier != AP_OK && fier != AP_CTR_NOCONVERGE) ||
+	    (niter >= AP_CMAXITER(ctr)) || (abs (xshift) < 1.0 &&
+	    abs (yshift) < 1.0))
 
 	# Return appropriate error code.
-	if (ier == AP_CTR_BADDATA) {
+	if (fier != AP_OK) {
+	    AP_XCENTER(ctr) = wx
+	    AP_YCENTER(ctr) = wy
+	    AP_XSHIFT(ctr) = 0.0
+	    AP_YSHIFT(ctr) = 0.0
+	    AP_XERR(ctr) = INDEFR
+	    AP_YERR(ctr) = INDEFR
+	    return (fier)
+	} else if (ier == AP_CTR_BADDATA) {
 	    return (AP_CTR_BADDATA)
-	} else if (fier != AP_OK) {
-	    if (fier == AP_CTR_NTOO_SMALL) {
-	        AP_XCENTER(ctr) = wx
-	        AP_YCENTER(ctr) = wy
-	        AP_XSHIFT(ctr) = 0.0
-	        AP_YSHIFT(ctr) = 0.0
-	        AP_XERR(ctr) = INDEFR
-	        AP_YERR(ctr) = INDEFR
-	        return (AP_CTR_NTOO_SMALL)
-	    } else
-		return (fier)
 	} else if (lowsnr == YES) {
 	    return (AP_CTR_LOWSNRATIO)
 	} else if (abs (AP_XSHIFT(ctr)) > (AP_MAXSHIFT(ctr) * AP_SCALE(ap))) {
@@ -272,6 +206,7 @@ begin
 	    return (AP_CTR_BADSHIFT)
 	} else if (ier == AP_CTR_OUTOFBOUNDS) {
 	    return (AP_CTR_OUTOFBOUNDS)
-	} else
+	} else {
 	    return (AP_OK)
+	}
 end

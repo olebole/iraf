@@ -3,6 +3,7 @@
 include	<ctype.h>
 include	<imhdr.h>
 include	<imio.h>
+include	<math.h>
 include	"mwcs.h"
 include	"imwcs.h"
 
@@ -20,7 +21,7 @@ int	ndim			#I system dimension
 double	theta
 char	ctype[8]
 bool	have_ltm, have_ltv, have_wattr
-int	axes[2], axis, npts, ch, ip, decax, ax1, ax2, i, j
+int	axes[2], axis, npts, ch, ip, raax, decax, ax1, ax2, i, j
 pointer	sp, r, o_r, cd, ltm, cp, rp, bufp, pv, wv, o_cd, o_ltm
 
 pointer	iw_gbigfits(), iw_findcard()
@@ -37,6 +38,7 @@ begin
 	call salloc (o_cd, ndim*ndim, TY_DOUBLE)
 	call salloc (o_ltm, ndim*ndim, TY_DOUBLE)
 
+	raax = 1
 	decax = 2
 
 	# Set any nonlinear functions on the axes.
@@ -97,6 +99,8 @@ samperr_		call eprintf (
 		# by CTYPEi values such as, e.g., "RA---TAN" and "DEC--TAN"
 		# for the TAN projection.
 
+		raax = axis
+
 		# Locate the DEC axis.
 		decax = 0
 		do j = 1, ndim {
@@ -126,10 +130,17 @@ samperr_		call eprintf (
 		axes[1] = axis
 		axes[2] = decax
 		call mw_swtype (mw, axes, 2, ctype[ip],
-		    "axis 1: axtype=ra, axis 2: axtype=dec")
+		    "axis 1: axtype=ra axis 2: axtype=dec")
 
 	    } else if (strncmp (ctype, "dec-", 4) == 0) {
 		;   # This case is handled when RA-- is seen.
+
+	    } else if (strncmp (ctype, "multispec", 8) == 0) {
+		# Multispec format image.  Axis 1,2 are coupled.
+		if (axis == 1) {
+		    axes[1] = 1;  axes[2] = 2
+		    call mw_swtype (mw, axes, 2, "multispec", "")
+		}
 
 	    } else {
 		# Since we have to be able to read any FITS header, we have
@@ -145,22 +156,27 @@ samperr_		call eprintf (
 	# CD matrix was input, the CROTA/CDELT representation was input,
 	# or nothing was input, in which case we have the identity matrix.
 
-	if (iw_findcard (iw, TY_CD, ERR, 0) == NULL)
-	    if (iw_findcard (iw, TY_CDELT, ERR, 0) == NULL)
-		call mw_mkidmd (IW_CD(iw,1,1), ndim)
-	    else {
-		theta = IW_CROTA(iw)
-		ax2 = decax
-		ax1 = 3 - decax
-		IW_CD(iw,ax1,ax1) = IW_CDELT(iw,ax1) * cos(theta)
-		IW_CD(iw,ax1,ax2) = abs(IW_CDELT(iw,ax2)) * sin(theta)
-		IW_CD(iw,ax2,ax1) = -abs(IW_CDELT(iw,ax1)) * sin(theta)
-		IW_CD(iw,ax2,ax2) = IW_CDELT(iw,ax2) * cos(theta)
-		if (IW_CDELT(iw,ax1) < 0)
-		    IW_CD(iw,ax1,ax2) = -IW_CD(iw,ax1,ax2)
-		if (IW_CDELT(iw,ax2) < 0)
-		    IW_CD(iw,ax2,ax1) = -IW_CD(iw,ax2,ax1)
+	if (iw_findcard (iw, TY_CD, ERR, 0) == NULL) {
+	    # Initialize CD matrix to the identity matrix.  Can't use mw_mkidm
+	    # here as IW_CD is not dimensioned ndim.
+
+	    do j = 1, ndim {
+		do i = 1, ndim
+		    IW_CD(iw,i,j) = 0.0
+		IW_CD(iw,j,j) = 1.0
 	    }
+
+	    # Convert CDELT/CROTA to CD matrix.
+	    if (iw_findcard (iw, TY_CDELT, ERR, 0) != NULL) {
+		theta = DEGTORAD(IW_CROTA(iw))
+		ax1 = raax
+		ax2 = decax
+		IW_CD(iw,ax1,ax1) =  IW_CDELT(iw,ax1) * cos(theta)
+		IW_CD(iw,ax1,ax2) =  IW_CDELT(iw,ax1) * sin(theta)
+		IW_CD(iw,ax2,ax1) = -IW_CDELT(iw,ax2) * sin(theta)
+		IW_CD(iw,ax2,ax2) =  IW_CDELT(iw,ax2) * cos(theta)
+	    }
+	}
 
 	# Extract an NDIM submatrix from LTM and CD.
 	do j = 1, ndim
@@ -188,9 +204,12 @@ samperr_		call eprintf (
 
 	# Compute R = inv(LTM) * (R' - LTV).
 	if (have_ltm || have_ltv) {
-	    call mw_invertd (Memd[o_ltm], Memd[ltm], ndim)
 	    call asubd (IW_CRPIX(iw,1), IW_LTV(iw,1), Memd[o_r], ndim)
-	    call mw_vmuld (Memd[ltm], Memd[o_r], Memd[r], ndim)
+	    if (have_ltm) {
+		call mw_invertd (Memd[o_ltm], Memd[ltm], ndim)
+		call mw_vmuld (Memd[ltm], Memd[o_r], Memd[r], ndim)
+	    } else
+		call amovd (Memd[o_r], Memd[r], ndim)
 	} else
 	    call amovd (IW_CRPIX(iw,1), Memd[r], ndim)
 

@@ -16,6 +16,14 @@ begin
 	    return (GT_LINE(gt))
 	case GTTRANSPOSE:
 	    return (GT_TRANSPOSE(gt))
+	case GTSYSID:
+	    return (GT_SYSID(gt))
+	case GTCOLOR:
+	    return (GT_COLOR(gt))
+	case GTXFLIP:
+	    return (GT_XFLIP(gt))
+	case GTYFLIP:
+	    return (GT_YFLIP(gt))
 	}
 end
 
@@ -30,13 +38,25 @@ int	param			# Parameter to set
 begin
 	switch (param) {
 	case GTXMIN:
-	    return (GT_XMIN(gt))
+	    if (GT_XFLIP(gt) == NO)
+		return (GT_XMIN(gt))
+	    else
+		return (GT_XMAX(gt))
 	case GTXMAX:
-	    return (GT_XMAX(gt))
+	    if (GT_XFLIP(gt) == NO)
+		return (GT_XMAX(gt))
+	    else
+		return (GT_XMIN(gt))
 	case GTYMIN:
-	    return (GT_YMIN(gt))
+	    if (GT_YFLIP(gt) == NO)
+		return (GT_YMIN(gt))
+	    else
+		return (GT_YMAX(gt))
 	case GTYMAX:
-	    return (GT_YMAX(gt))
+	    if (GT_YFLIP(gt) == NO)
+		return (GT_YMAX(gt))
+	    else
+		return (GT_YMIN(gt))
 	case GTXSIZE:
 	    return (GT_XSIZE(gt))
 	case GTYSIZE:
@@ -101,6 +121,8 @@ begin
 	        call strcpy ("mark", str, sz_str)
 	    case 2:
 	        call strcpy ("line", str, sz_str)
+	    case 3:
+		call strcpy ("histogram", str, sz_str)
 	    }
 	case GTMARK:
 	    switch (GT_MARK(gt)) {

@@ -3,13 +3,13 @@ include "../lib/polyphot.h"
 
 define	HELPFILE	"apphot$polyphot/ipolyphot.key"
 
-# AP_YRADSETUP -- Procedure to set up phot interactively using a radial profile
+# AP_YRADSETUP - Set up polyphot interactively using a radial profile
 # plot of a bright star.
 
 int procedure ap_yradsetup (ap, im, id, gd, out, stid, x, y, max_nvertices)
 
 pointer	ap			# pointer to apphot structure
-pointer	im			# pointero to the IRAF image
+pointer	im			# pointer to the IRAF image
 pointer	id			# pointer to the image display
 pointer	gd			# pointer to graphics stream
 int	out			# output file descriptor
@@ -26,7 +26,7 @@ real	xcenter, ycenter, xc, yc, rval
 int	ap_ycenter(), clgcur(), ap_showplot()
 int	apfitsky(),  ap_yfit(), apstati(), ap_ymkpoly()
 real	apstatr(), ap_cfwhmpsf(), ap_ccapert(), ap_cannulus(), ap_csigma()
-real	ap_cdannulus(), ap_ccthresh(), ap_cdatamin(), ap_cdatamax()
+real	ap_cdannulus(), ap_cdatamin(), ap_cdatamax()
 real	ap_crgrow(), ap_crclean(), ap_crclip()
 
 begin
@@ -34,6 +34,12 @@ begin
 	nvertices = ap_ymkpoly (ap, id, x, y, max_nvertices)
 	if (nvertices <= 0)
 	    return (nvertices)
+	if (id != NULL) {
+	    if (gd == id)
+		call gflush (id)
+	    else
+		call gframe (id)
+	}
 
 	# Store the viewport and window coordinates.
 	call ggview (gd, u1, u2, v1, v2)
@@ -58,7 +64,8 @@ begin
 
         call printf (
 	"Waiting for setup menu command (?=help, v=default setup, q=quit):\n")
-	while (clgcur ("cursor", xc, yc, wcs, key, Memc[cmd], SZ_LINE) != EOF) {
+	while (clgcur ("gcommands", xc, yc, wcs, key, Memc[cmd],
+	    SZ_LINE) != EOF) {
 
 	switch (key) {
 
@@ -69,7 +76,7 @@ begin
 	    case 'f':
 		rval = ap_cfwhmpsf (ap, gd, out, stid, rmin, rmax, imin, imax)
 	    case 'h':
-		rval = ap_ccthresh (ap, gd, out, stid, rmin, rmax, imin, imax)
+		#rval = ap_ccthresh (ap, gd, out, stid, rmin, rmax, imin, imax)
 	    case 'c':
 		rval = ap_ccapert (ap, gd, out, stid, rmin, rmax, imin, imax)
 	    case 's':
@@ -115,8 +122,8 @@ begin
 
 	# Print the answer.
 	cier = ap_ycenter (ap, im, xcenter, ycenter, x, y, nvertices + 1)
-	sier = apfitsky (ap, im, apstatr (ap, PYCX), apstatr (ap, PYCY), NULL,
-	    gd)
+	sier = apfitsky (ap, im, apstatr (ap, PYCX), apstatr (ap, PYCY),
+	    NULL, gd)
 	pier = ap_yfit (ap, im, x, y, nvertices + 1, apstatr (ap, SKY_MODE),
 	    apstatr (ap, SKY_SIGMA), apstati (ap, NSKY))
 	call ap_qyprint (ap, cier, sier, pier)

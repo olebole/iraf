@@ -13,11 +13,13 @@ begin
 	# Check that the user truly wants to proceed.
 	s1 = ""
 	print ("")
-	print ("WARNING: APTEST INITIALIZES THE APPHOT TASK PARAMETERS")
+	print ("APTEST INITIALIZES THE APPHOT TASK PARAMETERS")
 	print ("TYPE q or Q TO QUIT, ANY OTHER KEY TO PROCEED")
 	if (scan (s1) != EOF) {
-	    if (s1 == "q" || s1 == "Q")
-		error (0, "TERMINATING THE APTEST TASK")
+	    if (s1 == "q" || s1 == "Q") {
+		print ("TERMINATING THE APTEST TASK")
+		bye
+	    }
 	}
 	print ("")
 
@@ -50,14 +52,17 @@ begin
 
 	# Initialize the APPHOT package.
 	print ("INITIALIZE THE APPHOT PACKAGE", >> aplog)
-	print ("INITIALIZE THE APPHOT PACKAGE")
 	print ("", >> aplog)
 	print ("")
-	unlearn ("apselect")
+	print ("INITIALIZE THE APPHOT PACKAGE")
+	print ("")
+
+	unlearn ("txdump")
 	unlearn ("center")
 	unlearn ("centerpars")
 	unlearn ("daofind")
 	unlearn ("datapars")
+	unlearn ("findpars")
 	unlearn ("fitpsf")
 	unlearn ("fitsky")
 	unlearn ("fitskypars")
@@ -77,8 +82,8 @@ begin
 	print ("", >> aplog)
 
 	datapars.fwhmpsf=2.354820
-	datapars.threshold=30.0
 	datapars.sigma=10.0
+	findpars.threshold=3.0
 
 	apcoords = im // ".coo.1"
 	daofind (im, output=apcoords, interactive-, verify-)
@@ -194,11 +199,12 @@ begin
 
 	# Clean up.
 	delete (apcoords, ver-, >& "dev$null")
-	unlearn ("apselect")
+	unlearn ("txdump")
 	unlearn ("center")
 	unlearn ("centerpars")
 	unlearn ("daofind")
 	unlearn ("datapars")
+	unlearn ("findpars")
 	unlearn ("fitpsf")
 	unlearn ("fitsky")
 	unlearn ("fitskypars")

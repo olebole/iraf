@@ -11,10 +11,9 @@
 #include <signal.h>
 
 #define	mask(s)	(1<<((s)-1))
-#define	setvec(vec, a) \
-	vec.sv_handler = a; vec.sv_mask = vec.sv_onstack = 0
 
 static int ringring;
+static void napmsx();
 
 
 /* ZWMSEC -- Suspend task execution (sleep) for the specified number
@@ -23,15 +22,10 @@ static int ringring;
 ZWMSEC (msec)
 XINT	*msec;
 {
-	struct	itimerval itv, oitv;
+	struct itimerval itv, oitv;
 	register struct itimerval *itp = &itv;
-	struct	sigvec vec, ovec;
-#ifdef SUNOS4
-	void	napmsx();
-#else
-	int	napmsx();
-#endif
-	int	omask;
+	SIGFUNC	sv_handler;
+	int omask;
 
 	if (*msec == 0)
 	    return;
@@ -41,8 +35,9 @@ XINT	*msec;
 	if (setitimer (ITIMER_REAL, itp, &oitv) < 0)
 	    return;
 
-	setvec (ovec, SIG_DFL);
+#ifndef SOLARIS
 	omask = sigblock(0);
+#endif
 
 	itp->it_value.tv_usec = (*msec % 1000) * 1000;
 	itp->it_value.tv_sec  = (*msec / 1000);
@@ -62,24 +57,23 @@ XINT	*msec;
 	    }
 	}
 
-	setvec (vec, napmsx);
-	(void) sigvec (SIGALRM, &vec, &ovec);
 	ringring = 0;
+	sv_handler = signal (SIGALRM, (SIGFUNC)napmsx);
 	(void) setitimer (ITIMER_REAL, itp, (struct itimerval *)0);
 
 	while (!ringring)
+#ifdef SOLARIS
+	    sigpause (SIGALRM);
+#else
 	    sigpause (omask &~ mask(SIGALRM));
+#endif
 
-	(void) sigvec (SIGALRM, &ovec, (struct sigvec *)0);
+	signal (SIGALRM, sv_handler);
 	(void) setitimer (ITIMER_REAL, &oitv, (struct itimerval *)0);
 }
 
 
-#ifdef SUNOS4
 static void
-#else
-static int
-#endif
 napmsx()
 {
 	ringring = 1;

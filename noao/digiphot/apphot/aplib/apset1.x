@@ -69,6 +69,10 @@ begin
 	    call strcpy (str, AP_FILTER(ap), SZ_FNAME)
 	case FILTERID:
 	    call strcpy (str, AP_FILTERID(ap), SZ_FNAME)
+	case OBSTIME:
+	    call strcpy (str, AP_OBSTIME(ap), SZ_FNAME)
+	case OTIME:
+	    call strcpy (str, AP_OTIME(ap), SZ_FNAME)
 	default:
 	    call error (0, "APSETS: Unknown apphot parameter")
 	}
@@ -177,8 +181,14 @@ begin
 	    AP_SCALE(ap) =  rval
 	case K1:
 	    AP_K1(sky) = rval
-	case K2:
-	    AP_K2(sky) = rval
+	case SLOREJECT:
+	    AP_SLOREJECT(sky) = rval
+	case SHIREJECT:
+	    AP_SHIREJECT(sky) = rval
+	case SLOCLIP:
+	    AP_SLOCLIP(sky) = rval
+	case SHICLIP:
+	    AP_SHICLIP(sky) = rval
 	case BINSIZE:
 	    AP_BINSIZE(sky) = rval
 	case RGROW:
@@ -187,6 +197,8 @@ begin
 	    AP_WX(ap) = rval
 	case WY:
 	    AP_WY(ap) = rval
+	case CTHRESHOLD:
+	    AP_CTHRESHOLD(cen) = rval
 	case MAXSHIFT:
 	    AP_MAXSHIFT(cen) = rval
 	case MINSNRATIO:

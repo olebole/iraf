@@ -5,11 +5,11 @@
 
 # set	echo
 
-set	MACH = `mach`		# SUNOS specific.
-#set	MACH = convex		# other systems
-set	args = ""
+# Determine platform architecture.
+set MACH = linux
 
 # Scan the argument list and concatenate all arguments.
+set args = ""
 while ("$1" != "")
     set args = "$args $1"
     shift
@@ -23,6 +23,10 @@ if (! $?IRAFARCH) then
 	else
 	    setenv IRAFARCH "native"
 	endif
+    else if ("$MACH" == "linux") then
+	setenv IRAFARCH "linux"
+    else if ("$MACH" == "ssol") then
+	setenv IRAFARCH "ssun"
     else if ("$MACH" == "sparc") then
 	setenv IRAFARCH "sparc"
     else if ("$MACH" == "i386") then

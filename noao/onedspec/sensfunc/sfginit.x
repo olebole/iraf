@@ -30,7 +30,7 @@ begin
 	j = str
 	for (i=str; Memc[i] != EOS; i=i+1) {
 	    switch (Memc[i]) {
-	    case 'a','c','e','i','r','s':
+	    case 'a','c','e','i','l','r','s':
 		Memc[j] = Memc[i]
 		j = j + 1
 	    }
@@ -41,12 +41,22 @@ begin
 	else
 	    call strcpy ("sr", GP_GRAPHS(gp,1), SF_NGRAPHS)
 
-	# Set the starting mark types.
+	# Set the starting mark types and colors.
 	GP_MARK(gp) = GM_PLUS
 	GP_MDEL(gp) = GM_CROSS
 	GP_MADD(gp) = GM_BOX
+	GP_PLCOLOR(gp) = 2
+	GP_CMARK(gp) = 1
+	GP_CDEL(gp) = 3
+	GP_CADD(gp) = 4
 	call clgstr ("marks", Memc[str], SZ_FNAME)
 	call sf_marks (gp, Memc[str])
+	call clgstr ("colors", Memc[str], SZ_FNAME)
+	call sf_colors (gp, Memc[str])
+
+	# Set flux limits
+	GP_FMIN(gp) = INDEF
+	GP_FMAX(gp) = INDEF
 
 	# Open the graphics device.
 	call clgstr ("device", Memc[str], SZ_FNAME)
@@ -72,8 +82,8 @@ begin
 	do i = 1, SF_NGRAPHS {
 	    call mfree (GP_IMAGES(gp,i), TY_CHAR)
 	    call mfree (GP_SKYS(gp,i), TY_CHAR)
-	    if (GP_IMIO(gp,i) != NULL)
-		call imunmap (GP_IMIO(gp,i))
+	    if (GP_SHDR(gp,i) != NULL)
+		call shdr_close (GP_SHDR(gp,i))
 	}
 	call mfree (gp, TY_STRUCT)
 end

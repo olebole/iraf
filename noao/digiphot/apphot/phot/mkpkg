@@ -1,4 +1,4 @@
-# PHOT task
+# PHOT,QPHOT tasks
 
 $checkout libpkg.a ".."
 $update libpkg.a
@@ -6,22 +6,21 @@ $checkin libpkg.a ".."
 $exit
 
 libpkg.a:
+	# general photometry and  PHOT task routines
+
 	apbphot.x	<fset.h>		../lib/apphot.h        \
 			../lib/center.h		../lib/display.h       \
 			../lib/fitsky.h
 	apcomags.x	<mach.h>		../lib/noise.h
 	apgppars.x	../lib/center.h		../lib/fitsky.h        \
 			../lib/phot.h		../lib/display.h       \
-			../lib/noise.h		../lib/apphot.h
+			../lib/noise.h
 	apmag.x		<mach.h>		../lib/apphotdef.h     \
 			../lib/noisedef.h	../lib/photdef.h       \
 			../lib/phot.h
 	apmagbuf.x	<imhdr.h>		../lib/apphotdef.h     \
 			../lib/photdef.h	../lib/phot.h
-	apmagcolon.x	../lib/display.h	../lib/phot.h
 	apmeasure.x
-	apmshow.x	../lib/display.h
-	apmpshow.x	../lib/display.h	../lib/phot.h
 	apppars.x	../lib/display.h
 	appconfirm.x	../lib/apphot.h		../lib/noise.h         \
 			../lib/center.h
@@ -43,7 +42,7 @@ libpkg.a:
 	appmag.x	../lib/apphot.h		../lib/apphotdef.h     \
 			../lib/fitsky.h		../lib/center.h        \
 			../lib/photdef.h	../lib/phot.h
-	appshow.x	../lib/display.h
+	appshow.x	../lib/display.h	../lib/phot.h
 	apradsetup.x	../lib/fitsky.h		../lib/center.h        \
 			../lib/display.h	../lib/apphot.h
 	apremag.x	<mach.h>		../lib/apphotdef.h     \
@@ -51,5 +50,30 @@ libpkg.a:
 			../lib/photdef.h	../lib/phot.h
 	t_phot.x	<fset.h>		<gset.h>	       \
 			<lexnum.h>		../lib/apphot.h        \
+			../lib/fitsky.h
+
+	# QPHOT TASK SPECIFIC ROUTINES
+
+	apgqppars.x	"../lib/apphot.h"	"../lib/display.h"	\
+			"../lib/noise.h"	"../lib/center.h"	\
+			"../lib/fitsky.h"	"../lib/phot.h"
+	apqppars.x	"../lib/apphot.h"	"../lib/display.h"	\
+			"../lib/noise.h"	"../lib/center.h"	\
+			"../lib/fitsky.h"	"../lib/phot.h"
+	apqphot.x	<ctype.h>		<gset.h>		\
+			"../lib/apphot.h"	"../lib/display.h"	\
+			"../lib/center.h"	"../lib/fitsky.h"	\
+			"../lib/phot.h"
+	apqradsetup.x "../lib/apphot.h"		"../lib/display.h"	\
+			"../lib/center.h"	"../lib/fitsky.h"
+	apqcolon.x	"../lib/apphot.h"	"../lib/display.h"	\
+			"../lib/noise.h"	"../lib/center.h"	\
+			"../lib/fitsky.h"	"../lib/phot.h"         \
+			<error.h>
+	apqshow.x	"../lib/apphot.h"	"../lib/display.h"	\
+			"../lib/noise.h"	"../lib/center.h"	\
+			"../lib/fitsky.h"	"../lib/phot.h"
+	t_qphot.x	<fset.h>		<gset.h>		\
+			<lexnum.h>		../lib/apphot.h   	\
 			../lib/fitsky.h
 	;

@@ -32,7 +32,7 @@ begin
 		next
 	    Memd[x+nfit] = PIX(id,i)
 	    Memd[y+nfit] = USER(id,i)
-	    Memd[wts+nfit] = 1.
+	    Memd[wts+nfit] = max (1D0, WTS(id,i))
 	    nfit = nfit + 1
 	}
 
@@ -40,9 +40,6 @@ begin
 	    if (interactive == YES) {
 		call salloc (str, SZ_LINE, TY_CHAR)
 		gt1 = gt_init()
-#		call gt_copy (ID_GT(id), gt1)
-#	        call icg_f1d (ID_GP(id), gt1, ID_CV(id), 5, Memd[x], Memd[y],
-#		    Memd[wts], nfit, PIXDATA(id,1), IMDATA(id,1), ID_NPTS(id))
 		call icg_fitd (ID_IC(id), ID_GP(id), "cursor", gt1, ID_CV(id),
 		    Memd[x], Memd[y], Memd[wts], nfit)
 		call gt_free (gt1)

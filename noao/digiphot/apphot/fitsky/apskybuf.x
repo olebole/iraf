@@ -29,7 +29,8 @@ begin
 	    return (AP_NOSKYAREA)
 
 	# Allocate space for sky pixels.
-	lenbuf = PI * (2.0 * annulus + dannulus + 1.0) * dannulus
+	lenbuf = PI * (2.0 * annulus + dannulus + 1.0) * (dannulus + 0.5)
+
 	if (lenbuf != AP_LENSKYBUF(sky)) {
 	    if (AP_SKYPIX(sky) != NULL)
 		call mfree (AP_SKYPIX(sky), TY_REAL)
@@ -40,6 +41,9 @@ begin
 	    if (AP_INDEX(sky) != NULL)
 		call mfree (AP_INDEX(sky), TY_INT)
 	    call malloc (AP_INDEX(sky), lenbuf, TY_INT)
+	    if (AP_SWGT(sky) != NULL)
+		call mfree (AP_SWGT(sky), TY_REAL)
+	    call malloc (AP_SWGT(sky), lenbuf, TY_REAL)
 	    AP_LENSKYBUF(sky) = lenbuf
 	}
 
@@ -64,9 +68,12 @@ begin
 		AP_SNY(sky), AP_NBADSKYPIX(sky))
 	}
 
-	if (AP_NSKYPIX(sky) <= 0)
-	    return (AP_SKY_OUTOFBOUNDS)
-	else
+	if (AP_NSKYPIX(sky) <= 0) {
+	    if (AP_NBADSKYPIX(sky) <= 0)
+	        return (AP_SKY_OUTOFBOUNDS)
+	    else
+	        return (AP_NSKY_TOO_SMALL)
+	} else
 	    return (AP_OK)
 end
 
@@ -88,6 +95,8 @@ int	i, j, ncols, nlines, c1, c2, l1, l2, nskypix
 pointer	buf
 real	xc1, xc2, xl1, xl2, rin2, rout2, rj2, r2
 pointer	imgs2r()
+
+#pointer	tbuf
 
 begin
 	if (rout <= rin)
@@ -117,6 +126,7 @@ begin
 	rin2 = rin ** 2
 	rout2 = rout ** 2
 	nskypix = 0
+
 	do j = l1, l2 {
 	    buf = imgs2r (im, c1, c2, j, j)
 	    rj2 = (wy - j) ** 2
@@ -129,6 +139,22 @@ begin
 		}
 	    }
 	}
+
+	#buf = imgs2r (im, c1, c2, l1, l2)
+	#tbuf = buf
+	#do j = l1,  l2 {
+	    #rj2 = (wy - j) ** 2
+	    #do i = c1, c2 {
+	        #r2 = (wx - i) ** 2 + rj2
+		#if (r2 > rin2 && r2 <= rout2) {
+		    #skypix[nskypix+1] = Memr[tbuf+i-c1]
+		    #coords[nskypix+1] = (i - c1 + 1) + nx * (j - l1)
+		    #nskypix = nskypix + 1
+		#}
+	    #}
+	    #tbuf = tbuf + nx
+	#}
+
 	return (nskypix)
 end
 
@@ -154,6 +180,8 @@ pointer	buf
 real	xc1, xc2, xl1, xl2, rin2, rout2, rj2, r2, pixval
 pointer	imgs2r()
 
+#pointer	tbuf
+
 begin
 	if (rout <= rin)
 	    return (0)
@@ -178,11 +206,12 @@ begin
 	xc = wx - c1 + 1
 	yc = wy - l1 + 1
 
-	# Fetch the sky pixels.
 	rin2 = rin ** 2
 	rout2 = rout ** 2
 	nskypix = 0
 	nbad = 0
+
+	# Fetch the sky pixels.
 	do j = l1, l2 {
 	    buf = imgs2r (im, c1, c2, j, j)
 	    rj2 = (wy - j) ** 2
@@ -200,6 +229,26 @@ begin
 		}
 	    }
 	}
+
+	#buf = imgs2r (im, c1, c2, l1, l2)
+	#tbuf = buf
+	#do j = l1, l2 {
+	    #rj2 = (wy - j) ** 2
+	    #do i = c1, c2 {
+	        #r2 = (wx - i) ** 2 + rj2
+		#if (r2 > rin2 && r2 <= rout2) {
+		    #pixval = Memr[tbuf+i-c1] 
+		    #if (pixval < datamin || pixval > datamax)
+		        #nbad = nbad + 1
+		    #else {
+		        #skypix[nskypix+1] = pixval
+		        #coords[nskypix+1] = (i - c1 + 1) + nx * (j - l1)
+		        #nskypix = nskypix + 1
+		    #}
+		#}
+	    #}
+	    #tbuf = tbuf + nx
+	#}
 
 	return (nskypix)
 end

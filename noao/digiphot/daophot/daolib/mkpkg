@@ -1,0 +1,43 @@
+# DAOPHOT Library Tools
+
+$checkout libpkg.a ".."
+$update libpkg.a
+$checkin libpkg.a ".."
+$exit
+
+libpkg.a:
+	dpairmass.x	<imhdr.h>		../lib/daophotdef.h
+	dpfilter.x	<imhdr.h>		../lib/daophotdef.h
+	dpfree.x	../lib/daophotdef.h	../lib/apseldef.h          \
+			../lib/allstardef.h
+	dpgetapert.x 	../lib/apseldef.h	../lib/daophotdef.h        \
+			<tbset.h>		../../lib/ptkeysdef.h
+	dpgppars.x 	<ctotok.h>              ../lib/daophotdef.h
+	dpppars.x 	../lib/daophotdef.h
+	dpinit.x	../lib/daophotdef.h	../lib/psfdef.h            \
+			../lib/apseldef.h	../lib/nstardef.h          \
+			../lib/allstardef.h
+	dpreadpsf.x	<imhdr.h>		../lib/daophotdef.h        \
+			<error.h>
+	dpset.x		../lib/daophotdef.h	../lib/apseldef.h 
+	dpstat.x	../lib/daophotdef.h	../lib/apseldef.h
+	dpdate.x	<time.h>
+	dpgsubrast.x 	<imhdr.h>
+	dpnames.x
+	dpotime.x	<imhdr.h>		../lib/daophotdef.h
+	dppadu.x	<imhdr.h>		../lib/daophotdef.h
+	dprdnoise.x	<imhdr.h>		../lib/daophotdef.h
+	dprmwhite.x	<ctype.h>
+	dpverify.x	../lib/daophotdef.h
+	dpwparam.x
+	dpapheader.x
+	bicubic.x
+	daoran.x
+	erf.x
+	invers.f
+	mvmul.x
+	quick.f
+	pctile.f
+	profile.x	../lib/daophotdef.h
+	usepsf.x	../lib/daophotdef.h
+	;

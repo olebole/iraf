@@ -1,9 +1,9 @@
 include	<error.h>
 include	<imhdr.h>
 include	<math.h>
+include	<mach.h>
 
-define	MAX_HDR		20000			# Maximum user header
-define	COMMENT		"COMMENT   "		# Comment key
+define	LEN_UA		20000			# Maximum user header
 define	LEN_COMMENT	70			# Maximum comment length
 
 # Object data structure
@@ -42,12 +42,12 @@ real	m0				# Magnitude zero point
 long	seed				# Random number seed
 
 int	nobjects, save
-real	x, y, z, r, ar, pa
+real	x, y, z, r, ar, pa, dmin, dmax
 
-bool	new, bsave
+bool	new, bsave, cmmts, fcmmts
 int	i, j, k, l, nx, ny, nlines, c1, c2, c3, c4, l1, l2, l3, l4, irbuf, ipbuf
-pointer	sp, input, output, fname, star, comment, rbuf, pbuf
-pointer	in, out, buf, lines, newlines, obj, ptr1, ptr2
+pointer	sp, input, output, fname, type, star, comment, rbuf, pbuf
+pointer	in, out, buf, obuf, lines, newlines, obj, ptr1, ptr2
 pointer	mko, mkt
 
 long	clgetl(), clktime()
@@ -69,6 +69,7 @@ begin
 	call salloc (input, SZ_FNAME, TY_CHAR)
 	call salloc (output, SZ_FNAME, TY_CHAR)
 	call salloc (fname, SZ_FNAME, TY_CHAR)
+	call salloc (type, SZ_FNAME, TY_CHAR)
 	call salloc (star, SZ_FNAME, TY_CHAR)
 	call salloc (comment, LEN_COMMENT, TY_CHAR)
 
@@ -94,6 +95,7 @@ begin
 	exptime = clgetr ("exptime")
 	m0 = clgetr ("magzero")
 	seed = clgetl ("seed")
+	cmmts = clgetb ("comments")
 
 	background = exptime * background
 
@@ -119,18 +121,21 @@ begin
 	    # Map images.  Check for new, existing, and in-place images.
 	    if (streq (Memc[input], Memc[output])) {
 		if (imaccess (Memc[input], 0) == YES) {
-		    iferr (in = immap (Memc[input], READ_WRITE, MAX_HDR)) {
+		    iferr (out = immap (Memc[output], READ_WRITE, LEN_UA)) {
 			call erract (EA_WARN)
 			next
 		    }
-		    out = in
+		    in = out
 		    new = false
 		} else {
-		    iferr (in = immap (Memc[input], NEW_IMAGE, MAX_HDR)) {
+		    iferr (out = immap (Memc[output], NEW_IMAGE, LEN_UA)) {
 			call erract (EA_WARN)
 			next
 		    }
-		    out = in
+
+		    call clgstr ("header", Memc[comment], LEN_COMMENT)
+		    iferr (call mkh_header (out, Memc[comment], false, false))
+			call erract (EA_WARN)
 
 		    IM_NDIM(out) = 2
 		    IM_LEN(out,1) = clgeti ("ncols")
@@ -140,12 +145,12 @@ begin
 		    call imaddr (out, "exptime", exptime)
 		    call imaddr (out, "gain", gain)
 		    call imaddr (out, "rdnoise", rdnoise * gain)
-		    call mko_header (out)
 
+		    in = out
 		    new = true
 		}
 	    } else {
-		iferr (in = immap (Memc[input], READ_ONLY, MAX_HDR)) {
+		iferr (in = immap (Memc[input], READ_ONLY, LEN_UA)) {
 		    call erract (EA_WARN)
 		    next
 		}
@@ -158,6 +163,8 @@ begin
 	    }
 	    nc = IM_LEN(in,1)
 	    nl = IM_LEN(in,2)
+	    IM_MIN(out) = MAX_REAL
+	    IM_MAX(out) = -MAX_REAL
 
 	    # Read the object list.
 	    call malloc (mko, LEN_MKO, TY_STRUCT)
@@ -167,24 +174,23 @@ begin
 	    mkt = mkt_star (Memc[star])
 
 	    # Read the object list.
+	    fcmmts = false
 	    nobjects = 0
 	    while (fscan (i) != EOF) {
 		call gargr (x)
 		call gargr (y)
 		call gargr (z)
 		if (nscan() < 3) {
-		    call reset_scan ()
-		    call gargstr (Memc[comment], LEN_COMMENT)
-		    call mko_comment (out, Memc[comment])
+		    fcmmts = true
 		    next
 		}
-		call gargwrd (Memc[fname], SZ_FNAME)
+		call gargwrd (Memc[type], SZ_FNAME)
 		call gargr (r)
 		call gargr (ar)
 		call gargr (pa)
 		call gargb (bsave)
-		x = (x + xo) / distance
-		y = (y + yo) / distance
+		x = xo + x / distance
+		y = yo + y / distance
 		if (x < 1 || x > nc || y < 1 || y > nl)
 		    next
 		if (nobjects == 0) {
@@ -218,7 +224,7 @@ begin
 		if (nscan() < 7)
 		    Memi[MKO_MKT(mko)+nobjects] = mkt_star (Memc[star])
 		else {
-		    Memi[MKO_MKT(mko)+nobjects] = mkt_object (Memc[fname])
+		    Memi[MKO_MKT(mko)+nobjects] = mkt_object (Memc[type])
 		    Memr[MKO_R(mko)+nobjects] = r / distance
 		    Memr[MKO_AR(mko)+nobjects] = ar
 		    Memr[MKO_PA(mko)+nobjects] = DEGTORAD (pa)
@@ -231,27 +237,6 @@ begin
 		nobjects = nobjects + 1
 	    }
 	    call close (i)
-
-	    # Add comment history of task parameters.
-	    call strcpy ("# ", Memc[comment], LEN_COMMENT)
-	    call cnvtime (clktime (0), Memc[comment+2], LEN_COMMENT-2)
-	    call mko_comment (out, Memc[comment])
-	    call mko_comment (out, "begin\tmkobjects")
-	    call mko_comment1 (out, "background", 'r', Memc[comment])
-	    call mko_comment1 (out, "xoffset", 'r', Memc[comment])
-	    call mko_comment1 (out, "yoffset", 'r', Memc[comment])
-	    call mko_comment1 (out, "star", 's', Memc[comment])
-	    call mko_comment1 (out, "radius", 'r', Memc[comment])
-	    call mko_comment1 (out, "beta", 'r', Memc[comment])
-	    call mko_comment1 (out, "ar", 'r', Memc[comment])
-	    call mko_comment1 (out, "pa", 'r', Memc[comment])
-	    call mko_comment1 (out, "distance", 'r', Memc[comment])
-	    call mko_comment1 (out, "exptime", 'r', Memc[comment])
-	    call mko_comment1 (out, "magzero", 'r', Memc[comment])
-	    call mko_comment1 (out, "gain", 'r', Memc[comment])
-	    call mko_comment1 (out, "rdnoise", 'r', Memc[comment])
-	    call mko_comment1 (out, "poisson", 'b', Memc[comment])
-	    call mko_comment1 (out, "seed", 'i', Memc[comment])
 
 	    # If no objects are requested then do the image I/O
 	    # line by line.  Add noise if creating a new image or
@@ -266,24 +251,52 @@ begin
 
 		if (new) {
 		    do i = 1, nl {
-			ptr2 = impl2r (out, i)
+			obuf = impl2r (out, i)
 			if (background == 0.)
-			    call aclrr (Memr[ptr2], nc)
+			    call aclrr (Memr[obuf], nc)
 			else
-			    call amovkr (background, Memr[ptr2], nc)
+			    call amovkr (background, Memr[obuf], nc)
 			if (poisson)
-			    call mkpnoise (Memr[ptr2], Memr[ptr2], nc, 0., gain,
+			    call mkpnoise (Memr[obuf], Memr[obuf], nc, 0., gain,
 				pbuf, ranbuf, ipbuf, seed)
 			if (rdnoise > 0.)
-			    call mkrnoise (Memr[ptr2], nc, rdnoise,
+			    call mkrnoise (Memr[obuf], nc, rdnoise,
 				rbuf, ranbuf, irbuf, seed)
+			call alimr (Memr[obuf], nc, dmin, dmax)
+			IM_MIN(out) = min (IM_MIN(out), dmin)
+			IM_MAX(out) = max (IM_MAX(out), dmax)
 		    }
 		} else if (in != out) {
-		    do i = 1, nl
-			call amovr (Memr[imgl2r(in,i)], Memr[impl2r(out,i)],
+		    do i = 1, nl {
+			obuf = impl2r (out, i)
+			call amovr (Memr[imgl2r(in,i)], Memr[obuf],
 			    IM_LEN(in,1))
+			call alimr (Memr[obuf], nc, dmin, dmax)
+			IM_MIN(out) = min (IM_MIN(out), dmin)
+			IM_MAX(out) = max (IM_MAX(out), dmax)
+		    }
 		}
 
+		# Add comment history of task parameters.
+		if (cmmts) {
+		    call strcpy ("# ", Memc[comment], LEN_COMMENT)
+		    call cnvtime (clktime (0), Memc[comment+2], LEN_COMMENT-2)
+		    call mkh_comment (out, Memc[comment])
+		    call mkh_comment (out, "begin        mkobjects")
+		    call mkh_comment (out, Memc[comment])
+		    call mkh_comment1 (out, "background", 'r')
+		    call mkh_comment1 (out, "xoffset", 'r')
+		    call mkh_comment1 (out, "yoffset", 'r')
+		    call mkh_comment1 (out, "distance", 'r')
+		    call mkh_comment1 (out, "exptime", 'r')
+		    call mkh_comment1 (out, "magzero", 'r')
+		    call mkh_comment1 (out, "gain", 'r')
+		    call mkh_comment1 (out, "rdnoise", 'r')
+		    call mkh_comment1 (out, "poisson", 'b')
+		    call mkh_comment1 (out, "seed", 'i')
+		}
+
+		IM_LIMTIME(out) = IM_MTIME(out) + 1
 		if (in != out)
 		    call imunmap (in)
 		call imunmap (out)
@@ -341,11 +354,11 @@ begin
 
 		call mkt_gobject (mkt, obj, nx, ny, x, y, z, r, ar, pa, save)
 
-		c1 = nint (x - nx/2)
+		c1 = nint (x) - nx/2
 		c2 = c1 + nx - 1
 		c3 = max (1, c1)
 		c4 = min (nc, c2)
-		l1 = nint (y - ny/2)
+		l1 = nint (y) - ny/2
 		l2 = l1 + ny - 1
 		l3 = max (1, l1)
 		l4 = min (nl, l2)
@@ -356,8 +369,11 @@ begin
 		    j = mod (l, nlines)
 		    if (l != Memi[lines+j]) {
 			ptr2 = buf + j * nc
-			call amovr (Memr[ptr2],
-			    Memr[impl2r(out, Memi[lines+j])], nc)
+			obuf = impl2r (out, Memi[lines+j])
+			call amovr (Memr[ptr2], Memr[obuf], nc)
+			call alimr (Memr[obuf], nc, dmin, dmax)
+			IM_MIN(out) = min (IM_MIN(out), dmin)
+			IM_MAX(out) = max (IM_MAX(out), dmax)
 			Memi[lines+j] = l
 			if (Memi[newlines+l-1] == NO)
 			    call amovr (Memr[imgl2r(out,l)], Memr[ptr2], nc)
@@ -404,31 +420,42 @@ begin
 			    call mkrnoise (Memr[ptr2], nc, rdnoise,
 				rbuf, ranbuf, irbuf, seed)
 		    }
-		    call amovr (Memr[ptr2], Memr[impl2r(out,l)], nc) 
+		    obuf = impl2r (out, l)
+		    call amovr (Memr[ptr2], Memr[obuf], nc) 
+		    call alimr (Memr[obuf], nc, dmin, dmax)
+		    IM_MIN(out) = min (IM_MIN(out), dmin)
+		    IM_MAX(out) = max (IM_MAX(out), dmax)
 		}
 	    } else {
 		do i = 1, nlines {
 		    j = mod (i, nlines) 
 		    ptr2 = buf + j * nc
 		    l = Memi[lines+j]
-		    call amovr (Memr[ptr2], Memr[impl2r(out,l)], nc) 
+		    obuf = impl2r (out, l)
+		    call amovr (Memr[ptr2], Memr[obuf], nc) 
+		    call alimr (Memr[obuf], nc, dmin, dmax)
+		    IM_MIN(out) = min (IM_MIN(out), dmin)
+		    IM_MAX(out) = max (IM_MAX(out), dmax)
 		}
 
 		if (new) {
 		    call imflush (out)
 		    do i = 1, nl {
-			ptr2 = impl2r (out, i)
+			obuf = impl2r (out, i)
 			ptr1 = imgl2r (out, i)
 			if (background == 0.)
-			    call amovr (Memr[ptr1], Memr[ptr2], nc)
+			    call amovr (Memr[ptr1], Memr[obuf], nc)
 			else
-			    call aaddkr (Memr[ptr1], background, Memr[ptr2], nc)
+			    call aaddkr (Memr[ptr1], background, Memr[obuf], nc)
 			if (poisson)
-			    call mkpnoise (Memr[ptr2], Memr[ptr2], nc, 0., gain,
+			    call mkpnoise (Memr[obuf], Memr[obuf], nc, 0., gain,
 				pbuf, ranbuf, ipbuf, seed)
 			if (rdnoise > 0.)
-			    call mkrnoise (Memr[ptr2], nc, rdnoise,
+			    call mkrnoise (Memr[obuf], nc, rdnoise,
 				rbuf, ranbuf, irbuf, seed)
+			call alimr (Memr[obuf], nc, dmin, dmax)
+			IM_MIN(out) = min (IM_MIN(out), dmin)
+			IM_MAX(out) = max (IM_MAX(out), dmax)
 		    }
 		}
 	    }
@@ -452,6 +479,48 @@ begin
 	    call mfree (MKO_SORT(mko), TY_INT)
 	    call mfree (mko, TY_STRUCT)
 
+	    # Add comment history of task parameters.
+	    if (cmmts) {
+		call strcpy ("# ", Memc[comment], LEN_COMMENT)
+		call cnvtime (clktime (0), Memc[comment+2], LEN_COMMENT-2)
+		call mkh_comment (out, Memc[comment])
+		call mkh_comment (out, "begin        mkobjects")
+		call sprintf (Memc[comment], LEN_COMMENT, "%9t%s%24t%s")
+		    call pargstr ("objects")
+		    call pargstr (Memc[fname])
+		call mkh_comment (out, Memc[comment])
+		call mkh_comment1 (out, "background", 'r')
+		call mkh_comment1 (out, "xoffset", 'r')
+		call mkh_comment1 (out, "yoffset", 'r')
+		call mkh_comment1 (out, "star", 's')
+		call mkh_comment1 (out, "radius", 'r')
+		call mkh_comment1 (out, "beta", 'r')
+		call mkh_comment1 (out, "ar", 'r')
+		call mkh_comment1 (out, "pa", 'r')
+		call mkh_comment1 (out, "distance", 'r')
+		call mkh_comment1 (out, "exptime", 'r')
+		call mkh_comment1 (out, "magzero", 'r')
+		call mkh_comment1 (out, "gain", 'r')
+		call mkh_comment1 (out, "rdnoise", 'r')
+		call mkh_comment1 (out, "poisson", 'b')
+		call mkh_comment1 (out, "seed", 'i')
+		if (fcmmts) {
+		    i = open (Memc[fname], READ_ONLY, TEXT_FILE)
+		    while (fscan (i) != EOF) {
+			call gargr (x)
+			call gargr (y)
+			call gargr (z)
+			if (nscan() < 3) {
+			    call reset_scan ()
+			    call gargstr (Memc[comment], LEN_COMMENT)
+			    call mkh_comment (out, Memc[comment])
+			}
+		    }
+		    call close (i)
+		}
+	    }
+
+	    IM_LIMTIME(out) = IM_MTIME(out) + 1
 	    if (in != out)
 		call imunmap (in)
 	    call imunmap (out)
@@ -480,118 +549,4 @@ begin
 	    return (1)
 	else
 	    return (0)
-end
-
-
-# MKO_COMMENT -- Add comment to header.
-
-procedure mko_comment (im, comment)
-
-pointer	im			# image descriptor
-char	comment[ARB]		# comment
-
-pointer	ua
-
-begin
-	ua = IM_USERAREA(im)
-	if (Memc[ua] == EOS)
-	    call strcat ("\n", Memc[ua], MAX_HDR)
-	call strcat (COMMENT, Memc[ua], MAX_HDR)
-	call strcat (comment, Memc[ua], MAX_HDR)
-	call strcat ("\n", Memc[ua], MAX_HDR)
-end
-
-
-# MKO_COMMENT1 -- Make comment out of CL parameter.
-
-procedure mko_comment1 (im, param, type, comment)
-
-pointer	im			# image descriptor
-char	param[ARB]		# parameter name
-int	type			# datatype
-char	comment[ARB]		# comment string
-
-bool	clgetb()
-int	clgeti()
-real	clgetr()
-pointer	str
-
-begin
-	switch (type) {
-	case 'b':
-	    call sprintf (comment, LEN_COMMENT, "\t%s%24t%b")
-		call pargstr (param)
-	    	call pargb (clgetb (param))
-	case 'i':
-	    call sprintf (comment, LEN_COMMENT, "\t%s%24t%d")
-		call pargstr (param)
-	    	call pargi (clgeti (param))
-	case 'r':
-	    call sprintf (comment, LEN_COMMENT, "\t%s%24t%g")
-		call pargstr (param)
-	    	call pargr (clgetr (param))
-	case 's':
-	    call malloc (str, SZ_FNAME, TY_CHAR)
-	    call clgstr (param, Memc[str], SZ_FNAME)
-	    call sprintf (comment, LEN_COMMENT, "\t%s%24t%s")
-		call pargstr (param)
-	    	call pargstr (Memc[str])
-	    call mfree (str, TY_CHAR)
-	}
-
-	call mko_comment (im, comment)
-end
-
-
-# MKO_HEADER -- Set new image header.
-
-procedure mko_header (im)
-
-pointer	im			# Image pointer
-
-int	i, fd, open(), nowhite(), fscan(), nscan()
-real	r
-pointer	sp, key, type, str
-errchk	open
-
-begin
-	call smark (sp)
-	call salloc (key, SZ_FNAME, TY_CHAR)
-	call salloc (type, SZ_FNAME, TY_CHAR)
-	call salloc (str, SZ_LINE, TY_CHAR)
-
-	call clgstr ("header", Memc[key], SZ_FNAME)
-	if (nowhite (Memc[key], Memc[key], SZ_FNAME) > 0) {
-	    iferr {
-		fd = NULL
-		i = open (Memc[key], READ_ONLY, TEXT_FILE)
-		fd = i
-		while (fscan (fd) != EOF) {
-		    call gargwrd (Memc[key], SZ_FNAME)
-		    call gargwrd (Memc[type], SZ_FNAME)
-		    if (nscan() < 2)
-			next
-		    switch (Memc[type]) {
-		    case 'i':
-			call gargi (i)
-			if (nscan() == 3)
-			    call imaddi (im, Memc[key], i)
-		    case 'r':
-			call gargr (r)
-			if (nscan() == 3)
-			    call imaddr (im, Memc[key], r)
-		    default:
-			call gargstr (Memc[str], SZ_LINE)
-			if (nscan() == 3)
-			    call imastr (im, Memc[key], Memc[str])
-		    }
-		}
-		call close (fd)
-	    } then {
-		call erract (EA_WARN)
-		if (fd != NULL)
-		    call close (fd)
-	    }
-	}
-	call sfree (sp)
 end

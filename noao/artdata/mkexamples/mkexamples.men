@@ -1,8 +1,10 @@
 	    		MKEXAMPLE Menu
 
-       longslit - Long slit spectrum
-     multifiber - Multifiber spectrum
      galcluster - Galaxy cluster
        globular - Globular cluster
        galfield - Galaxy field
       starfield - Starfield
+
+       onedspec - Menu of one dimensional spectra
+       twodspec - Menu of two dimensional spectra
+     threedspec - Menu of three dimensional spectra

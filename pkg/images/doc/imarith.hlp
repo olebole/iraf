@@ -11,7 +11,7 @@ PARAMETERS
 Lists of images and constants to be used as operands.
 Image templates and image sections are allowed.
 .le
-.ls op
+.ls op    
 Operator to be applied to the operands.  The allowed operators
 are "+", "-", "*", "/", "min", and "max".
 .le
@@ -25,6 +25,7 @@ from operand1 if operand1 is an image or from operand2 otherwise.
 .ls divzero = 0.
 Replacement value for division by zero.  When the denominator is zero
 or nearly zero the result is replaced by this value.
+.le
 .ls hparams = ""
 List of header parameters to be operated upon.  This is primarily
 used for adding exposure times when adding images.
@@ -32,13 +33,14 @@ used for adding exposure times when adding images.
 .ls pixtype = "", calctype = ""
 Pixel datatype for the resultant image and the internal calculation datatype.
 The choices are given below.  They may be abbreviated to one character.
-.le
-.ls ""
-\fICalctype\fR defaults to the highest precedence operand datatype.
-If the highest precedence operator is type "ushort", \fIcalctype\fR
-will default to "long".
-\fIPixtype\fR defaults to \fIcalctype\fR. Users who want type "ushort"
-images on output will need to set \fIpixtype\fR to "ushort" explicitly.
+.ls ""    
+\fICalctype\fR defaults to the highest precedence operand datatype.  If the
+highest precedence datatype is an integer type and the operation is
+division then the calculation type will be "real".  If the highest
+precedence operand is type "ushort", \fIcalctype\fR will default to
+"long".  \fIPixtype\fR defaults to \fIcalctype\fR. Users who want type
+"ushort" images on output will need to set \fIpixtype\fR to "ushort"
+explicitly.
 .le
 .ls "1", "2"
 The pixel datatype of the first or second operand.
@@ -87,7 +89,8 @@ The pixel datatype for the resultant image may be set using the
 parameter \fIpixtype\fR.  If no pixel datatype is specified then the
 pixel datatype defaults to the calculation datatype given by the
 parameter \fIcalctype\fR.  The calculation datatype defaults to the
-highest precedence datatype of the operand images or constants.
+highest precedence datatype of the operand images or constants except
+that a division operation will default to real for integer images.
 The precedence of the datatypes, highest first, is double,
 real, long, integer, and short.  The datatype of a constant operand is
 either short integer or real.  A real constant has a decimal point.

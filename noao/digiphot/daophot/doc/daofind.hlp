@@ -1,0 +1,462 @@
+.help daofind Dec92 noao.digiphot.daophot
+.ih
+NAME
+daofind -- find objects in images
+.ih
+USAGE
+daofind image output
+.ih
+PARAMETERS
+.ls image
+The list of images in which objects are to be detected.
+.le
+.ls output 
+The name of the results file or the results directory. If \fIoutput\fR is
+"default", "dir$default" or a directory specification then a file
+name of the form dir$root.extension.version is constructed, where
+dir is the directory, root is the root image name, extension is "coo"
+and version is the next available version number. If \fIoutput\fR 
+is null ("") then no results file is written. If \fIoutput\fR is non-null,
+the number of results files must be equal to the number
+of input images.
+.le
+.ls starmap = ""
+The image name prefix and/or directory where the density enhancement
+image is stored.
+If \fIstarmap\fR is null ("") or a directory,
+DAOFIND creates a temporary image which is deleted on task termination.
+Otherwise \fIstarmap\fR is prefixed to the input image name,
+and the computed density enhancement image is saved for use in a subsequent
+run of DAOFIND.
+.le
+.ls skymap = ""
+The image name prefix and/or directory where the mean density
+image is stored.
+If \fIskymap\fR is null ("") or a directory,
+no mean density image is written.
+Otherwise \fIskymap\fR is prefixed to the input image name
+and the mean density image is saved on disk.
+\fISkymap\fR is not used by DAOFIND, but may be used by the user
+as a check on DAOFIND, since the sum of the \fIstarmap\fR and \fIskymap\fR
+images should reproduce the original image, except for regions
+containing bad pixels.
+.le
+.ls datapars = ""
+The name of the file containing the data dependent parameters. The critical
+parameters \fIfwhmpsf\fR and \fIsigma\fR are located here.
+If \fIdatapars\fR is null ("") then the default parameter set in the user's
+uparm directory is used.
+.le
+.ls findpars = ""
+The name of the file containing the object detection parameters. The 
+parameter \fIthreshold\fR is located here.
+If \fIfindpars\fR is null ("") then the default parameter set in the user's
+uparm directory is used.
+.le
+.ls boundary = "nearest"
+The type of boundary extension. The choices are the following.
+.ls nearest
+Use the value of the nearest boundary pixel.
+.le
+.ls constant
+Use a constant value.
+.le
+.ls reflect
+Generate a value by reflecting around the boundary.
+.le
+.ls wrap
+Generate a value by wrapping around to the other side of the image.
+.le
+.le
+.ls constant = 0
+The constant for constant boundary extension.
+.le
+.ls interactive = no
+Interactive or batch mode?
+.le
+.ls verify = ")_.display"
+Automatically confirm the critical parameters when running in non-interactive
+mode? \fIVerify\fR may be set to the daophot package parameter value
+(the default), "yes", or "no".
+.le
+.ls verbose = ")_.verbose"
+Print out information about the progress of the task in non-interactive mode.
+\fIVerbose\fR may be set to the daophot package parameter value
+(the default), "yes", or "no".
+.le
+.ls graphics = ")_.graphics"
+The standard graphics device. \fIGraphics\fR can be set to the daophot package
+parameter value (the default), "yes", or "no".
+.le
+.ls display = ")_.display"
+The standard image display device. \fIDisplay\fR can be set to the daophot
+package parameter value (the default), "yes", or "no".
+.le
+.ls icommands = ""
+The image display cursor.
+.le
+.ls gcommands = ""
+The graphics cursor.
+.le
+
+.ih
+DESCRIPTION
+
+DAOFIND searches the IRAF images \fIimage\fR for local density maxima,
+with a full-width half-maxima of \fIdatapars.fwhmpsf\fR,
+and peak intensities greater than \fIfindpars.threshold\fR *
+\fIdatapars.sigma\fR above the
+local background, and writes a
+list of detected objects in the file \fIoutput\fR.
+The detected objects are also listed on the standard output
+if the program is running in interactive mode or the \fIverbose\fR
+switch is turned on in non-interactive mode.
+
+DAOFIND can be run either interactively or in batch mode by setting the
+parameter \fIinteractive\fR. In interactive mode the user can examine,
+adjust and save algorithm parameters, change setup objects interactively,
+and finally write the  coordinate list computed with the chosen parameter set.
+The \fIverify\fR parameter can be used to automatically confirm
+the critical parameters \fIdatapars.fwhmpsf\fR and \fIdatapars.sigma\fR
+when running with \fIinteractive\fR = "no".
+
+
+.ih
+CURSOR COMMANDS
+
+.nf
+
+	     Interactive Keystroke Commands
+
+?	Print help
+:	Colon commands 
+v	Verify critical parameters
+w	Save the current parameters
+d	Plot radial profile of star near cursor
+i	Interactively set parameters using star near cursor
+f	Find stars in the image
+spbar	Find stars in the image and output results
+q	Exit task
+
+
+		Colon Commands
+
+:show		[data/center]	List the parameters
+
+		Colon Parameter Editing Commands
+
+# Image and file name parameters
+
+:image		[string]	Image name
+:output		[string]	Output file name
+
+# Data dependent parameters
+
+:scale		[value]		Image scale (units per pixel)
+:fwhmpsf	[value]		Full width half maximum of psf (scale units)
+:emission	[y/n]		Emission feature (y), absorption (n)
+:sigma		[value]		Standard deviation of sky (counts)
+:datamin	[value]		Minimum good data value (counts)
+:datamax	[value]		Maximum good data value (counts)
+
+# Noise description parameters
+
+:noise 		[string]	Noise model (constant|poisson)
+:gain		[string]	Gain image header keyword
+:ccdread	[string]	Readout noise image header keyword
+:epadu		[value]		Gain (electrons per adu)
+:readnoise	[value]		Readout noise (electrons)
+
+# Observation parameters
+
+:exposure	[string]	Exposure time image header keyword
+:airmass	[string]	Airmass image header keyword
+:filter		[string]	Filter image header keyword
+:obstime	[string]	Time of observation image header keyword
+:itime		[value]		Exposure time (time units)
+:xairmass	[value]		Airmass value (number)
+:ifilter	[string]	Filter id string
+:otime		[string]	Time of observation (time units)
+
+# Object detection parameters
+
+:nsigma		[value]		Size of Gaussian kernel (sigma) 
+:threshold	[value]		Detection intensity threshold (counts)
+:ratio		[value]		Sigmay / sigmax of Gaussian kernel
+:theta		[value]		Position angle of Gaussian kernel
+:sharplo	[value]		Lower bound on sharpness
+:sharphi	[value]		Upper bound on sharpness
+:roundlo	[value]		Lower bound on roundness
+:roundhi	[value]		Upper bound on roundness
+
+# Plotting and marking commands
+
+:mkdetections	[y/n]		Mark detections on the image display
+
+
+
+The following commands are available from inside the interactive setup menu.
+
+
+                    Interactive Daofind Setup Menu
+
+	v	Mark and verify critical daofind parameters (f,s)
+
+	f	Mark and verify the full-width half-maximum of the psf
+	s	Mark and verify the standard deviation of the background
+	l	Mark and verify the minimum good data value
+	u	Mark and verify the maximum good data value
+
+.fi
+
+.ih
+ALGORITHMS
+
+DAOFIND approximates the stellar point spread function with
+an elliptical Gaussian function, whose sigma along the semi-major axis is
+0.42466 * \fIdatapars.fwhmpsf\fR /
+\fIdatapars.scale\fR pixels, semi-minor to semi-major
+axis ratio is \fIratio\fR, and major axis position angle is \fItheta\fR.
+Using this model, a convolution kernel, truncated at \fInsigma\fR * sigma,
+and normalized so as to sum to zero, is constructed.
+
+The density enhancement image \fIstarmap\fR is computed by
+convolving the input image with the Gaussian kernel. This operation is
+mathematically equivalent to fitting, in the least-squares sense, the image
+data at each point with a truncated, lowered elliptical Gaussian function.
+After convolution each point in \fIstarmap\fR
+contains as estimate of the amplitude of the best fitting Gaussian
+function at that point. Each point in \fIskymap\fR, if the user
+chooses to compute it, contains an estimate of the best fitting sky value
+at that point.
+
+After image convolution , DAOFIND steps through \fIstarmap\fR searching
+for density enhancements greater than
+\fIfindpars.threshold\fR * \fIdatapars.sigma\fR, and brighter than
+all other density enhancements within a semi-major
+axis of 0.42466 \fIfindpars.nsigma\fR * \fIdatapars.fwhmpsf\fR.
+As the program selects
+candidates, it computes two shape characteristics, sharpness and roundness.
+The sharpness statistic measures the ratio of, the difference between the height
+of the central pixel and the mean of the surrounding non-bad pixels, to
+the height of the best fitting Gaussian function at the central pixel.
+The roundness statistics measures the ratio of, the difference between
+the height of the best fitting Gaussian function in x minus the
+height of the best fitting Gaussian function in y,
+over the average of the heights of the best fitting
+Gaussian functions in x and y.
+The default limits on these parameters \fIfindpars.sharplo\fR,
+\fIfindpars.sharphi\fR
+\fIfindpars.roundlo\fR, and \fIfindpars.roundhi\fR,
+are set to weed out non-astronomical objects and brightness enhancements
+that are elongated in x and y respectively.
+
+Lastly the x and y centroids of the detected objects are
+computed by estimating the x and y positions of the best fitting 1D Gaussian
+functions in x and y respectively; a magnitude is estimated
+by computing the
+ratio of the amplitude of the best fitting Gaussian function
+at the object position to
+\fIfindpars.threshold\fR *
+\fIdatapars.sigma\fR, and the object is added to the output coordinate file.
+
+.ih
+OUTPUT
+
+If verbose = yes,
+the following quantities are written to the terminal as each object is
+measured.
+
+.nf
+	xcenter  ycenter  mag  sharpness  roundness  id
+
+			where
+
+	mag = -2.5 * log10 (peak density / detection threshold)
+.fi
+
+Xcenter and ycenter are the computed x and y coordinates in pixels.
+Mag is a measure of the intensity ratio
+of the amplitude of the best fitting Gaussian function at the object position
+to the detection threshold. 
+Sharpness is typically .5 to .8 for a star with fwhmpsf identical 
+to the pattern star and roundness is approximately zero for
+round stars. Id is the sequence number of the star in the list.
+
+In both interactive and batch mode the full output is written to the text
+file \fIoutput\fR. At the beginning of each file is a header listing
+the values of the parameters current when the first stellar record was
+written.
+
+.ih
+EXAMPLES
+
+1. Run daofind on an image of n2264 using the default setup.
+
+.nf
+	da> daofind n2264 default
+
+	... answer the verify prompts
+
+	... the output will appear in n2264.coo.1
+.fi
+
+2. Run daofind interactively on n4147 using the image display
+and display cursor. Set the fwhmpsf and sigma parameters
+with the graphics cursor,  radial profile plot, and the interactive
+setup key i.
+
+.nf
+	da> set stdimcur = stdimage
+
+	... define the image cursor
+
+	da> display n4147 1 fi+
+
+	... display the image
+
+	da> daofind n4147 interactive+
+
+	... move display cursor to a setup star
+	... type i to enter the interactive setup menu
+	... enter maximum radius in pixels of the radial profile
+	... set the fwhmpsf and sigma using the graphics cursor and the
+	    radial profile plot
+	... typing <CR> leaves the parameters at their default values
+
+	... type the v key to verify the critical parameters
+
+	... type the w key to save the parameters in the parameter files
+
+	... type the space bar to detect stars in the image
+
+	... a 1 line summary of the answers will appear on the standard
+	    output for each star measured
+
+	... full output will appear in the text file n4147.coo.1
+.fi
+
+
+3. Run daofind interactively on a single image using the contour plot
+and graphics cursor. Set the fwhmpsf and sigma parameters
+with the graphics cursor and radial profile plot and the interactive setup
+key i.
+
+.nf
+	da> set stdimcur = stdgraph
+
+	... define the image cursor to be the graphics cursor
+
+	da> contour m92 >G m92.plot1
+
+	... store the contour plot of m92 in the file m92.plot1
+
+	da> daofind m92 display=stdgraph interactive+
+
+	... type :.read m92.plot1 to load the contour plot on the screen
+
+	... move graphics cursor to a setup star
+	... type i to enter the interactive setup menu
+	... enter maximum radius in pixels of the radial profile
+	... set the fwhmpsf and sigma using the graphics cursor and the
+	    radial profile plot
+	... typing <CR> leaves the parameters at their default values
+
+	... type the v key to confirm the critical parameters
+
+	... type the w key to save the parameters in the parameter files
+
+	... type the space bar to detect stars in the image
+
+	... a 1 line summary of the answers will appear on the standard
+	    output for each star measured
+
+	... full output will appear in the text file m92.coo.1
+
+.fi
+
+
+4. Run DAOFIND interactively on a SUN workstation using the imtool window,
+setting the parameters interactively with the i key as in example 2, but
+without using cursor readback.
+
+.nf
+	da> set stdimcur = text
+
+	... set the image cursor to the standard input
+
+	da> display m92 1
+
+	... display the image in the imtool window
+	... move the mouse to the imtool window
+	... press the F6 key to enter cursor readback mode
+	... return to the text window
+
+	da> daofind m92 interactive+
+
+	... move the mouse to the imtool window
+	... move the cursor cursor to a setup star, press the center mouse
+	    button to freeze the coordinates of the star, and return
+	    to the text window
+
+	... type "x y 1 i" in response to the image cursor query where
+	    x and y are the coordinates of the star to be used as setup,
+	    1 is the default world coordinate system, and i enters the
+	    interactive setup menu.
+
+	... enter maximum radius in pixels of the radial profile
+	... set the fwhmpsf and sigma using the graphics cursor and the
+	    radial profile plot
+	... typing <CR> leaves the parameters at their default values
+
+	... type the v key to verify the parameters
+
+	... type the w key to save the parameters in the parameter files
+
+	... type the space bar to detect stars in the image
+
+	... a 1 line summary of the answers will appear on the standard
+	    output for each star measured
+
+	... full output will appear in the text file m92.coo.2
+.fi
+
+5. Run daofind on a list of 3 images contained in the file imlist in batch mode.
+The program will ask the user to verify that the fwhmpsf, sigma, and threshold
+are correct before beginning execution.
+
+.nf
+	da> daofind @imlist default 
+.fi
+
+6. The user can submit the same job to the background after satisfying
+himself/herself that the parameter values are correct by appending an
+& at the end of the command and turning off the parameter queries 
+with the verify switch.
+
+.nf
+	da> daofind @imlist default verify- &
+.fi
+
+.ih
+TIME REQUIREMENTS
+
+.ih
+BUGS
+
+It is currently the responsibility of the user to make sure that the
+image displayed in the frame is the same as that specified by the image
+parameter.
+
+Commands which draw to the image display are currently disabled.
+The TVMARK task in the proto package  can be used to draw simple marks
+on the display. All the DAOPHOT marking commands will however function
+if a contour plot is used in lieu of the image display.
+
+Users should not be confused by the normally enabled markcur option in the
+SUN/IMTOOL setup window. This feature is under the control of the
+IMTOOL window and the DAOPHOT package has no control over it.
+
+.ih
+SEE ALSO
+.endhelp

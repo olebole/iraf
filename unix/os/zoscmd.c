@@ -4,6 +4,8 @@
 #include <stdio.h>
 #include <fcntl.h>
 #include <signal.h>
+#include <sys/time.h>
+#include <sys/resource.h>
 
 #define	import_kernel
 #define	import_knames
@@ -13,6 +15,14 @@
 
 static	int lastsig;
 extern	int pr_onint();
+
+#ifdef SYSV
+#define	vfork	fork
+#else
+#  ifdef sun
+#  include <vfork.h>
+#  endif
+#endif
 
 
 /* ZOSCMD -- Send a (machine dependent) command to the host operating
@@ -24,11 +34,12 @@ PKCHAR	*oscmd;
 PKCHAR	*stdin_file, *stdout_file, *stderr_file;
 XINT	*status;
 {
-	PFI	old_sigint;
+	SIGFUNC	old_sigint;
 	char	*shell, *sh = "/bin/sh";
 	char	*sin, *sout, *serr, *cmd;
+	struct	rlimit rlim;
+	int	maxfd, fd, pid;
 	char	*getenv();
-	int	fd, pid;
 
 	cmd  = (char *)oscmd;
 	sin  = (char *)stdin_file;
@@ -45,7 +56,7 @@ XINT	*status;
 	} else if ((shell = getenv ("SHELL")) == NULL)
 	    shell = sh;
 
-	old_sigint = (PFI) signal (SIGINT, SIG_IGN);
+	old_sigint = (SIGFUNC) signal (SIGINT, SIG_IGN);
 
 	/* Vfork is faster if we can use it.
 	 */
@@ -76,7 +87,7 @@ XINT	*status;
 	    }
 
 	    if (*sout != EOS) {					/* stdout */
-		fd = creat (sout, FILE_MODEBITS);
+		fd = creat (sout, _u_fmode(FILE_MODEBITS));
 		if (fd == ERR)
 		    fprintf (stderr, "cannot create `%s'\n", sout);
 		else {
@@ -91,7 +102,7 @@ XINT	*status;
 		if (strcmp (sout, serr) == 0) {
 		    close (2); dup (1);
 		} else {
-		    fd = creat (serr, FILE_MODEBITS);
+		    fd = creat (serr, _u_fmode(FILE_MODEBITS));
 		    if (fd == ERR)
 			fprintf (stderr, "cannot create `%s'\n", serr);
 		    else {
@@ -100,11 +111,16 @@ XINT	*status;
 		}
 	    }
 
+	    if (getrlimit (RLIMIT_NOFILE, &rlim))
+		maxfd = MAXOFILES;
+	    else
+		maxfd = rlim.rlim_cur;
+
 	    /* Arrange for the local file descriptors of the parent to be closed
 	     * in the child if the exec succeeds.  If this is not done the child
 	     * may run out of file descriptors.
 	     */
-	    for (fd=3;  fd < min(MAXOFILES,getdtablesize());  fd++)
+	    for (fd=3;  fd < min(MAXOFILES,maxfd);  fd++)
 		fcntl (fd, F_SETFD, 1);
 
 	    /* Spawn a shell to execute the command.
@@ -123,8 +139,17 @@ XINT	*status;
 	 */
 	pr_enter (pid, 0, 0);
 	lastsig = 0;
-	if (old_sigint != (PFI) SIG_IGN)
-	    signal (SIGINT, pr_onint);
+
+#ifndef SYSV
+	/* This doesn't appear to work on SysV systems, I suspect that wait()
+	 * is not being reentered after the signal handler below.  This could
+	 * probably be fixed by modifying the signal handling but I am not
+	 * sure the parent needs to intercept errors in any case, so lets
+	 * try really ignoring errors in the parent instead, on SYSV systems.
+	 */
+	if (old_sigint != SIG_IGN)
+	    signal (SIGINT, (SIGFUNC) pr_onint);
+#endif
 
 	*status = pr_wait (pid);
 
@@ -147,8 +172,8 @@ XINT	*status;
  */
 pr_onint (usig, hwcode, scp)
 int	usig;				/* SIGINT, SIGFPE, etc.		*/
-int	hwcode;				/* VAX hardware trap/fault codes */
-struct	sigcontext *scp;
+int	*hwcode;			/* not used */
+int	*scp;				/* not used */
 {
 	lastsig = usig;
 	/* return to wait() */

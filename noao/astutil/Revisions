@@ -1,5 +1,204 @@
 .help revisions Jun88 noao.astutil
 .nf
+astutil$t_obs.x
+astutil$t_asttimes.x
+astutil$observatory.par
+    Modified to allow non-integer timezones.  (12/29/94, Valdes)
+
+astutil$t_setjd.x
+    Added an extra digit to the printed output to give times to a second.
+    (6/4/94, Valdes)
+
+astutil$t_asthedit.x
+    Modified this to use the evvexpr package rather than the evexpr package
+    since the former includes double precision datatypes necessary to
+    maintain precision on some astronomical quantities.  (4/22/94, Valdes)
+
+astutil$ccddb.x
+astutil$doc/ccdtime.hlp
+    1.	The code would not work with database entries containing whitespace.
+    2.	The help was not correct in describing how the number of pixels used
+	in the photometry is calculated from the seeing FWHM.
+    (4/5/94, Valdes)
+
+astutil$t_ccdtime.x
+    Modified CCDTIME to use a plate scale instead of the f/ratio and to
+    include an airmass term.  (10/23/93, Valdes)
+
+astutil$mkpkg
+astutil$asttools/mkpkg
+    The ASTTOOLS routines are now an NOAO package library which can be
+    referenced as -lasttools.  (8/19/93, Valdes)
+
+astutil$t_ccdtime.x	+
+astutil$ccddb.x		+
+astutil$ccdtime.x	-
+astutil$ccdtime.par
+astutil$doc/ccdtime.hlp
+astutil$astutil.men
+astutil$mkpkg
+    Revised CCDTIME to use a telescope/filter/detector database and to
+    compute and print additional information.  (8/16/93, Valdes)
+
+astutil$t_asttimes.x
+    1.	The times are now always printed in the proper 24 hour interval.
+    2.	Also the fix to asttimes.x fixes incorrect values produced around
+	the new year.
+    3.  The header parameter also suppress printing the observatory info.
+	(5/27/93, Valdes)
+
+astutil$asttools/asttimes.x
+    The epoch was changed from day of the year divided by 365.25 to the
+    precise J2000 Julian epoch definition.  This also has the effect
+    of fixing incorrect values of JD and LMST around the new year.
+    (5/27/93, Valdes)
+
+astutil$t_rvcorrect.x
+astutil$keywpars.par		+
+astutil$doc/keywpars.hlp	+
+    Added a pset KEYWPARS which is a duplicate of the RV package version,
+    updated the RVCORRECT task to make use of this instead of using hard-
+    wired image header keywords.  Previously it was possible that the astutil
+    version of RVCORRECT would compute a heliocentric correction different
+    from what was found by the RV package when working from image headers.
+    Eventually other tasks should be modified to make use of this pset.
+    (5/12/93, MJF)
+
+astutil$t_asthedit.x
+astutil$asthedit.par
+astutil$doc/asthedit.hlp
+astutil$x_astutil.x
+astutil$astutil.cl
+astutil$astutil.men
+astutil$astutil.hd
+    ASTHEDIT is a new task which edits image headers of astronomical images.
+    In includes functions for airmass, astronomical times, precession, etc.
+    (3/30/93, Valdes)
+
+astutil$t_rvcorrect.x
+    A typo in the clgstr call in the rvc_images procedure resulted in the
+    input observatory name being truncated at 2 characters.  Instead
+    of TY_CHAR for the lenght of the string it needs to be SZ_FNAME.
+    (2/1/93, Valdes)
+
+=======
+V2.10.2
+=======
+
+astutil$astutil.par
+astutil$asttimes.par
+astutil$rvcorrect.par
+astutil$setairmass.par
+astutil$setjd.par
+astutil$doc/asttimes.hlp
+astutil$doc/rvcorrect.hlp
+astutil$doc/setairmass.hlp
+astutil$doc/setjd.hlp
+    Observatory parameter redirected to package parameter.
+    (2/6/92, Valdes)
+
+astutil$t_rvcorrect.x
+astutil$t_setairmass.x
+astutil$t_setjd.x
+    Modified to use obsimopen.  (2/4/92, Valdes)
+
+astutil$t_obs.x
+astutil$observatory.par
+astutil$doc/obs.hlp
+    New version of this task.  (2/4/92, Valdes)
+
+astutil$t_setjd.x +
+astutil$setjd.par +
+astutil$doc/setjd.hlp +
+astutil$mkpkg
+astutil$astutil.cl
+astutil$astutil.men
+astutil$astutil.hd
+    Added task to set Julian dates in image headers.
+    (1/29/92, Valdes)
+
+asttools$asttimes.x
+asttools$asthjd.x
+    1.  Added additional conversions from date to JD and back from
+	Numerical Receipes without having to go through the epoch.
+    2.  Added HJD from JD without needing to go through the epoch.
+    (1/29/92, Valdes)
+
+astutil$t_setairmass.x
+astutil$setairmass.par
+astutil$doc/setairmass.hlp
+    1.  Changed the default action to update the image headers.
+    2.  Added an update field to the show listing.
+    3.  A warning is printed if show=no and update=no since this is a noop.
+    (11/5/91, Valdes)
+
+astutil$t_setairmass.x
+    The hour angle was slightly incorrect because universal time, from
+    the exposure time, was used instead of siderial time in computing the
+    midpoint.  (8/26/91, Seaman)
+
+astutil$asttools/*.x
+    Coerced all constants with many significant digits to double precision.
+    (6/24/91, Valdes)
+
+astutil$asttools/asthjd.x
+    The dummy argument t was changed to lt as declared.  (6/24/91, Valdes)
+
+astutil$t_gratings.x
+astutil$gratings.par
+astutil$doc/gratings.hlp
+astutil$mkpkg
+astutil$astutil.cl
+astutil$astutil.men
+astutil$astutil.hd
+    Added a new task to compute grating parameters. (3/13/91, Valdes)
+
+astutil$t_setairmass.x
+astutil$t_rvcorrect.x
+astutil$t_asttimes.x
+astutil$setairmass.par
+astutil$rvcorrect.par
+astutil$astttimes.par
+astutil$doc/setairmass.hlp
+astutil$doc/rvcorrect.hlp
+astutil$doc/astttimes.hlp
+    Updated to use observatory parameter.  (11/19/90, Valdes)
+
+astutil$t_obs.x +
+astutil$x_astutil.x
+astutil$mkpkg
+astutil$astutil.cl
+astutil$astutil.men
+astutil$astutil.hd
+    1.  A new version of the observatory task based on an observatory database
+    using the new interface obsdb.x in xtools was added to the astutil
+    executable.
+    2.  The observatory help was revised and moved to astutil.
+    3.  The observatory task itself is defined in noao and was removed
+    from the astutil package definitions.
+    (11/6/90, Valdes)
+
+astutil$t_asttimes.x
+    Added a modulus operations to convert any zone to the range -12 to 12.
+    (9/28/90, Valdes)
+
+astutil$t_asttimes.x
+    Changed the procedure times to ast_times to avoid a name conflict in the
+    HPUX port.  This is a better name anyway.  (9/8/90, Valdes)
+
+astutil$asttimes.par
+    Removed the range limits on the zone.  Zones east of Greenwich need to
+    be negative to obtain the correct dates.  (6/15/90, Valdes)
+
+astutil$doc/galactic.hlp
+    Corrected comment about epoch of galactic coordinates.  Added an example
+    showing how to get galactic coordinates for images containing
+    equitorial coordinates.  (5/23/90, Valdes)
+
+====
+V2.9
+====
+
 astutil$setairmass.par
 astutil$t_setairmass.x
     The task now precesses the coordinates to the epoch of the

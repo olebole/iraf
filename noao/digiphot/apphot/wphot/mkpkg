@@ -11,14 +11,13 @@ libpkg.a:
 			../lib/fitsky.h
 	apgwppars.x	../lib/center.h		../lib/fitsky.h        \
 			../lib/phot.h		../lib/display.h       \
-			../lib/noise.h		../lib/apphot.h
+			../lib/noise.h
 	apwconfirm.x	../lib/apphot.h		../lib/noise.h         \
 			../lib/center.h		../lib/fitsky.h	       \
 			../lib/phot.h
 	apwmag.x	<mach.h>		../lib/apphotdef.h     \
 			../lib/noisedef.h	../lib/photdef.h       \
 			../lib/phot.h
-	apwmagcolon.x	../lib/display.h	../lib/phot.h
 	apgmeasure.x	../lib/apphot.h		../lib/fitsky.h        \
 			../lib/center.h		../lib/noise.h
 	aptmeasure.x	../lib/apphot.h		../lib/fitsky.h        \

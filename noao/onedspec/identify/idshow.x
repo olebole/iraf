@@ -1,4 +1,3 @@
-include	<pkg/center1d.h>
 include	"identify.h"
 
 # ID_SHOW -- Show parameter information.
@@ -24,7 +23,7 @@ begin
 	call fprintf (fd, "image %s\n")
 	    call pargstr (Memc[ID_IMAGE(id)])
 	call fprintf (fd, "nsum %d\n")
-	    call pargi (ID_NSUM(id))
+	    call pargi (ID_NSUM(id,1))
 	switch (ID_FTYPE(id)) {
 	case EMISSION:
 	    call fprintf (fd, "ftype emission\n")
@@ -37,7 +36,11 @@ begin
 	case 3:
 	    call fprintf (fd, "labels pixel\n")
 	case 4:
+	    call fprintf (fd, "labels coords\n")
+	case 5:
 	    call fprintf (fd, "labels user\n")
+	case 6:
+	    call fprintf (fd, "labels both\n")
 	default:
 	    call fprintf (fd, "labels none\n")
 	}

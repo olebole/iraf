@@ -1,5 +1,170 @@
 .help revisions Jun88 noao.twodspec.longslit
 .nf
+longslit.cl
+longslit.men
+    Added the new SFLIP task to the package.  (7/18/94, Valdes)
+
+transform/t_transform.x
+    The last interval of the inversion surface could be distorted by the
+    limitation of the inversion coordinats to be within the input image.
+    This limit was removed (with the out of bounds checking taking place
+    later).  (9/19/93, Valdes)
+
+============
+V2.10.3 beta
+============
+
+transform/fcgetcoords.x
+transform/t_transform.x
+    Modified to allow transposed axes.  (5/14/93, Valdes)
+
+getdaxis.x	+
+response.x
+illumination.x
+extinction.x
+fluxcalib.x
+transform/t_transform.x
+    Access to the dispersion axis is now through the routine get_daxis.  This
+    routine checks for transposed images.  (5/14/93, Valdes)
+
+longslit.men
+longslit.par
+longslit.cl
+standard.par +
+sensfunc.par +
+calibrate.par +
+identify.par -
+reidentify.par
+demos$test.cl
+demos$xgtest.dat +
+demos$gtest.dat -
+demos$xtest.dat -
+    1.  Added commonly used tasks from the ONEDSPEC package.
+    2.  Added additional package paraemters required by the ONEDSPEC tasks.
+    3.  Modified the test playback for the new package and XGTERM.
+    4.  Removed playbacks for XTERM and GTERM.
+    (2/12/93, Valdes)
+
+transform/fcgetcoords.x
+    If the combine option is used and the images do not all have the same
+    fit axis then a segmentation error would occur because of a mistake
+    in where the MWCS and IMIO pointers are closed.  This was fixed
+    and a warning message added.  (12/7/92, Valdes)
+
+transform/fcgetcoords.x
+    Features with INDEF user values are now excluded.
+    (11/11/92, Valdes)
+
+transform/t_transform.x
+    Added DCLOG1 keyword.  This goes along with the changes in DISPCOR
+    to allow multiple dispersion corrections.  (10/19/92, Valdes)
+
+fluxcalib.x
+    Loosened the wavelength limit checks so that an warning is only given
+    if the image wavelengths extend outside the calibration wavelengths
+    by more than a half pixel.  (9/10/92, Valdes)
+
+demos/* +
+longslit.cl
+longslit.men
+    Added a demos task with a test playback.  (7/24/92, Valdes)
+
+=======
+V2.10.2
+=======
+
+=======
+V2.10.1
+=======
+
+=======
+V2.10.0
+=======
+
+transform/t_transform.x
+    It was possible to end up with too few lines for MSIFIT.  A minimum
+    buffer size is now enforced.  (6/18/92, Valdes)
+
+transform/t_transform.x
+    Modified to use MWCS.  (5/20/92, Valdes)
+
+=====
+V2.10
+=====
+
+longslit$fluxcalib.x
+longslit$doc/fluxcalib.hlp
+    The output pixel type is now of type real.  If the input image is
+    to be modified the calibration is done on a temporary image and
+    renamed to the input image upon completion rather than being done
+    in place.  Previously, flux calibrating a type short image would
+    produce an image of all zeros.  (3/19/92, Valdes)
+
+longslit$longslit.par
+    Added observatory to package parameters.
+    (2/6/92, Valdes)
+
+longslit$transform/fcgetcoords.x
+    In V2.10 IDENTIFY/REIDENTIFY measure feature positions in physical
+    coordinates while FITCOORDS and TRANSFORM require logical coordinates.
+    Therefore, the IDENTIFY database coordinates are transformed to
+    logical coordinates when they are read.  (12/20/91, Valdes)
+
+longslit$transform/igsfit/igsfit.x
+    Removed the print statement about fitting because this caused the graphics
+    to be overplotted on the previous graph for some unknown reason.
+    (12/12/91, Valdes)
+
+longslit$doc/extinction.hlp
+longslit$doc/fluxcalib.hlp
+longslit$doc/illumination.hlp
+longslit$doc/response.hlp
+    Added discussion and example about the DISPAXIS keyword.  (12/6/91, Valdes)
+
+longslit$t_transform.x
+    Fixed datatype declaration error for array tmp.  This was a harmless
+    error.  (11/21/91, Valdes)
+
+longslit$longslit.par
+longslit$response.x
+longslit$illumination.x
+longslit$fluxcalib.x
+longslit$extinction.x
+longslit$transform/t_transform.x
+    1.  Added dispaxis parameter to package parameters.
+    2.  Modified all routines to use package dispaxis if not found in image
+	all also write it to header.  (8/28/91, Valdes)
+
+longslit$transform/t_transform.x
+    Removed W0 and WPC from output image.  (8/28/91, Valdes)
+
+longslit$transform/igsfit/igssolve.x
+    The case of a single trace along x handled by igs_solve3 was using the
+    yorder instead of the xorder in one place.  (7/11/91, Valdes)
+
+longslit$transform/t_transform.x
+    The interative inversion was made more stable by using a fudge factor.
+    This was needed to make the LONGSLIT test procedure work on HPUX.
+    (9/17/90, Valdes)
+
+longslit$identify.par
+longslit$reidentify.par
+    Updated parameter files for the new version.  (8/23/90, Valdes)
+
+longslit$transform/t_transform.x
+    Changed the computation of the output grid from a cumulative addition of
+    the pixel increment to a direct calculation to avoid cumulative
+    round off errors in high resolution data. (7/19/90, Valdes)
+
+longslit$doc/lslit.ms +
+    Added copy of the SPIE paper on the LONGSLIT package.  It is in MS TROFF
+    format.  Postscript copies may be obtained from the FTP archive.
+    (7/4/90, Valdes)
+
+====
+V2.9
+====
+
 longslit$transform/igsfit
 longslit$transform/t_transform.x
 longslit$fluxcalib.x

@@ -29,7 +29,7 @@
  *	    d_newproc (name, type)	process procedure declaration
  *	d_declaration (typestr)		process typed declaration statement
  *	    d_codegen (fp)		output declarations for sym table
- *	    d_runtime (fp)		output any runtime initialization
+ *	    d_runtime (text)		return any runtime initialization text
  *
  *	*symbol =  d_enter (symbol, dtype, flags)
  *	*symbol = d_lookup (symbol)
@@ -128,7 +128,7 @@ int	dtype;			/* procedure type (0 if subr)	*/
 d_declaration (dtype)
 int	dtype;			/* data type			*/
 {
-	register struct	symbol *sp;
+	register struct	symbol *sp = NULL;
 	register char	ch;
 	int	token, ndim;
 	char	tokstr[SZ_TOKEN+1];
@@ -312,16 +312,21 @@ register FILE	*fp;
 
 	/* Declare local variables and externals. */
 	for (sp=sym;  sp <= top;  sp++)
-	    if (!(sp->s_flags & S_ARGUMENT))
+	    if (sp->s_flags & S_ARGUMENT)
+	        continue;
+	    else if (sp->s_flags & S_FUNCTION)
+	        d_declfunc (sp, fp);
+	    else
 		d_makedecl (sp, fp);
 }
 
 
-/* D_RUNTIME -- Output any runtime procedure initialization statements,
- * i.e., statements to be executed at runtime when a procedure is entered.
+/* D_RUNTIME -- Return any runtime procedure initialization statements,
+ * i.e., statements to be executed at runtime when a procedure is entered,
+ * in the given output buffer.
  */
-d_runtime (fp)
-FILE	*fp;
+d_runtime (text)
+char	*text;
 {
 	/* For certain types of functions, ensure that the function value
 	 * is initialized to a legal value, in case the procedure is exited
@@ -330,9 +335,10 @@ FILE	*fp;
 	switch (proctype) {
 	case XTY_REAL:
 	case XTY_DOUBLE:
-	    fprintf (fp, "\t%s = 0\n", procname);
+	    sprintf (text, "\t%s = 0\n", procname);
 	    break;
 	default:
+	    text[0] = EOS;
 	    break;
 	}
 }
@@ -484,5 +490,22 @@ int	maxch;			/* max chars to token string	*/
 	if (ch <= 0)
 	    error (XPP_SYNTAX, "unexpected EOF");
 
+/*
+fprintf (stderr, "token = `%s':  ", tokstr);
+fprintf (stderr, "token = `%c' %d(0%o)\n", tokstr[0], tokstr[0]);
+*/
+
 	return (tokstr[0]);
+}
+
+
+/* D_DECLFUNC -- Declare a function.  This module is provided to allow
+ * for any special treatment required for certain types of function
+ * declarations.
+ */
+d_declfunc (sp, fp)
+register struct symbol *sp;
+FILE  *fp;
+{
+	d_makedecl (sp, fp);
 }

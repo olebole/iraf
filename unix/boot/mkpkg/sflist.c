@@ -125,7 +125,7 @@ struct	context *cx;		/* current mkpkg context */
 		fatals ("too many special file list directories: %s", dirname);
 	    tail = NULL;
 	} else {
-	    for (sfp=head;  sfp;  sfp=sfp->sf_next)
+	    for (tail=sfp=head;  sfp;  sfp=sfp->sf_next)
 		tail = sfp;
 	}
 
@@ -142,7 +142,7 @@ struct	context *cx;		/* current mkpkg context */
 	    else if (tok != TOK_FNAME)
 		goto badline;
 	    else
-		strcpy (stname, token, SZ_PATHNAME);
+		strcpy (stname, token);
 
 	    /* Get the special file name. */
 	    if ((tok = gettok (cx, sfname, SZ_PATHNAME)) == TOK_END)

@@ -11,8 +11,8 @@
 #define import_ttset
 #include <iraf.h>
 
-#include "clmodes.h"
 #include "config.h"
+#include "clmodes.h"
 #include "mem.h"
 #include "operand.h"
 #include "param.h"
@@ -49,6 +49,7 @@
  */
 
 extern	int cldebug;
+extern	int cltrace;
 extern	int lastjobno;		/* last background job spawned		*/
 extern	int gologout;		/* flag to execute() to cause logout	*/
 extern	char *findexe();
@@ -507,6 +508,29 @@ clhistory()
 }
 
 
+/* CLTRACE -- Enable or disable instruction tracing (d_trace).
+ */
+dotrace()
+{
+	register struct pfile *pfp;
+	struct operand o;
+	int value = !cltrace;
+
+	pfp = newtask->t_pfp;
+
+	if (nargs (pfp) > 0) {
+	    pushbparams (pfp->pf_pp);
+	    popop();				/* discard the $1 	*/
+	    o = popop();
+	    if (o.o_type != OT_INT)
+		cl_error (E_UERR, "trace arg should be an integer");
+	    value = o.o_val.v_i;
+	}
+
+	d_trace (value);
+}
+
+
 /* CLEHISTORY -- Edit command history.  (dummy - see history.c)
  */
 clehistory()
@@ -940,6 +964,91 @@ argerr:		cl_error (E_UERR, "Too few arguments to print or fprint");
 }
 
 
+/* CLPRINTF -- Formatted print command (interface to VOS printf).
+ */
+clprintf()
+{
+	struct	pfile *pfp;
+	struct	operand o;
+	int	arg, n;
+
+	pfp = newtask->t_pfp;
+	pushbpvals (pfp->pf_pp);
+	if ((n = nargs (pfp)) < 1)
+	    cl_error (E_UERR, "printf: insufficient arguments\n");
+
+	/* Output format. */
+	o = popop();
+	if ((o.o_type & OT_BASIC) != OT_STRING)
+	    cl_error (E_UERR, "printf: bad format string\n");
+	c_fprintf (fileno(currentask->t_stdout), o.o_val.v_s);
+
+	/* Pass the operand values. */
+	for (arg=2;  arg <= n;  arg++) {
+	    o = popop();
+	    if (opindef(&o)) {
+		c_pargstr ("INDEF");
+	    } else if (opundef(&o)) {
+		cl_error (E_UERR, "printf: argument %d has undefined value\n",
+		    arg);
+	    } else {
+		switch (o.o_type & OT_BASIC) {
+		case OT_BOOL:
+		case OT_INT:
+		    c_pargi (o.o_val.v_i);
+		    break;
+		case OT_REAL:
+		    c_pargd (o.o_val.v_r);
+		    break;
+		case OT_STRING:
+		    c_pargstr (o.o_val.v_s);
+		    break;
+		default:
+		    cl_error (E_UERR, "printf: bad operand type\n");
+		}
+	    }
+	}
+}
+
+
+/* CLSCAN -- The scan function called as a task to scan from the standard
+ * input, e.g. a pipe.  (Name changed to clscans to avoid a name clash
+ * with fmtio.clscan).
+ */
+clscans()
+{
+	struct	pfile *pfp;
+
+	pfp = newtask->t_pfp;
+	pushbpvals (pfp->pf_pp);
+	cl_scan (nargs(pfp)-1, "stdin");
+	popop();
+}
+
+
+/* CLSCANF -- Formatted scan function.
+ */
+clscanf()
+{
+	struct	pfile *pfp;
+	struct	operand o;
+	int	n;
+
+	pfp = newtask->t_pfp;
+	pushbpvals (pfp->pf_pp);
+	if ((n = nargs (pfp)) < 1)
+	    cl_error (E_UERR, "scanf: insufficient arguments\n");
+
+	/* Get scan format. */
+	o = popop();
+	if ((o.o_type & OT_BASIC) != OT_STRING)
+	    cl_error (E_UERR, "scanf: bad format string\n");
+
+	cl_scanf (o.o_val.v_s, nargs(pfp)-2, "stdin");
+	popop();
+}
+
+
 /* PUTLOG user-msg 
  * Write a user message to the logfile.  The current pkg.task, bkg info, and
  * a time stamp are added by the putlog() function (in history.c).
@@ -1302,6 +1411,11 @@ clforeign()
 		    ;
 	    }
 
+	if (cltrace) {
+	    d_fmtmsg (stderr, "\t    ", oscmd, 80 - 13);
+	    eprintf ("\t--------------------------------\n");
+	}
+
 	/* Call the host system to execute the command.  If i/o redirection
 	 * was indicated on the command line pointers to the names of the
 	 * referenced files will have been stored in the task structure by
@@ -1319,10 +1433,43 @@ clforeign()
 	    /* Parents i/o is not redirected, hence we can redirect i/o
 	     * directly without a temp file.
 	     */
-	    c_oscmd (oscmd,
-		newtask->ft_in  ? newtask->ft_in  : "",
-		newtask->ft_out ? newtask->ft_out : "",
-		newtask->ft_err ? newtask->ft_err : "");
+	    char *in, *out, *err;
+	    int append_all;
+
+	    in  = newtask->ft_in  ? newtask->ft_in  : "",
+	    out = newtask->ft_out ? newtask->ft_out : "",
+	    err = newtask->ft_err ? newtask->ft_err : "";
+	    append_all = (out == err);
+
+	    if (newtask->t_flags & T_APPEND) {
+		register int ch;
+		register FILE *fp=NULL, *outfp=NULL;
+		char tmpfile[SZ_PATHNAME];
+
+		/* Execute the command spooling the output in a temporary
+		 * file (OSCMD cannot directly append to an output file).
+		 */
+		if (!c_mktemp ("tmp$ft", tmpfile, SZ_PATHNAME))
+		    strcpy (tmpfile, "tmp$ft.out");
+		c_oscmd (oscmd, in, tmpfile, append_all ? tmpfile : err);
+
+		/* Append the spooled output to the user-specified output
+		 * redirection file.
+		 */
+		if ((fp = fopen (tmpfile, "r")) != NULL &&
+			(outfp = fopen (out, "a")) != NULL) {
+		    while ((ch = fgetc(fp)) != EOF)
+			fputc (ch, outfp);
+		}
+
+		if (fp)
+		    fclose (fp);
+		if (outfp)
+		    fclose (outfp);
+		c_delete (tmpfile);
+
+	    } else
+		c_oscmd (oscmd, in, out, err);
 	}
 }
 
@@ -1350,12 +1497,21 @@ clunlearn()
 	    opcast (OT_STRING);
 	    o = popop();		/* get ltask|package name	*/
 	    breakout (o.o_val.v_s, &x1, &pk, &t, &x2);
-	    ltp = cmdsrch (pk, t);
+	    if (!(ltp = cmdsrch (pk, t)))
+		continue;
 
+	    /* If package, unlearn each task. */
 	    if (ltp->lt_flags & LT_PACCL) {
+		/* Unlearn each task in the package. */
 		for (ltt=ltp->lt_pkp->pk_ltp;  ltt != NULL;  ltt=ltt->lt_nlt)
 		    if (pfileinit (ltt) == ERR)
 			eprintf (errfmt, ltt->lt_lname);
+
+		/* Unlearn the package parameters. */
+		if (ltt = ltasksrch (pk, t))
+		    if (pfileinit(ltt) == ERR)
+			eprintf (errfmt, ltt->lt_lname);
+
 	    } else if (pfileinit (ltp) == ERR)
 		eprintf (errfmt, ltp->lt_lname);
 	}
@@ -1747,9 +1903,8 @@ cldevstatus()
 	o = popop();
 	strcpy (device, o.o_val.v_s);
 
-	/* Print the device status.
-	 */
-	c_devstatus (STDOUT, device);
+	/* Print the device status.  */
+	c_devstatus (device, STDOUT);
 }
 
 
@@ -1782,6 +1937,7 @@ register struct package *pkp;
 	    "d_m", d_d, LT_INVIS,	/* shows memory usage		*/
 	    "d_off", d_off, LT_INVIS,	/* disables debuggin msgs	*/
 	    "d_on", d_on, LT_INVIS,	/* enables debuging msgs	*/
+	    "d_trace",dotrace,LT_INVIS,	/* instruction tracing		*/
 	    "d_p", d_p, LT_INVIS,	/* shows loaded param files	*/
 	    "d_t", d_t, LT_INVIS,	/* shows running tasks		*/
 	    "prcache", clprcache, 0,	/* show process cache		*/
@@ -1802,6 +1958,7 @@ register struct package *pkp;
 	    "_curpack", clcurpack,
 		LT_INVIS,		/* name the current package	*/
 	    "print", clprint, 0,	/* formatted output to stdout	*/
+	    "printf", clprintf, 0,	/* formatted output to stdout	*/
 	    "fprint", clfprint, 0,	/* formatted output		*/
 	    "putlog", clputlog, 0, 	/* put a message to the logfile */
 	    "dparam", cldparam, 0,	/* dump params for tasks	*/
@@ -1827,8 +1984,9 @@ register struct package *pkp;
 	    "bye", clbye, 0,		/* restore previous state	*/
 	    "logout", cllogout, 0,	/* log out of the CL		*/
 
-	    "scan", clfunc, 0,		/* intrinsic function entries	*/
-	    "fscan", clfunc, 0,		/* 		"		*/
+	    "scan", clscans, 0,		/* scan from a pipe		*/
+	    "scanf", clscanf, 0,	/* formatted scan 		*/
+	    "fscan", clfunc, 0,		/* intrinsic function entries	*/
 	    "defpac", clfunc, 0,	/* 		"		*/
 	    "defpar", clfunc, 0,	/* 		"		*/
 	    "deftask", clfunc, 0,	/* 		"		*/
@@ -1978,6 +2136,24 @@ struct param *pp;
 	onam.o_type = OT_STRING;
 	onam.o_val.v_s = pp->p_name;
 	pushop (&onam);
+}
+
+
+/* PUSHBPVALS -- Like pushbparams, but only the parameter value is pushed.
+ */
+pushbpvals (pp)
+struct param *pp;
+{
+	struct operand onam;
+	struct param *npp;
+
+	if (pp == NULL)
+	    return;		/* just a guard	*/
+	npp = pp->p_np;
+	if (npp != NULL)
+	    pushbpvals (npp);
+
+	paramget (pp, 'V');
 }
 
 

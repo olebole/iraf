@@ -41,7 +41,7 @@
 #define SZ_OBUF		50000	/* buffers procedure body		*/
 #define SZ_DBUF		4096	/* for errchk, common, ect. decls	*/
 #define SZ_SBUF		8192	/* buffers text of strings		*/
-#define MAX_STRINGS	100	/* max strings in a procedure		*/
+#define MAX_STRINGS	256	/* max strings in a procedure		*/
 #define MAX_INCLUDE	5	/* maximum nesting of includes		*/
 #define	MIN_REALPREC	7	/* used by HMS				*/
 #define	SZ_NUMBUF	32	/* for numeric constants		*/
@@ -507,7 +507,6 @@ char	ch;
  */
 do_include()
 {
-	static	char irafdefs[SZ_FNAME] = "";
 	char    *p, delim, *rindex();
 	int	root_len;
 	int	strcmp();
@@ -885,7 +884,7 @@ parse_task_statement()
 		if (sp >= &sbuf[SZ_SBUF])
 		    goto err;
 	    for (ip=proc_name;  (*op++ = *ip++) != EOS;  )
-		if (op >= &sbuf[SZ_OBUF])
+		if (op >= &obuf[SZ_OBUF])
 		    goto err;
 
 	    /* If the next character is a comma, skip it and a newline if
@@ -922,6 +921,7 @@ err:	    error (XPP_COMPERR, "too many tasks in task statement");
 	 * the buffer.
 	 */
 	op = obuf;
+	return (OK);
 }
 
 
@@ -1144,6 +1144,8 @@ char	*string;
  */
 begin_code()
 {
+	char	text[1024];
+
 	/* If we are already processing the body of a procedure, we probably
 	 * have a missing END.
 	 */
@@ -1156,6 +1158,7 @@ begin_code()
 	 * begins.
 	 */
 	setcontext (BODY);
+	d_runtime (text);  outstr (text);
 	outstr ("begin\n");
 
 	/* Initialization. */
@@ -1237,7 +1240,6 @@ end_code()
 	 * are not permitted in the procedure body.
 	 */
 	init_strings();
-	d_runtime (yyout);
 	*op++ = EOS;
 	fputs (obuf, yyout);
 	fputs ("end\n", yyout);
@@ -1641,7 +1643,7 @@ char	**strp;
 	    for (digit = *ip++;  isdigit (digit);  digit = *ip++)
 		sum = sum * base + (digit - '0');
 	    *strp = ip - 1;
-	    return (sum);
+	    break;
 	case HEX:
 	    while ((digit = *ip++) != EOF) {
 		if (isdigit (digit))
@@ -1652,12 +1654,16 @@ char	**strp;
 		   sum = sum * base + (digit - 'A' + 10);
 		else {
 		    *strp = ip;
-		    return (sum);
+		    break;
 		}
 	    }
+	    break;
 	default:
 	    error (XPP_COMPERR, "Accum: unknown numeric base");
+	    return (ERR);
 	}
+
+	return (sum);
 }
 
 
@@ -1669,8 +1675,8 @@ charcon (string)
 char	*string;
 {
 	register char *ip, ch;
-	char    digit, *nump;
 	char	*cc, *index();
+	char    *nump;
 
 	ip = string + 1;		/* skip leading apostrophe	*/
 	ch = *ip++;
@@ -1683,7 +1689,8 @@ char	*string;
 	    } else if (isdigit (*ip)) {
 		nump = ip;
 		return (accum (OCTAL, &nump));
-	    }
+	    } else
+		return (ch);
 	} else {
 	    /* Regular characters, i.e., 'c'; just return ASCII value of char.
 	     */
@@ -1701,8 +1708,8 @@ char	*string;
 int	base;
 {
 	char    decimal_constant[SZ_NUMBUF], *p;
-	int     i;
 	long    accum(), value;
+	int     i;
 
 	p = string;
 	i = strlen (string);
@@ -1739,6 +1746,7 @@ int	base;
 
 	default:
 	    error (XPP_COMPERR, "Unknown numeric base for integer conversion");
+	    value = ERR;
 	}
 
 	/* Output the decimal value of the integer constant.  We are simply

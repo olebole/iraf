@@ -45,11 +45,20 @@
 #define	SZ_GINMODETERM	10		/* ginmode string length	*/
 #define	SZ_FNAME	128
 
+#define	R_TYPE		0		/* 0=postscript, 1=rasterfile */
+#define	R_DISPOSE	"lpr -s %s"	/* dispose command */
+#define	R_FILENAME	""		/* output filename */
+
 /* External variables. */
 extern	int gio_graphicsenabled;	/* set when in graphics mdoe	*/
 int	cursor_show = -1;		/* cursor state: on or off	*/
 Window	gt_baseframe, gt_ttysw, gio_frame, gio_canvas;
 FILE	*gt_logfp = NULL;		/* logfile file pointer		*/
+
+/* Screendump stuff. */
+int	r_type = R_TYPE;
+char	r_dispose[SZ_FNAME+1] = R_DISPOSE;
+char	r_filename[SZ_FNAME+1] = R_FILENAME;
 
 /* Both external and a user option. */
 int	clip_graphics = 1;		/* disable rasterop clipping	*/
@@ -189,12 +198,24 @@ gterm_main (argc, argv)
 int	argc;
 char	**argv;
 {
+	char	*s;
+
 	/* Set user settable options to their initial compiled in values. */
 	restore_params();
 
 	main_argc = argc;
 	main_argv = argv;
 	parse_args (argc, argv, &tty_argc, tty_argv, &gio_argc, gio_argv);
+
+	/* Screendump stuff. */
+	if (s = getenv ("R_DISPOSE"))
+	    strcpy (r_dispose, s);
+	if (s = getenv ("R_FILENAME"))
+	    strcpy (r_filename, s);
+	if (s = getenv ("R_RASTERFILE")) {
+	    strcpy (r_filename, s);
+	    r_type = 1;
+	}
 
 	/* Create the base frame for all the GTERM windows. */
 	gt_baseframe = window_create (NULL, FRAME,

@@ -148,18 +148,17 @@ char	title[ARB]		# Title
 int	interactive		# Interactive?
 
 char	graphics[SZ_FNAME]	# Graphics output device
-int	i, axis, npts, nbins, len_title
+int	i, laxis, paxis, axis, npts, nbins, len_title
 pointer	bins, cv, gp, sp, x, y, z, z1, wts
 
-int	imgeti(), strlen()
 pointer	gopen()
-errchk	imgeti
+int	strlen()
+errchk	get_daxis
 
 begin
 	# Determine the slit axis and set the axis labels.
-
-	axis = imgeti (in, "dispaxis")
-	if (axis == 1)
+	call get_daxis (in, laxis, paxis)
+	if (laxis == 1)
 	    axis = 2
 	else
 	    axis = 1

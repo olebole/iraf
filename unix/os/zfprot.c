@@ -26,14 +26,14 @@ XINT	*action, *status;
 	register char	*p;
 	char	link_name[SZ_PATHNAME];
 	int	first, link(), chk_prot();
-	char	*rindex();
+	char	*strrchr();
 
 	/* Build up name of link file: "dir/..fname".  This is done by copying
 	 * fname to the filename buffer of the link file and truncating the
 	 * new filename after the directory prefix (if any).
 	 */
 	strcpy (link_name, (char *)fname);
-	if ((p = rindex (link_name, '/')) != NULL) {
+	if ((p = strrchr (link_name, '/')) != NULL) {
 	    *(p+1) = EOS;
 	    first = p - link_name + 1;		/* first char after '/' */
 	} else {
@@ -58,12 +58,12 @@ XINT	*action, *status;
 	    return;
 
 	case SET_PROTECTION:
-	    if (chk_prot ((char *)fname, link_name) == XYES)
-		*status = XOK;
-	    else if (link ((char *)fname, link_name) == ERR)
-		*status = XERR;
-	    else 
-		*status = XOK;
+	    *status = XOK;
+	    if (chk_prot ((char *)fname, link_name) == XNO) {
+		unlink (link_name);
+		if (link ((char *)fname, link_name) == ERR)
+		    *status = XERR;
+	    }
 	    return;
 
 	default:

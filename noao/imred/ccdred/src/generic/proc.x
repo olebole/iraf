@@ -60,8 +60,9 @@ procedure proc1s (ccd)
 
 pointer	ccd		# CCD structure
 
-int	line, ncols, nlines, findmean
+int	line, ncols, nlines, findmean, rep
 real	overscan, darkscale, flatscale, illumscale, frgscale, mean
+short	minrep
 pointer	in, out, zeroim, darkim, flatim, illumim, fringeim
 pointer	outbuf, overscan_vec, zerobuf, darkbuf, flatbuf, illumbuf, fringebuf
 
@@ -83,6 +84,9 @@ begin
 	findmean = CORS(ccd, FINDMEAN)
 	if (findmean == YES)
 	    mean = 0.
+	rep = CORS(ccd, MINREP)
+	if (rep == YES)
+	    minrep = MINREPLACE(ccd)
 
 	overscan_vec = OVERSCAN_VEC(ccd)
 
@@ -98,6 +102,10 @@ begin
 	if (CORS(ccd, DARKCOR) == 0) {
 	    darkim = NULL
 	    darkbuf = 1
+	} else if (IM_LEN(DARK_IM(ccd),2) == 1) {
+	    darkim = NULL
+	    darkbuf = ccd_gls (DARK_IM(ccd), DARK_C1(ccd), DARK_C2(ccd), 1)
+	    darkscale = FLATSCALE(ccd)
 	} else {
 	    darkim = DARK_IM(ccd)
 	    darkscale = DARKSCALE(ccd)
@@ -141,8 +149,8 @@ begin
 
 	do line = 2 - OUT_L1(ccd), 0
 	    call amovs (
-		Memr[imgl2s(in,IN_L1(ccd)+line-1)+IN_C1(ccd)-OUT_C1(ccd)],
-		Memr[impl2s(out,OUT_L1(ccd)+line-1)], IM_LEN(out,1))
+		Mems[imgl2s(in,IN_L1(ccd)+line-1)+IN_C1(ccd)-OUT_C1(ccd)],
+		Mems[impl2s(out,OUT_L1(ccd)+line-1)], IM_LEN(out,1))
 
 	do line = 1, nlines {
 	    outbuf = impl2s (out, OUT_L1(ccd)+line-1)
@@ -172,14 +180,16 @@ begin
 		Mems[flatbuf], Mems[illumbuf], Mems[fringebuf], ncols,
 		darkscale, flatscale, illumscale, frgscale)
 
+	    if (rep == YES)
+		call amaxks (Mems[outbuf], minrep, Mems[outbuf], ncols)
 	    if (findmean == YES)
 		mean = mean + asums (Mems[outbuf], ncols)
 	}
 
 	do line = nlines+1, IM_LEN(out,2)-OUT_L1(ccd)+1
 	    call amovs (
-		Memr[imgl2s(in,IN_L1(ccd)+line-1)+IN_C1(ccd)-OUT_C1(ccd)],
-		Memr[impl2s(out,OUT_L1(ccd)+line-1)], IM_LEN(out,1))
+		Mems[imgl2s(in,IN_L1(ccd)+line-1)+IN_C1(ccd)-OUT_C1(ccd)],
+		Mems[impl2s(out,OUT_L1(ccd)+line-1)], IM_LEN(out,1))
 
 	# Compute the mean from the sum of the output pixels.
 	if (findmean == YES)
@@ -196,8 +206,9 @@ procedure proc2s (ccd)
 
 pointer	ccd		# CCD structure
 
-int	line, ncols, nlines, findmean
+int	line, ncols, nlines, findmean, rep
 real	darkscale, flatscale, illumscale, frgscale, mean
+short	minrep
 pointer	in, out, zeroim, darkim, flatim, illumim, fringeim
 pointer	outbuf, overscan_vec, zerobuf, darkbuf, flatbuf, illumbuf, fringebuf
 
@@ -219,6 +230,9 @@ begin
 	findmean = CORS(ccd, FINDMEAN)
 	if (findmean == YES)
 	    mean = 0.
+	rep = CORS(ccd, MINREP)
+	if (rep == YES)
+	    minrep = MINREPLACE(ccd)
 
 	overscan_vec = OVERSCAN_VEC(ccd)
 
@@ -234,6 +248,10 @@ begin
 	if (CORS(ccd, DARKCOR) == 0) {
 	    darkim = NULL
 	    darkbuf = 1
+	} else if (IM_LEN(DARK_IM(ccd),1) == 1) {
+	    darkim = NULL
+	    darkbuf = imgs2s (DARK_IM(ccd), 1, 1, DARK_L1(ccd), DARK_L2(ccd))
+	    darkscale = DARKSCALE(ccd)
 	} else {
 	    darkim = DARK_IM(ccd)
 	    darkscale = DARKSCALE(ccd)
@@ -277,8 +295,8 @@ begin
 
 	do line = 2 - OUT_L1(ccd), 0
 	    call amovs (
-		Memr[imgl2s(in,IN_L1(ccd)+line-1)+IN_C1(ccd)-OUT_C1(ccd)],
-		Memr[impl2s(out,OUT_L1(ccd)+line-1)], IM_LEN(out,1))
+		Mems[imgl2s(in,IN_L1(ccd)+line-1)+IN_C1(ccd)-OUT_C1(ccd)],
+		Mems[impl2s(out,OUT_L1(ccd)+line-1)], IM_LEN(out,1))
 
 	do line = 1, nlines {
 	    outbuf = impl2s (out, OUT_L1(ccd)+line-1)
@@ -306,14 +324,16 @@ begin
 		Mems[flatbuf], Mems[illumbuf], Mems[fringebuf], ncols,
 		zeroim, flatim, darkscale, flatscale, illumscale, frgscale)
 
+	    if (rep == YES)
+		call amaxks (Mems[outbuf], minrep, Mems[outbuf], ncols)
 	    if (findmean == YES)
 		mean = mean + asums (Mems[outbuf], ncols)
 	}
 
 	do line = nlines+1, IM_LEN(out,2)-OUT_L1(ccd)+1
 	    call amovs (
-		Memr[imgl2s(in,IN_L1(ccd)+line-1)+IN_C1(ccd)-OUT_C1(ccd)],
-		Memr[impl2s(out,OUT_L1(ccd)+line-1)], IM_LEN(out,1))
+		Mems[imgl2s(in,IN_L1(ccd)+line-1)+IN_C1(ccd)-OUT_C1(ccd)],
+		Mems[impl2s(out,OUT_L1(ccd)+line-1)], IM_LEN(out,1))
 
 	# Compute the mean from the sum of the output pixels.
 	if (findmean == YES)
@@ -329,8 +349,9 @@ procedure proc1r (ccd)
 
 pointer	ccd		# CCD structure
 
-int	line, ncols, nlines, findmean
+int	line, ncols, nlines, findmean, rep
 real	overscan, darkscale, flatscale, illumscale, frgscale, mean
+real	minrep
 pointer	in, out, zeroim, darkim, flatim, illumim, fringeim
 pointer	outbuf, overscan_vec, zerobuf, darkbuf, flatbuf, illumbuf, fringebuf
 
@@ -352,6 +373,9 @@ begin
 	findmean = CORS(ccd, FINDMEAN)
 	if (findmean == YES)
 	    mean = 0.
+	rep = CORS(ccd, MINREP)
+	if (rep == YES)
+	    minrep = MINREPLACE(ccd)
 
 	overscan_vec = OVERSCAN_VEC(ccd)
 
@@ -367,6 +391,10 @@ begin
 	if (CORS(ccd, DARKCOR) == 0) {
 	    darkim = NULL
 	    darkbuf = 1
+	} else if (IM_LEN(DARK_IM(ccd),2) == 1) {
+	    darkim = NULL
+	    darkbuf = ccd_glr (DARK_IM(ccd), DARK_C1(ccd), DARK_C2(ccd), 1)
+	    darkscale = FLATSCALE(ccd)
 	} else {
 	    darkim = DARK_IM(ccd)
 	    darkscale = DARKSCALE(ccd)
@@ -441,6 +469,8 @@ begin
 		Memr[flatbuf], Memr[illumbuf], Memr[fringebuf], ncols,
 		darkscale, flatscale, illumscale, frgscale)
 
+	    if (rep == YES)
+		call amaxkr (Memr[outbuf], minrep, Memr[outbuf], ncols)
 	    if (findmean == YES)
 		mean = mean + asumr (Memr[outbuf], ncols)
 	}
@@ -465,8 +495,9 @@ procedure proc2r (ccd)
 
 pointer	ccd		# CCD structure
 
-int	line, ncols, nlines, findmean
+int	line, ncols, nlines, findmean, rep
 real	darkscale, flatscale, illumscale, frgscale, mean
+real	minrep
 pointer	in, out, zeroim, darkim, flatim, illumim, fringeim
 pointer	outbuf, overscan_vec, zerobuf, darkbuf, flatbuf, illumbuf, fringebuf
 
@@ -488,6 +519,9 @@ begin
 	findmean = CORS(ccd, FINDMEAN)
 	if (findmean == YES)
 	    mean = 0.
+	rep = CORS(ccd, MINREP)
+	if (rep == YES)
+	    minrep = MINREPLACE(ccd)
 
 	overscan_vec = OVERSCAN_VEC(ccd)
 
@@ -503,6 +537,10 @@ begin
 	if (CORS(ccd, DARKCOR) == 0) {
 	    darkim = NULL
 	    darkbuf = 1
+	} else if (IM_LEN(DARK_IM(ccd),1) == 1) {
+	    darkim = NULL
+	    darkbuf = imgs2r (DARK_IM(ccd), 1, 1, DARK_L1(ccd), DARK_L2(ccd))
+	    darkscale = DARKSCALE(ccd)
 	} else {
 	    darkim = DARK_IM(ccd)
 	    darkscale = DARKSCALE(ccd)
@@ -575,6 +613,8 @@ begin
 		Memr[flatbuf], Memr[illumbuf], Memr[fringebuf], ncols,
 		zeroim, flatim, darkscale, flatscale, illumscale, frgscale)
 
+	    if (rep == YES)
+		call amaxkr (Memr[outbuf], minrep, Memr[outbuf], ncols)
 	    if (findmean == YES)
 		mean = mean + asumr (Memr[outbuf], ncols)
 	}

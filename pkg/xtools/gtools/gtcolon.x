@@ -9,7 +9,9 @@ define	PROMPT	"graph format options"
 # Defined colon commands for the GTOOLS package
 define	COMMANDS "|/xwindow|/ywindow|/xtransform|/ytransform|/title|/xlabel|\
 	|/ylabel|/xunits|/yunits|/comments|/help|/redraw|/subtitle|/xsize|\
-	|/ysize|/parameters|/type|/mark|/line|/transpose|/sysid|"
+	|/ysize|/parameters|/type|/mark|/line|/transpose|/sysid|/color|\
+	|/xflip|/yflip|"
+
 define	XWINDOW		1	# Set X window limits
 define	YWINDOW		2	# Set Y window limits
 define	XTRANSFORM	3	# Set X transformation function
@@ -33,6 +35,10 @@ define	MARK		20	# Set symbol mark type
 define	LINE		21	# Set line type
 define	TRANSPOSE	22	# Transpose graph
 define	SYSID		23	# Draw SYSID?
+define	COLOR		24	# Set color
+#	newline		25
+define	XFLIP		26	# Toggle x flip
+define	YFLIP		27	# Toggle y flip
 
 
 # GT_COLON -- Process standard gtools colon commands.
@@ -160,7 +166,8 @@ begin
 
 	case PARAMETERS: # /parameters: Set parameters string
 	    call gargstr (cmd, SZ_LINE)
-	    call gt_sets (gt, GTSUBTITLE, cmd)
+####	    call gt_sets (gt, GTPARAMETERS, cmd)
+	    call gt_sets (gt, GTPARAMS, cmd)
 
 	case TYPE: # /type: Graph type
 	    call gargwrd (cmd, SZ_LINE)
@@ -183,12 +190,30 @@ begin
 	    }
 
 	case LINE: # /line: Line type
-	    call gargr (ival)
+	    call gargi (ival)
 	    if (nscan() == 2)
 		call gt_seti (gt, GTLINE, ival)
 	    else {
 	        call printf ("line = %s\n")
 		    call pargi (gt_geti (gt, GTLINE))
+	    }
+
+	case XFLIP: # /xflip: Toggle x flip flag
+	    call gargb (bval)
+	    if (nscan() == 2)
+		call gt_seti (gt, GTXFLIP, btoi (bval))
+	    else {
+		call printf ("xflip = %b\n")
+		    call pargi (gt_geti (gt, GTXFLIP))
+	    }
+
+	case YFLIP: # /yflip: Toggle y flip flag
+	    call gargb (bval)
+	    if (nscan() == 2)
+		call gt_seti (gt, GTYFLIP, btoi (bval))
+	    else {
+		call printf ("yflip = %b\n")
+		    call pargi (gt_geti (gt, GTYFLIP))
 	    }
 
 	case TRANSPOSE: # /transpose: Toggle transpose flag
@@ -204,6 +229,15 @@ begin
 	    else {
 		call printf ("sysid = %b\n")
 		    call pargi (gt_geti (gt, GTSYSID))
+	    }
+
+	case COLOR: # /color: line/mark color
+	    call gargi (ival)
+	    if (nscan() == 2)
+		call gt_seti (gt, GTCOLOR, ival)
+	    else {
+	        call printf ("color = %s\n")
+		    call pargi (gt_geti (gt, GTCOLOR))
 	    }
 	}
 end

@@ -33,10 +33,10 @@ pointer	in, out				# IMIO pointers
 pointer	ic				# ICFIT pointer
 pointer	gt				# GTOOLS pointer
 
+bool	same, clgetb()
 int	imtopen(), imtgetim(), imtlen(), strdic(), gt_init()
 int	clgeti()
 real	clgetr()
-bool	clgetb()
 
 begin
 	# Get input and output lists and check that the number of images
@@ -92,13 +92,14 @@ begin
 	while ((imtgetim (listin, input, SZ_LINE) != EOF) &&
 	    (imtgetim (listout, output, SZ_FNAME) != EOF)) {
 
-	    iferr (call f1d_immap (input, output, ntype, in, out)) {
+	    iferr (call f1d_immap (input, output, ntype, in, out, same)) {
 		call erract (EA_WARN)
 		next
 	    }
 	    call f1d_fit1d (in, out, ic, gt, input, axis, ntype, interactive)
 	    call imunmap (in)
-	    call imunmap (out)
+	    if (!same)
+		call imunmap (out)
 	}
 
 	call ic_closer (ic)
@@ -125,12 +126,12 @@ bool	interactive			# Interactive?
 
 char	graphics[SZ_FNAME]		# Graphics device
 int	i, nx, new
+real	div
 pointer	cv, gp, sp, x, wts, indata, outdata
 
 int	f1d_getline(), f1d_getdata(), strlen()
-real	f1d_efncr()
+real	cveval()
 pointer	gopen()
-extern	f1d_efncr
 
 begin
 	# Error check.
@@ -185,16 +186,20 @@ begin
 		nx, new, YES, new, new)
 	    new = NO
 
+	    # Be careful because the indata and outdata buffers may be the same.
 	    switch (ntype) {
 	    case 1:
 	        call cvvector (cv, Memr[x], Memr[outdata], nx)
 	    case 2:
-		call cvvector (cv, Memr[x], Memr[outdata], nx)
-		call asubr (Memr[indata], Memr[outdata], Memr[outdata], nx)
+		do i = 0, nx-1
+		    Memr[outdata+i] = Memr[indata+i] - cveval (cv, Memr[x+i])
 	    case 3:
-		call cvvector (cv, Memr[x], Memr[outdata], nx)
-		call advzr (Memr[indata], Memr[outdata], Memr[outdata], nx,
-			f1d_efncr)
+		do i = 0, nx-1 {
+		    div = cveval (cv, Memr[x+i])
+		    if (abs (div) < 1E-20)
+			div = 1
+		    Memr[outdata+i] = Memr[indata+i] / div
+		}
 	    }
 	}
 
@@ -203,30 +208,21 @@ begin
 end
 
 
-# F1D_EFNCR -- Function called by advzr on zero division.
-
-real procedure f1d_efncr (x)
-
-real	x		# Numerator
-
-begin
-	return (1.)
-end
-
-
 # F1D_IMMAP -- Map images for fit1d.
 
-procedure f1d_immap (input, output, ntype, in, out)
+procedure f1d_immap (input, output, ntype, in, out, same)
 
 char	input[ARB]		# Input image
 char	output[ARB]		# Output image
 int	ntype			# Type of fit1d output
 pointer	in			# Input IMIO pointer
 pointer	out			# Output IMIO pointer
+bool	same			# Same image?
 
 int	i
-pointer	sp, root, sect, line, data
+pointer	sp, iroot, isect, oroot, osect, line, data
 
+bool	streq()
 int	imaccess(), impnlr()
 pointer	immap()
 errchk	immap
@@ -235,18 +231,23 @@ begin
 	# Get the root name and section of the input image.
 
 	call smark (sp)
-	call salloc (root, SZ_FNAME, TY_CHAR)
-	call salloc (sect, SZ_FNAME, TY_CHAR)
+	call salloc (iroot, SZ_FNAME, TY_CHAR)
+	call salloc (isect, SZ_FNAME, TY_CHAR)
+	call salloc (oroot, SZ_FNAME, TY_CHAR)
+	call salloc (osect, SZ_FNAME, TY_CHAR)
 
-	call imgimage (input, Memc[root], SZ_FNAME)
-	call imgsection (input, Memc[sect], SZ_FNAME)
+	call imgimage (input, Memc[iroot], SZ_FNAME)
+	call imgsection (input, Memc[isect], SZ_FNAME)
+	call imgimage (output, Memc[oroot], SZ_FNAME)
+	call imgsection (output, Memc[osect], SZ_FNAME)
+	same = streq (Memc[iroot], Memc[oroot])
 
 	# If the output image is not accessible then create it as a new copy
 	# of the full input image and initialize according to ntype.
 
 	if (imaccess (output, READ_WRITE) == NO) {
-	    in = immap (Memc[root], READ_ONLY, 0)
-	    out = immap (output, NEW_COPY, in)
+	    in = immap (Memc[iroot], READ_ONLY, 0)
+	    out = immap (Memc[oroot], NEW_COPY, in)
 	    IM_PIXTYPE(out) = TY_REAL
 
 	    call salloc (line, IM_MAXDIM, TY_LONG)
@@ -272,19 +273,25 @@ begin
 
 	in = immap (input, READ_ONLY, 0)
 
-	call imgsection (output, Memc[root], SZ_FNAME)
-	if (Memc[root] == EOS) {
-	    call sprintf (Memc[root], SZ_FNAME, "%s%s")
-	        call pargstr (output)
-	        call pargstr (Memc[sect])
-	    out = immap (Memc[root], READ_WRITE, 0)
+	if (Memc[isect] != EOS && Memc[osect] == EOS) {
+	    call sprintf (Memc[osect], SZ_FNAME, "%s%s")
+	        call pargstr (Memc[oroot])
+	        call pargstr (Memc[isect])
 	} else
-	    out = immap (output, READ_WRITE, 0)
+	    call strcpy (output, Memc[osect], SZ_FNAME)
+
+	if (streq (input, Memc[osect])) {
+	    call imunmap (in)
+	    in = immap (input, READ_WRITE, 0)
+	    out = in
+	} else
+	    out = immap (Memc[osect], READ_WRITE, 0)
 
 	do i = 1, IM_NDIM(in)
 	    if (IM_LEN(in, i) != IM_LEN(out, i)) {
 		call imunmap (in)
-		call imunmap (out)
+		if (!same)
+		    call imunmap (out)
 		call sfree (sp)
 		call error (0, "Input and output images have different sizes")
 	    }

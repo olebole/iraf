@@ -48,14 +48,8 @@ begin
 
 	if (interactive == YES) {
 	    gp = gopen (device, NEW_FILE, STDGRAPH)
-
-	    call gt_setr (gt, GTXMIN, real (xmin))
-	    call gt_setr (gt, GTXMAX, real (xmax))
-	     
 	    call icg_fitr (ic, gp, "cursor", gt, cv, x, y, wts, nvalues)
-
 	    call gclose (gp)
-
 	} else 
 	    # Do fit non-interactively
 	    call ic_fitr (ic, cv, x, y, wts, nvalues, YES, YES, YES, YES)
@@ -67,7 +61,9 @@ begin
 		call ttyclear (STDOUT, tty)
 		call ttycdes (tty)
 	    }
-	    call cf_errorsr (ic, gt, cv, x, y, wts, nvalues)
+
+	    call ic_show (ic, "STDOUT", gt)
+	    call ic_vshowr (ic, "STDOUT", cv, x, y, wts, nvalues, gt)
 
 	    if (ofmt == VERBOSE_OUTPUT) {
 		call printf ("\n\t    X     \t     Yc   \t     Y    \t     W\n")
@@ -94,7 +90,7 @@ begin
 	}
 
 	call cvfree (cv)
-	call ic_closer (ic)
+	#call ic_close$t (ic)
 end
 
 
@@ -120,56 +116,6 @@ begin
 		call pargr (wts[i])
 	}
 end
-
-
-# CF_ERRORS -- Calculate and print errors of fit.
-
-procedure cf_errorsr (ic, gt, cv, x, y, wts, npts)
-
-pointer	ic		# ICFIT pointer
-pointer	gt		# Graphics tools pointer
-pointer	cv		# Curfit pointer
-real	x[ARB]		# X data values
-real	y[ARB]		# Y data values
-real	wts[ARB]	# Weights
-int	npts		# Number of data points
-
-int	i, ncoeffs
-real	chisqr
-pointer	sp, fit, coeffs, errors, str
-
-int	rcvstati()
-
-begin
-	# Determine the number of coefficients and allocate memory.
-	ncoeffs = rcvstati (cv, CVNCOEFF)
-	call smark (sp)
-	call salloc (coeffs, ncoeffs, TY_REAL)
-	call salloc (errors, ncoeffs, TY_REAL)
-	call salloc (fit, npts, TY_REAL)
-	call salloc (str, SZ_LINE, TY_CHAR)
-
-	# Use icfit output routines first
-	call ic_show   (ic, "STDOUT", gt)
-	call ic_errorsr (ic, "STDOUT", cv, x, y, wts, npts)
-
-	# Get some more information
-	call rcvcoeff (cv, Memr[coeffs], ncoeffs)
-	call rcvvector (cv, x, Memr[fit], npts)
-	call rcverrors (cv, y, wts, Memr[fit], npts, chisqr, Memr[errors])
-
-	call printf ("\tcoefficent\t  error\n")
-	do i = 1, ncoeffs {
-	    call printf (" %d\t%14.7e\t%14.7e\n")
-		call pargi (i)
-		call pargr (Memr[coeffs+i-1])
-		call pargr (Memr[errors+i-1])
-	}
-
-	# Free allocated memory.
-	call sfree (sp)
-end
-
 
 # IM_PROJECTION -- Given an image section of arbitrary dimension, compute
 # the projection along a single axis by taking the average over the other
@@ -293,14 +239,8 @@ begin
 
 	if (interactive == YES) {
 	    gp = gopen (device, NEW_FILE, STDGRAPH)
-
-	    call gt_setr (gt, GTXMIN, real (xmin))
-	    call gt_setr (gt, GTXMAX, real (xmax))
-	     
 	    call icg_fitd (ic, gp, "cursor", gt, cv, x, y, wts, nvalues)
-
 	    call gclose (gp)
-
 	} else 
 	    # Do fit non-interactively
 	    call ic_fitd (ic, cv, x, y, wts, nvalues, YES, YES, YES, YES)
@@ -312,7 +252,9 @@ begin
 		call ttyclear (STDOUT, tty)
 		call ttycdes (tty)
 	    }
-	    call cf_errorsd (ic, gt, cv, x, y, wts, nvalues)
+
+	    call ic_show (ic, "STDOUT", gt)
+	    call ic_vshowd (ic, "STDOUT", cv, x, y, wts, nvalues, gt)
 
 	    if (ofmt == VERBOSE_OUTPUT) {
 		call printf ("\n\t    X     \t     Yc   \t     Y    \t     W\n")
@@ -339,7 +281,7 @@ begin
 	}
 
 	call dcvfree (cv)
-	call ic_closed (ic)
+	#call ic_close$t (ic)
 end
 
 
@@ -365,56 +307,6 @@ begin
 		call pargd (wts[i])
 	}
 end
-
-
-# CF_ERRORS -- Calculate and print errors of fit.
-
-procedure cf_errorsd (ic, gt, cv, x, y, wts, npts)
-
-pointer	ic		# ICFIT pointer
-pointer	gt		# Graphics tools pointer
-pointer	cv		# Curfit pointer
-double	x[ARB]		# X data values
-double	y[ARB]		# Y data values
-double	wts[ARB]	# Weights
-int	npts		# Number of data points
-
-int	i, ncoeffs
-double	chisqr
-pointer	sp, fit, coeffs, errors, str
-
-int	dcvstati()
-
-begin
-	# Determine the number of coefficients and allocate memory.
-	ncoeffs = dcvstati (cv, CVNCOEFF)
-	call smark (sp)
-	call salloc (coeffs, ncoeffs, TY_DOUBLE)
-	call salloc (errors, ncoeffs, TY_DOUBLE)
-	call salloc (fit, npts, TY_DOUBLE)
-	call salloc (str, SZ_LINE, TY_CHAR)
-
-	# Use icfit output routines first
-	call ic_show   (ic, "STDOUT", gt)
-	call ic_errorsd (ic, "STDOUT", cv, x, y, wts, npts)
-
-	# Get some more information
-	call dcvcoeff (cv, Memd[coeffs], ncoeffs)
-	call dcvvector (cv, x, Memd[fit], npts)
-	call dcverrors (cv, y, wts, Memd[fit], npts, chisqr, Memd[errors])
-
-	call printf ("\tcoefficent\t  error\n")
-	do i = 1, ncoeffs {
-	    call printf (" %d\t%14.7e\t%14.7e\n")
-		call pargi (i)
-		call pargd (Memd[coeffs+i-1])
-		call pargd (Memd[errors+i-1])
-	}
-
-	# Free allocated memory.
-	call sfree (sp)
-end
-
 
 # IM_PROJECTION -- Given an image section of arbitrary dimension, compute
 # the projection along a single axis by taking the average over the other

@@ -1,80 +1,165 @@
 # SUMFLUX -- Sum up the flux in a specified bandpass
 
-procedure sumflux (pix, w0, we, wpc, eqx1, eqx2, eqy1, eqy2,
+procedure sumflux (sh, x, y, s, n, eqx1, eqx2, eqy1, eqy2,
 	sum, rsum, esum, ctr)
 
-real	pix[ARB]
-real	w0, we, wpc, eqx1, eqx2, eqy1, eqy2, sum, rsum, esum, ctr
+pointer	sh
+real	x[n], y[n], s[n]
+int	n
+real	eqx1, eqx2, eqy1, eqy2
+real	sum[2], rsum[2], esum[2], ctr[2]
 
-real	slope, csum, sum2, rampval, scale, delta
+real	slope, csum[2], sum2[2], rampval, scale, delta, wpc
 real	w1, w2
 int	i, i1, i2
 bool	fp_equalr()
 
 begin
-	i1 = aint ((eqx1-w0)/wpc +0.5) + 1
-	i2 = aint ((eqx2-w0)/wpc +0.5) + 1
-
+	call fixx (sh, eqx1, eqx2, eqy1, eqy2, i1, i2)
 	slope = (eqy2-eqy1) / (eqx2-eqx1)
 
-	sum  = 0.0
-	rsum = 0.0
-	esum = 0.0
-	csum = 0.0
-	sum2 = 0.0
+	sum[1]  = 0.0
+	rsum[1] = 0.0
+	esum[1] = 0.0
+	csum[1] = 0.0
+	sum2[1] = 0.0
 	scale = 0.0
 
-	for (i=i1+1; i <= i2-1; i = i+1) {
-	    rampval = eqy1 + slope * (w0 + (i-1)*wpc - eqx1)
-	    sum = sum + pix[i]
-	    rsum = rsum + rampval
-	    if (!IS_INDEF(esum)) {
-		if (fp_equalr (0., rampval))
-		    esum = INDEF
-		else
-	            esum = esum + (1. - pix[i] / rampval)
-	    }
-	    scale = max (scale, pix[i])
-	}
+	for (i=i1+1; i <= i2-1; i = i+1)
+	    scale = max (scale, y[i])
 	if (scale <= 0.)
 	    scale = 1.
 
 	for (i=i1+1; i <= i2-1; i = i+1) {
-	    rampval = eqy1 + slope * (w0 + (i-1)*wpc - eqx1)
-	    delta = (pix[i] - rampval) / scale
-	    csum = csum + abs(delta)**1.5 * (w0 + (i-1)*wpc)
-	    sum2 = sum2 + abs(delta)**1.5
+	    rampval = eqy1 + slope * (x[i] - eqx1)
+	    sum[1] = sum[1] + y[i]
+	    rsum[1] = rsum[1] + rampval
+	    if (!IS_INDEF(esum[1])) {
+		if (fp_equalr (0., rampval/scale))
+		    esum[1] = INDEF
+		else
+	            esum[1] = esum[1] + (1. - y[i] / rampval)
+	    }
 	}
 
-	# start pt
-	w1 = (w0 + (i1-1)*wpc - eqx1) / wpc
-	w2 = 1.0 - (w0 + (i2-1)*wpc - eqx2) / wpc
+	for (i=i1+1; i <= i2-1; i = i+1) {
+	    rampval = eqy1 + slope * (x[i] - eqx1)
+	    delta = (y[i] - rampval) / scale
+	    csum[1] = csum[1] + abs(delta)**1.5 * x[i]
+	    sum2[1] = sum2[1] + abs(delta)**1.5
+	}
 
-	sum = sum + w1 * pix[i1] + w2 * pix[i2]
-	rsum = rsum + w1 * eqy1 + w2 * eqy2
-	if (!IS_INDEF(esum)) {
-	    if (fp_equalr (0., eqy1)|| fp_equalr (0., eqy2))
-		esum = INDEF
+	# end points
+	if (eqx1 < x[i1]) {
+	    if (i1 > 1)
+		w1 = (x[i1] - eqx1) / (x[i1] - x[i1-1])
 	    else
-		esum = esum + w1 * (1. - pix[i1] / eqy1) +
-		    w2 * (1. - pix[i2] / eqy2)
+		w1 = (x[i1] - eqx1) / (x[i1+1] - x[i1])
+	} else {
+	    if (i1 < n)
+		w1 = (x[i1] - eqx1) / (x[i1+1] - x[i1])
+	    else
+		w1 = (x[i1] - eqx1) / (x[i1] - x[i1-1])
+	}
+	if (eqx2 < x[i2]) {
+	    if (i2 > 1)
+		w2 = (x[i2] - eqx2) / (x[i2] - x[i2-1])
+	    else
+		w2 = (x[i2] - eqx2) / (x[i2+1] - x[i2])
+	} else {
+	    if (i2 < n)
+		w2 = (x[i2] - eqx2) / (x[i2+1] - x[i2])
+	    else
+		w2 = (x[i2] - eqx2) / (x[i2] - x[i2-1])
+	}
+	w2 = 1.0 - w2
+
+	sum[1] = sum[1] + w1 * y[i1] + w2 * y[i2]
+	rsum[1] = rsum[1] + w1 * eqy1 + w2 * eqy2
+	if (!IS_INDEF(esum[1])) {
+	    if (fp_equalr (0., eqy1/scale)|| fp_equalr (0., eqy2/scale))
+		esum[1] = INDEF
+	    else
+		esum[1] = esum[1] + w1 * (1. - y[i1] / eqy1) +
+		    w2 * (1. - y[i2] / eqy2)
 	}
 
-	delta = (pix[i1] - eqy1) / scale
-	csum = csum + w1 * abs(delta)**1.5 * eqx1
-	sum2 = sum2 + w1 * abs(delta)**1.5
+	delta = (y[i1] - eqy1) / scale
+	csum[1] = csum[1] + w1 * abs(delta)**1.5 * eqx1
+	sum2[1] = sum2[1] + w1 * abs(delta)**1.5
 
-	delta = (pix[i1] - eqy1) / scale
-	csum = csum + w2 * abs(delta)**1.5 * eqx2
-	sum2 = sum2 + w2 * abs(delta)**1.5
+	delta = (y[i2] - eqy2) / scale
+	csum[1] = csum[1] + w2 * abs(delta)**1.5 * eqx2
+	sum2[1] = sum2[1] + w2 * abs(delta)**1.5
 
-	if (sum2 != 0.0)
-	    ctr = csum / sum2
+	if (sum2[1] != 0.0)
+	    ctr[1] = csum[1] / sum2[1]
 	else
-	    ctr = 0.0
+	    ctr[1] = 0.0
 
 	# Correct for angstroms/channel
-	sum = sum * wpc
-	esum = esum * wpc
-	rsum = rsum * wpc
+	if (i1 != i2)
+	    wpc = (x[i2] - x[i1]) / (i2 - i1)
+	else if (i1 < n)
+	    wpc = x[i1+1] - x[i1]
+	else
+	    wpc = x[i1-1] - x[i1]
+	sum[1] = sum[1] * wpc
+	if (!IS_INDEF(esum[1]))
+	    esum[1] = esum[1] * wpc
+	rsum[1] = rsum[1] * wpc
+
+	# Errors (Note there are no errors in the ramp values).
+	if (!IS_INDEF(s[1])) {
+	    sum[2]  = 0.0
+	    rsum[2] = 0.0
+	    esum[2] = 0.0
+	    csum[2] = 0.0
+	    sum2[2] = 0.0
+	    for (i=i1+1; i <= i2-1; i = i+1) {
+		rampval = eqy1 + slope * (x[i] - eqx1)
+		sum[2] = sum[2] + s[i]**2
+		if (!IS_INDEF(esum[1])) {
+		    if (fp_equalr (0., rampval/scale))
+			esum[2] = INDEF
+		    else
+			esum[2] = esum[2] + (s[i] / rampval) ** 2
+		}
+	    }
+
+	    for (i=i1+1; i <= i2-1; i = i+1) {
+		rampval = eqy1 + slope * (x[i] - eqx1)
+		delta = (y[i] - rampval) / scale
+		csum[2] = csum[2] + abs(delta)*((x[i]-ctr[1])*s[i]) ** 2
+	    }
+
+	    # endpoints
+	    sum[2] = sum[2] + (w1 * s[i1])**2 + (w2 * s[i2])**2
+	    if (!IS_INDEF(esum[1])) {
+		if (fp_equalr (0., eqy1/scale)|| fp_equalr (0., eqy2/scale))
+		    esum[2] = INDEF
+		else
+		    esum[2] = esum[2] + (w1 * s[i1] / eqy1) ** 2 +
+			(w2 * s[i2] / eqy2) ** 2
+	    }
+
+	    delta = (y[i1] - eqy1) / scale
+	    csum[2] = csum[2] + abs(delta)*(w1*(eqx1-ctr[1])*s[i1]) ** 2
+
+	    delta = (y[i2] - eqy2) / scale
+	    csum[2] = csum[2] + abs(delta)*(w2*(eqx2-ctr[1])*s[i2]) ** 2
+
+	    if (sum2[1] != 0.0)
+		ctr[2] = 1.5 / scale * sqrt (csum[2]) / sum2[1]
+	    else
+		ctr[2] = 0.0
+
+	    sum[2] = sqrt (sum[2])
+	    esum[2] = sqrt (esum[2])
+
+	    # Correct for angstroms/channel
+	    sum[2] = sum[2] * wpc
+	    if (!IS_INDEF(esum[1]))
+		esum[2] = esum[2] * wpc
+	}
 end

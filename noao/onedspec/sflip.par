@@ -1,6 +1,6 @@
-# SPFLIP parameter file
+# SFLIP parameter file
 
-input,s,a,,,,Input image root file name
-records,s,a,,,,Range of spectral records
-output,s,a,,,,Output file root name for flipped spectra
-start_rec,i,a,1,0,9999,Next starting spectral record
+input,s,a,,,,Input spectra to flip
+output,s,a,,,,Output flipped spectra
+coord_flip,b,h,no,,,Flip coordinate system?
+data_flip,b,h,yes,,,Flip data?

@@ -191,7 +191,7 @@ pointer	duout, dvout		# Output coordinate intervals
 
 int	i, j, nsf, nusf, nvsf, nu1, nv1
 real	xmin, xmax, ymin, ymax, umin, umax, vmin, vmax
-real	u, v, du1, dv1, der[8]
+real	u, v, x, y, du1, dv1, der[8]
 pointer	sp, sfname, usf, vsf, sf, xgrid, ygrid, zgrid, ptr1, ptr2, ptr3
 
 int	clgfil(), clplen()
@@ -338,10 +338,15 @@ begin
 	    v = v1 + (i - 1) * dv1
 	    do j = 1, nu1 {
 		u = u1 + (j - 1) * du1
-		call tr_invert (Memi[usf], nusf, Memi[vsf], nvsf, u, v, der,
-		    xmin, xmax, ymin, ymax)
-		Memr[ptr1+j] = der[1]
-		Memr[ptr2+j] = der[2]
+		call tr_invert (Memi[usf], nusf, Memi[vsf], nvsf, u, v, x, y,
+		    der, xmin, xmax, ymin, ymax)
+		# V2.10.2
+		#Memr[ptr1+j] = der[1]
+		#Memr[ptr2+j] = der[2]
+		# After V2.10.3
+		Memr[ptr1+j] = x
+		Memr[ptr2+j] = y
+
 		Memr[ptr3+j] = 1. / abs (der[4] * der[8] - der[5] * der[7])
 	    }
 	    if (i == nv1)
@@ -354,10 +359,14 @@ begin
 	    v = v1 + i * dv1
 	    do j = nu1, 1, -1 {
 		u = u1 + (j - 1) * du1
-		call tr_invert (Memi[usf], nusf, Memi[vsf], nvsf, u, v, der,
-		    xmin, xmax, ymin, ymax)
-		Memr[ptr1+j] = der[1]
-		Memr[ptr2+j] = der[2]
+		call tr_invert (Memi[usf], nusf, Memi[vsf], nvsf, u, v, x, y,
+		    der, xmin, xmax, ymin, ymax)
+		# V2.10.2
+		#Memr[ptr1+j] = der[1]
+		#Memr[ptr2+j] = der[2]
+		# V2.10.3
+		Memr[ptr1+j] = x
+		Memr[ptr2+j] = y
 		Memr[ptr3+j] = 1. / abs (der[4] * der[8] - der[5] * der[7])
 	    }
 	}
@@ -396,15 +405,13 @@ begin
 	call malloc (uout, nu, TY_REAL)
 	call malloc (duout, nu, TY_REAL)
 	if (ulog) {
-	    v = 10. ** du
-	    Memr[uout] = u1
-	    do i = uout + 1, uout + nu - 1
-		Memr[i] = v * Memr[i-1]
+	    v = log10 (u1)
+	    do i = 0, nu - 1
+		Memr[uout+i] = 10. ** (v + i * du)
 	    call amulkr (Memr[uout], du * LN_10, Memr[duout], nu)
 	} else {
-	    Memr[uout] = u1
-	    do i = uout + 1, uout + nu - 1
-	        Memr[i] = Memr[i-1] + du
+	    do i = 0, nu - 1
+		Memr[uout+i] = u1 + i * du
 	    call amovkr (du, Memr[duout], nu)
 	}
 	u2 = Memr[uout+nu-1]
@@ -412,15 +419,13 @@ begin
 	call malloc (vout, nv, TY_REAL)
 	call malloc (dvout, nv, TY_REAL)
 	if (vlog) {
-	    v = 10. ** dv
-	    Memr[vout] = v1
-	    do i = vout + 1, vout + nv - 1
-		Memr[i] = v * Memr[i-1]
+	    v = log10 (v1)
+	    do i = 0, nv - 1
+		Memr[vout+i] = 10. ** (v + i * dv)
 	    call amulkr (Memr[vout], dv * LN_10, Memr[dvout], nv)
 	} else {
-	    Memr[vout] = v1
-	    do i = vout + 1, vout + nv - 1
-		Memr[i] = Memr[i-1] + dv
+	    do i = 0, nv - 1
+		Memr[vout+i] = v1 + i * dv
 	    call amovkr (dv, Memr[dvout], nv)
 	}
 	v2 = Memr[vout+nv-1]
@@ -531,6 +536,7 @@ end
 
 define	MAX_ITERATE	10
 define	ERROR		0.05
+define	FUDGE		0.5
 
 # TR_INVERT -- Given user coordinate surfaces U(X,Y) and V(X,Y)
 # (if none use one-to-one mapping and if more than one average)
@@ -540,22 +546,24 @@ define	ERROR		0.05
 # and solving the linear Taylor expansions simultaneously.  The last
 # point sampled is used as the starting point.  Thus, if the
 # input U and V progress smoothly then the number of iterations
-# can be small.  The output is returned in the derivative array
+# can be small.  The output is returned in x and y and in the derivative array
 # DER.  A point outside of the surfaces is returned as the nearest
-# point at the edge of the surfaces.
+# point at the edge of the surfaces in the DER array.
 
-procedure tr_invert (usf, nusf, vsf, nvsf, u, v, der, xmin, xmax, ymin, ymax)
+procedure tr_invert (usf, nusf, vsf, nvsf, u, v, x, y, der,
+	xmin, xmax, ymin, ymax)
 
 pointer	usf[ARB], vsf[ARB]	# User coordinate surfaces U(X,Y) and V(X,Y)
 int	nusf, nvsf		# Number of surfaces for each coordinate
 real	u, v			# Input U and V to determine X and Y
+real	x, y			# Output X and Y
 real	der[8]			# Last result as input, new result as output 
 				# 1=X, 2=Y, 3=U, 4=DUDX, 5=DUDY, 6=V,
 				# 7=DVDX, 8=DVDY
 real	xmin, xmax, ymin, ymax	# Limits of coordinate surfaces.
 
 int	i, j, nedge
-real	du, dv, dx, dy, tmp[3]
+real	fudge, du, dv, dx, dy, tmp[3]
 
 begin
 	# Use the last result as the starting point for the next position.
@@ -570,24 +578,15 @@ begin
 	    dx = (der[8] * du - der[5] * dv) /
 		(der[8] * der[4] - der[5] * der[7])
 	    dy = (dv - der[7] * dx) / der[8]
-	    der[1] = der[1] + dx
-	    der[2] = der[2] + dy
-	    if (der[1] < xmin) {
-	        der[1] = xmin
+	    fudge = 1 - FUDGE / i
+	    x = der[1] + fudge * dx
+	    y = der[2] + fudge * dy
+	    der[1] = max (xmin, min (xmax, x))
+	    der[2] = max (ymin, min (ymax, y))
+	    if (x < xmin || x > xmax)
 	        nedge = nedge + 1
-	    }
-	    if (der[1] > xmax) {
-	        der[1] = xmax
+	    if (y < ymin || y > ymax)
 	        nedge = nedge + 1
-	    }
-	    if (der[2] < ymin) {
-	        der[2] = ymin
-	        nedge = nedge + 1
-	    }
-	    if (der[2] > ymax) {
-	        der[2] = ymax
-	        nedge = nedge + 1
-	    }
 	    if (nedge > 2)
 	        break
 	    if ((abs (dx) < ERROR) && (abs (dy) < ERROR))
@@ -652,7 +651,8 @@ int	nusf, nvsf		# Number of surfaces for each coordinate
 real	x, y			# Starting X and Y
 real	der[8]			# Inversion data
 
-int	j, tmp[3]
+int	j
+real	tmp[3]
 
 begin
 	der[1] = x
@@ -723,13 +723,14 @@ pointer	jmsi			# Jacobian interpolation pointer
 real	xout[ARB], yout[ARB]	# Output grid relative to interpolation surface
 real	dxout[ARB], dyout[ARB]	# Output coordinate intervals
 
-int	i, nxin, nyin, line1, line2, line3, line4, nlines, dispaxis
-real	a, b
+int	i, nxin, nyin, line1, line2, line3, line4, nlines, laxis, paxis, axis[2]
+real	a, b, r[2], w[2], cd[2,2]
 pointer	zmsi, buf, bufout
-pointer	sp, xin, yin, y
+pointer	sp, xin, yin, y, mw
 
-int	imaccf(), imgeti()
-pointer	impl2r()
+pointer	mw_open(), impl2r()
+errchk	get_daxis
+data	axis/1,2/
 
 include	"transform.com"
 
@@ -738,53 +739,51 @@ begin
 
 	IM_LEN(out, 1) = nu
 	IM_LEN(out, 2) = nv
-	call imaddr (out, "crpix1", 1.)
+
+	mw = mw_open (NULL, 2)
+	call mw_newsystem (mw, "world", 2)
+	call mw_swtype (mw, 1, 1, "linear", "")
+	call mw_swtype (mw, 2, 1, "linear", "")
+	r[1] = 1.
 	if (ulog)
-	    call imaddr (out, "crval1", log10 (u1))
+	    w[1] = log10 (u1)
 	else
-	    call imaddr (out, "crval1", u1)
-	call imaddr (out, "cdelt1", du)
-	call imaddr (out, "cd1_1", du)
-	call imaddr (out, "crpix2", 1.)
+	    w[1] = u1
+	cd[1,1] = du
+	cd[1,2] = 0.
+	r[2] = 1.
 	if (vlog)
-	    call imaddr (out, "crval2", log10 (v1))
+	    w[2] = log10 (v1)
 	else
-	    call imaddr (out, "crval2", v1)
-	call imaddr (out, "cdelt2", dv)
-	call imaddr (out, "cd2_2", dv)
+	    w[2] = v1
+	cd[2,2] = dv
+	cd[2,1] = 0.
+	call mw_swtermr (mw, r, w, cd, 2)
 
 	# The following image parameters are for compatibility with the
 	# ONEDSPEC package.
 
-	if (imaccf (in, "dispaxis") == YES) {
-	    dispaxis = imgeti (in, "dispaxis")
-	    switch (dispaxis) {
-	    case 1:
-		if (ulog) {
-		    call imaddr (out, "w0", log10 (u1))
-	    	    call imaddi (out, "dc-flag", 1)
-		} else {
-		    call imaddr (out, "w0", u1)
-	    	    call imaddi (out, "dc-flag", 0)
-		}
-		call imaddr (out, "wpc", du)
-	    case 2:
-		if (vlog) {
-		    call imaddr (out, "w0", log10 (v1))
-	    	    call imaddi (out, "dc-flag", 1)
-		} else {
-		    call imaddr (out, "w0", v1)
-	    	    call imaddi (out, "dc-flag", 0)
-		}
-		call imaddr (out, "wpc", dv)
-	    }
-	} else {
-	    call eprintf (
-		"Warning: Header parameter DISPAXIS not found in %s.\n")
-		call pargstr (IM_HDRFILE(in))
-	    call eprintf (
-		"This may cause difficulties with later reductions.\n")
+	call imastr (out, "DCLOG1", "Transform")
+	call get_daxis (in, laxis, paxis)
+	call imaddi (out, "dispaxis", laxis)
+	switch (laxis) {
+	case 1:
+	    if (ulog)
+		call imaddi (out, "dc-flag", 1)
+	    else
+		call imaddi (out, "dc-flag", 0)
+	    call mw_swattrs (mw, 1, "label", "Wavelength")
+	    call mw_swattrs (mw, 1, "units", "Angstroms")
+	case 2:
+	    if (vlog)
+		call imaddi (out, "dc-flag", 1)
+	    else
+		call imaddi (out, "dc-flag", 0)
+	    call mw_swattrs (mw, 2, "label", "Wavelength")
+	    call mw_swattrs (mw, 2, "units", "Angstroms")
 	}
+	call mw_saveim (mw, out)
+	call mw_close (mw)
 
 	# Allocate memory for the input coordinates and a vector for the
 	# output y coordinates.  Also initialize the image data buffer.
@@ -827,10 +826,12 @@ begin
 	    if (a < 1.) {
 		call arltr (Memr[yin], nu, 1., 1.)
 		a = 1.
+		b = max (a, b)
 	    }
 	    if (b > nyin) {
 		call argtr (Memr[yin], nu, real (nyin), real (nyin))
 		b = nyin
+		a = min (a, b)
 	    }
 
 	    # Get the input image data and fit an interpolator to the data.
@@ -848,9 +849,11 @@ begin
 		} else if (b > line2) {
 		    line1 = max (1, int (a))
 		    line2 = min (nyin, line1 + nlines - 1)
+		    line1 = max (1, line2 - nlines + 1)
 		} else {
 		    line2 = min (nyin, int (b+1.))
 		    line1 = max (1, line2 - nlines + 1)
+		    line2 = min (nyin, line1 + nlines - 1)
 		}
 		line3 = max (1, line1 - NEDGE)
 		line4 = min (nyin, line2 + NEDGE)

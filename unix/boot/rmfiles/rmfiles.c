@@ -16,6 +16,8 @@ int	verbose;		/* print names of deleted files		*/
 int	execute;		/* permission to delete files		*/
 int	debug;			/* print debugging info			*/
 
+extern	char *vfn2osfn();
+
 
 /*
  * RMFILES -- Delete all files with the listed extensions in the listed
@@ -40,7 +42,7 @@ char	*argv[];
 {
 	char	prog[SZ_LINE+1];
 	char	*argp, *ip, *op;
-	int	oneliner, argno, i;
+	int	oneliner, argno;
 
 	ZZSTRT();
 
@@ -115,7 +117,7 @@ int	oneliner;		/* if !oneliner, open program file	*/
 	char	*extnlist[MAXEXTN], *ip, *op;
 	char	lbuf[SZ_LINE+1];
 	int	nextn, mode;
-	FILE	*fp;
+	FILE	*fp = NULL;
 
 	if (debug) {
 	    fprintf (stderr, "rmfiles @(%s), exe=%d, ver=%d\n", prog, execute,

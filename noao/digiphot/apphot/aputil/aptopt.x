@@ -1,8 +1,8 @@
 include	<mach.h>
 include	<math.h>
 
-# APTOPT - One-dimensional centering routine using repeated
-# convolutions to locate image center.
+# APTOPT - One-dimensional centering routine using repeated convolutions to
+# locate image center.
 
 define	MAX_SEARCH	3	# Max initial search steps
 
@@ -30,7 +30,8 @@ begin
 	x[1] = center
 	call mkt_prof_derv (Memr[wgt], npix, x[1], sigma, ortho)
 	s[1] = adotr (Memr[wgt], data, npix)
-	if (abs (s[1]) <= EPSILONR) {
+	#if (abs (s[1]) <= EPSILONR) {
+	if (s[1] == 0.0) {
 	    center = x[1]
 	    call sfree (sp)
 	    return (0)
@@ -44,7 +45,8 @@ begin
 	    x[1] = x[3] + sign (sigma, s[3])
 	    call mkt_prof_derv (Memr[wgt], npix, x[1], sigma, ortho)
 	    s[1] = adotr (Memr[wgt], data, npix)
-	    if (abs (s[1]) <= EPSILONR) {
+	    #if (abs (s[1]) <= EPSILONR) {
+	    if (s[1] == 0.0) {
 		center = x[1]
 		call sfree (sp)
 		return (0)
@@ -62,7 +64,8 @@ begin
 	x[2] = x[3] - s[3] * delx / (s[1] - s[3])
 	call mkt_prof_derv (Memr[wgt], npix, x[2], sigma, ortho)
 	s[2] = adotr (Memr[wgt], data, npix)
-	if (abs (s[2]) <= EPSILONR) {
+	#if (abs (s[2]) <= EPSILONR) {
+	if (s[2] == 0.0) {
 	    center = x[2]
 	    call sfree (sp)
 	    return (1)
@@ -72,7 +75,8 @@ begin
 	for (iter = 2; iter <= maxiter; iter = iter + 1)  {
 
 	    # Check for completion.
-	    if (abs (s[2]) <= EPSILONR)
+	    #if (abs (s[2]) <= EPSILONR)
+	    if (s[2] == 0.0)
 		break
 	    if (abs (x[2] - x[1]) <= tol)
 		break
@@ -104,16 +108,16 @@ begin
 end
 
 
-# AP_TPROFDER -- Procedure to estimate the triangle functions and its
-# derivatives
+# AP_TPROFDER -- Procedure to estimate the approximating triangle function
+# and its derivatives.
 
 procedure ap_tprofder (data, der, npix, center, sigma, ampl)
 
 real	data[ARB]		# input data
 real	der[ARB]		# derivatives
 int	npix			# number of pixels
-real	center			# center of Gaussian
-real	sigma			# sigma of Gaussian
+real	center			# center of input Gaussian function
+real	sigma			# sigma of input Gaussian function
 real	ampl			# amplitude
 
 int	i
@@ -136,7 +140,6 @@ end
 
 
 # MKT_PROF_DERV - Make orthogonal profile derivative vector.
-# Vector is output of GAUSS_DERV with Gramm-Schmidt orthogonalization applied.
 
 procedure mkt_prof_derv (weight, npix, center, sigma, norm)
 
@@ -151,9 +154,10 @@ real	coef
 real	asumr(),  adotr()
 
 begin
-	# Fetch the weighting function and derivatives.
 	call smark (sp)
 	call salloc (der, npix, TY_REAL)
+
+	# Fetch the weighting function and derivatives.
 	call ap_tprofder (Memr[der], weight, npix, center, sigma, 1.0)
 
 	if (norm == YES) {
@@ -165,8 +169,11 @@ begin
 	    call aaddkr (Memr[der], coef, Memr[der], npix)
 
 	    # Make orthogonal to profile vector.
-	    coef = adotr (weight, Memr[der], npix) /
-		adotr (Memr[der], Memr[der], npix)
+	    coef = adotr (Memr[der], Memr[der], npix)
+	    if (coef <= 0.0)
+		coef = 1.0
+	    else
+	        coef = adotr (weight, Memr[der], npix) / coef
 	    call amulkr (Memr[der], coef, Memr[der], npix)
 	    call asubr (weight, Memr[der], weight, npix)
 
@@ -180,4 +187,43 @@ begin
 	}
 
 	call sfree (sp)
+end
+
+define	QTOL	.125
+
+# APQZERO - Solve for the root of a quadratic function defined by three
+# points.
+
+real procedure apqzero (x, y)
+
+real	x[3]
+real	y[3]
+
+real	a, b, c, det, dx
+real	x2, x3, y2, y3
+
+begin
+	# Compute the determinant.
+	x2 = x[2] - x[1]
+	x3 = x[3] - x[1]
+	y2 = y[2] - y[1]
+	y3 = y[3] - y[1]
+	det = x2 * x3 * (x2 - x3)
+
+	# Compute the shift in x.
+	#if (abs (det) > 100.0 * EPSILONR) {
+	if (abs (det) > 0.0) {
+	    a = (x3 * y2 - x2 * y3) / det
+	    b = - (x3 * x3 * y2 - x2 * x2 * y3) / det
+	    c =  a * y[1] / (b * b)
+	    if (abs (c) > QTOL)
+		dx = (-b / (2.0 * a)) * (1.0 - sqrt (1.0 - 4.0 * c))
+	    else
+		dx = - (y[1] / b) * (1.0 + c)
+	    return (dx)
+	#} else if (abs (y3) > EPSILONR)
+	} else if (abs (y3) > 0.0)
+	    return (-y[1] * x3 / y3)
+	else
+	    return (0.0)
 end

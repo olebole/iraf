@@ -1,12 +1,12 @@
 include <gset.h>
 include <fset.h>
 
-# APGSCUR -- Procedure to fetch x and y positions from a file and move
-# the cursor to those positions.
+# APGSCUR -- Read the x and y coordinates of an object from a file and move
+# the cursor to those coordinates.
 
 int procedure apgscur (sl, gd, xcur, ycur, prev_num, req_num, num)
 
-pointer	sl		# pointer to text file containing cursor coords
+int	sl		# coordinate file descriptor
 pointer	gd		# pointer to graphics stream
 real	xcur, ycur	# x cur and y cur
 int	prev_num	# previous number
@@ -21,6 +21,7 @@ errchk	greactivate, gdeactivate, gscur
 begin
 	if (sl == NULL)
 	    return (EOF)
+
 	call smark (sp)
 	call salloc (fname, SZ_FNAME, TY_CHAR)
 
@@ -38,8 +39,11 @@ begin
 		nskip = req_num - prev_num
 	}
 
+	# Initialize.
 	ncount = 0
 	num = prev_num
+
+	# Read the coordinates and write the cursor.
 	repeat {
 
 	    # Print the prompt if file is STDIN.
@@ -72,6 +76,7 @@ begin
 	} until (ncount == EOF || ncount == nskip)
 
 	call sfree (sp)
+
 	if (ncount == EOF) {
 	    return (EOF)
 	} else if (nskip == req_num) {

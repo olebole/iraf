@@ -49,13 +49,13 @@ begin
 
 	call addcard_i (fd, "NP2", NP2(ids), "Right plot limit")
 
-	if (UT(ids) == INDEFI)
+	if (IS_INDEFI (UT(ids)))
 	    value = INDEFR
 	else
 	    value = real (UT(ids) / 3600.)
 	call addcard_time (fd, "UT", value, "Universal time")
 
-	if (ST(ids) == INDEFI)
+	if (IS_INDEFI (ST(ids)))
 	    value = INDEFR
 	else
 	    value = real (ST(ids)/ 3600.)
@@ -89,7 +89,7 @@ begin
 	# condition is a test for IDSOUT data, where the df coeffecients
 	# have been applied but not stored in the header.)
 
-	if (DF_FLAG(ids) != -1 && Memd[COEFF(ids)] != 0.) {
+	if (DF_FLAG(ids) != -1 && COEFF(ids) != 0) {
 	    call strcpy ("DF", keyword, LEN_KEYWORD)
    	    do i = 1, DF_FLAG(ids) {
 		call sprintf (keyword[3], LEN_KEYWORD, "%s")

@@ -21,7 +21,7 @@ char	imsect[SZ_FNAME]
 char	device[SZ_FNAME], title[SZ_LINE]
 bool	label, sub, pre
 pointer	im, subras, work
-int	ncols, nlines, mode, wkid, nx, ny
+int	ncols, nlines, mode, wkid, nx, ny, npix
 int	epa, status, old_onint, tsujmp[LEN_JUMPBUF]
 int	xres, yres, first
 real	angh, angv, imcols, imlines
@@ -29,7 +29,7 @@ real	floor, ceiling, vpx1, vpx2, vpy1, vpy2
 
 pointer gp, gopen()
 bool	clgetb(), streq()
-int	clgeti()
+int	clgeti(), surf_limits()
 real	clgetr()
 extern	tsu_onint()
 pointer	immap(), plt_getdata()
@@ -37,6 +37,7 @@ common	/tsucom/ tsujmp
 common  /noaovp/ vpx1, vpx2, vpy1, vpy2
 common  /frstfg/ first
 
+define	exit_ 91
 begin
 	# First initialize srface common blocks before changing any parameters
 	first = 1
@@ -53,8 +54,6 @@ begin
 	angv = clgetr ("angv")
 	floor = clgetr ("floor")
 	ceiling = clgetr ("ceiling")
-	floor = min (floor, ceiling)
-	ceiling = max (floor, ceiling)
 	label = clgetb ("label")
 
 	call clgstr ("title", title, SZ_LINE)
@@ -102,7 +101,9 @@ begin
 	call malloc (work, (2 * nx * ny) + nx + ny, TY_REAL)
 
 	# Take floor and ceiling if enabled (nonzero).
-	call surf_limits (Memr[subras], nx, ny, floor, ceiling)
+	npix = nx * ny
+	if (surf_limits (Memr[subras], npix, floor, ceiling) == ERR)
+	    goto exit_
 
 	# Open graphics device and make plot.
 	call gopks (STDERR)
@@ -112,7 +113,6 @@ begin
 	call gacwk (wkid)
 	call gtext (gp, 0.5, .96, title, "s=0.8;f=b;h=c")
 	call set (vpx1, vpx2, vpy1, vpy2, 1.0, 1024., 1.0, 1024., 1)
-
 
 	# Install interrupt exception handler.
 	call zlocpr (tsu_onint, epa)
@@ -136,6 +136,7 @@ begin
 	call gdawk (wkid)
 	call gclwk (wkid)
 	call gclks ()
+exit_
 	call mfree (subras, TY_REAL)
 	call mfree (work, TY_REAL)
 
@@ -160,64 +161,69 @@ end
 
 
 # SURF_LIMITS -- Apply the floor and ceiling constraints to the subraster.
-# If either value is exactly zero, it is not applied.
+# If both values are exactly zero, they are not applied.
 
-procedure surf_limits (ras, m, n, floor, ceiling)
+int procedure surf_limits (ras, npix, floor, ceiling)
 
-real	ras[m,n]
-int	m, n
-real	floor, ceiling
-real	val1_1			# value at ras[1,1]
-int	i, k
-bool	const_val		# true if data are constant
-bool	bad_floor		# true if no value is above floor
-bool	bad_ceiling		# true if no value is below ceiling
+real	ras[npix]		# Input array of pixels
+int	npix			# npixels in array
+real	floor, ceiling		# user specified parameters
+int	apply, i
+real	tfloor, tceiling, delta, dmin, dmax
 bool	fp_equalr()
 
 begin
-	const_val = true		# initial values
-	bad_floor = true
-	bad_ceiling = true
-	val1_1 = ras[1,1]
+	tfloor = floor
+	tceiling = ceiling
+	apply = YES
 
-	do i = 1, n {
-	    if (const_val) {
-		do k = 1, m
-		    if (ras[k,i] != val1_1) {
-			const_val = false
-			break
-		    }
-	    }
-	    if (!(fp_equalr (floor, 0.0))) {
-		if (bad_floor)
-		    do k = 1, m {
-			if (ras[k,i] <= floor)
-			    ras[k,i] = floor
-			else
-			    bad_floor = false
-		    }
-		else
-		    call amaxkr (ras[1,i], floor, ras[1,i], m)
-	    }
-	    if (!(fp_equalr (ceiling, 0.0))) {
-		if (bad_ceiling)
-		    do k = 1, m {
-			if (ras[k,i] >= ceiling)
-			    ras[k,i] = ceiling
-			else
-			    bad_ceiling = false
-		    }
-		else
-		    call aminkr (ras[1,i], ceiling, ras[1,i], m)
-	    }
+	call alimr (ras, npix, dmin, dmax)
+	if (fp_equalr (dmin, dmax)) {
+	    call eprintf ("Constant valued array; no plot drawn\n")
+	    return (ERR)
 	}
 
-	if (bad_floor && !(fp_equalr (floor, 0.0)))
-	    call error (1, "entire image is below (or at) specified floor")
-	if (bad_ceiling && !(fp_equalr (ceiling, 0.0)))
-	    call error (1, "entire image is above (or at) specified ceiling")
-	if (const_val)
-	    call error (1, "all data values are the same; can't plot it")
+	if (fp_equalr (tfloor, INDEF))
+	    tfloor = dmin
+	if (fp_equalr (tceiling, INDEF))
+	    tceiling = dmax
+
+	delta = tceiling - tfloor
+	if (delta < 0.0) {
+	    # specified ceiling is lower than floor, flip them
+	    floor = tceiling
+	    ceiling = tfloor
+	} else if (fp_equalr (delta, 0.0)) {
+	    # degenerate values
+	    apply = NO
+	    floor = dmin
+	    ceiling = dmax
+	    call eprintf (
+ "Floor and ceiling are degenerate values and will be ignored\n")
+	} else {
+	    # Non-degenerate, ceiling exceedes floor as expected
+	    floor = tfloor
+	    ceiling = tceiling
+	}
+
+	if (apply == YES) {
+	    # First verify that floor and ceiling are valid
+	    if (dmax <= floor) {
+	        call eprintf ("Entire image is at or below specified floor\n")
+		return (ERR)
+	    }
+	    if (dmin >= ceiling) {
+	        call eprintf ("Entire image is at or above specified ceiling\n")
+		return (ERR)
+	    }
+
+	    do i = 1, npix {
+		# Apply surface limits
+		ras[i] = max (floor, ras[i])
+		ras[i] = min (ceiling, ras[i])
+	    }
+	}
+	 return (OK)
 end
 
 

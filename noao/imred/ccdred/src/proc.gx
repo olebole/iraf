@@ -60,12 +60,19 @@ procedure proc1$t (ccd)
 
 pointer	ccd		# CCD structure
 
-int	line, ncols, nlines, findmean
+int	line, ncols, nlines, findmean, rep
 real	overscan, darkscale, flatscale, illumscale, frgscale, mean
+PIXEL	minrep
 pointer	in, out, zeroim, darkim, flatim, illumim, fringeim
 pointer	outbuf, overscan_vec, zerobuf, darkbuf, flatbuf, illumbuf, fringebuf
 
+$if (datatype == csir)
 real	asum$t()
+$else $if (datatype == ld)
+double	asum$t()
+$else
+PIXEL	asum$t()
+$endif $endif
 pointer	imgl2$t(), impl2$t(), ccd_gl$t()
 
 begin
@@ -83,6 +90,9 @@ begin
 	findmean = CORS(ccd, FINDMEAN)
 	if (findmean == YES)
 	    mean = 0.
+	rep = CORS(ccd, MINREP)
+	if (rep == YES)
+	    minrep = MINREPLACE(ccd)
 
 	overscan_vec = OVERSCAN_VEC(ccd)
 
@@ -98,6 +108,10 @@ begin
 	if (CORS(ccd, DARKCOR) == 0) {
 	    darkim = NULL
 	    darkbuf = 1
+	} else if (IM_LEN(DARK_IM(ccd),2) == 1) {
+	    darkim = NULL
+	    darkbuf = ccd_gl$t (DARK_IM(ccd), DARK_C1(ccd), DARK_C2(ccd), 1)
+	    darkscale = FLATSCALE(ccd)
 	} else {
 	    darkim = DARK_IM(ccd)
 	    darkscale = DARKSCALE(ccd)
@@ -141,8 +155,8 @@ begin
 
 	do line = 2 - OUT_L1(ccd), 0
 	    call amov$t (
-		Memr[imgl2$t(in,IN_L1(ccd)+line-1)+IN_C1(ccd)-OUT_C1(ccd)],
-		Memr[impl2$t(out,OUT_L1(ccd)+line-1)], IM_LEN(out,1))
+		Mem$t[imgl2$t(in,IN_L1(ccd)+line-1)+IN_C1(ccd)-OUT_C1(ccd)],
+		Mem$t[impl2$t(out,OUT_L1(ccd)+line-1)], IM_LEN(out,1))
 
 	do line = 1, nlines {
 	    outbuf = impl2$t (out, OUT_L1(ccd)+line-1)
@@ -172,14 +186,16 @@ begin
 		Mem$t[flatbuf], Mem$t[illumbuf], Mem$t[fringebuf], ncols,
 		darkscale, flatscale, illumscale, frgscale)
 
+	    if (rep == YES)
+		call amaxk$t (Mem$t[outbuf], minrep, Mem$t[outbuf], ncols)
 	    if (findmean == YES)
 		mean = mean + asum$t (Mem$t[outbuf], ncols)
 	}
 
 	do line = nlines+1, IM_LEN(out,2)-OUT_L1(ccd)+1
 	    call amov$t (
-		Memr[imgl2$t(in,IN_L1(ccd)+line-1)+IN_C1(ccd)-OUT_C1(ccd)],
-		Memr[impl2$t(out,OUT_L1(ccd)+line-1)], IM_LEN(out,1))
+		Mem$t[imgl2$t(in,IN_L1(ccd)+line-1)+IN_C1(ccd)-OUT_C1(ccd)],
+		Mem$t[impl2$t(out,OUT_L1(ccd)+line-1)], IM_LEN(out,1))
 
 	# Compute the mean from the sum of the output pixels.
 	if (findmean == YES)
@@ -196,12 +212,19 @@ procedure proc2$t (ccd)
 
 pointer	ccd		# CCD structure
 
-int	line, ncols, nlines, findmean
+int	line, ncols, nlines, findmean, rep
 real	darkscale, flatscale, illumscale, frgscale, mean
+PIXEL	minrep
 pointer	in, out, zeroim, darkim, flatim, illumim, fringeim
 pointer	outbuf, overscan_vec, zerobuf, darkbuf, flatbuf, illumbuf, fringebuf
 
+$if (datatype == csir)
 real	asum$t()
+$else $if (datatype == ld)
+double	asum$t()
+$else
+PIXEL	asum$t()
+$endif $endif
 pointer	imgl2$t(), impl2$t(), imgs2$t(), ccd_gl$t()
 
 begin
@@ -219,6 +242,9 @@ begin
 	findmean = CORS(ccd, FINDMEAN)
 	if (findmean == YES)
 	    mean = 0.
+	rep = CORS(ccd, MINREP)
+	if (rep == YES)
+	    minrep = MINREPLACE(ccd)
 
 	overscan_vec = OVERSCAN_VEC(ccd)
 
@@ -234,6 +260,10 @@ begin
 	if (CORS(ccd, DARKCOR) == 0) {
 	    darkim = NULL
 	    darkbuf = 1
+	} else if (IM_LEN(DARK_IM(ccd),1) == 1) {
+	    darkim = NULL
+	    darkbuf = imgs2$t (DARK_IM(ccd), 1, 1, DARK_L1(ccd), DARK_L2(ccd))
+	    darkscale = DARKSCALE(ccd)
 	} else {
 	    darkim = DARK_IM(ccd)
 	    darkscale = DARKSCALE(ccd)
@@ -277,8 +307,8 @@ begin
 
 	do line = 2 - OUT_L1(ccd), 0
 	    call amov$t (
-		Memr[imgl2$t(in,IN_L1(ccd)+line-1)+IN_C1(ccd)-OUT_C1(ccd)],
-		Memr[impl2$t(out,OUT_L1(ccd)+line-1)], IM_LEN(out,1))
+		Mem$t[imgl2$t(in,IN_L1(ccd)+line-1)+IN_C1(ccd)-OUT_C1(ccd)],
+		Mem$t[impl2$t(out,OUT_L1(ccd)+line-1)], IM_LEN(out,1))
 
 	do line = 1, nlines {
 	    outbuf = impl2$t (out, OUT_L1(ccd)+line-1)
@@ -306,14 +336,16 @@ begin
 		Mem$t[flatbuf], Mem$t[illumbuf], Mem$t[fringebuf], ncols,
 		zeroim, flatim, darkscale, flatscale, illumscale, frgscale)
 
+	    if (rep == YES)
+		call amaxk$t (Mem$t[outbuf], minrep, Mem$t[outbuf], ncols)
 	    if (findmean == YES)
 		mean = mean + asum$t (Mem$t[outbuf], ncols)
 	}
 
 	do line = nlines+1, IM_LEN(out,2)-OUT_L1(ccd)+1
 	    call amov$t (
-		Memr[imgl2$t(in,IN_L1(ccd)+line-1)+IN_C1(ccd)-OUT_C1(ccd)],
-		Memr[impl2$t(out,OUT_L1(ccd)+line-1)], IM_LEN(out,1))
+		Mem$t[imgl2$t(in,IN_L1(ccd)+line-1)+IN_C1(ccd)-OUT_C1(ccd)],
+		Mem$t[impl2$t(out,OUT_L1(ccd)+line-1)], IM_LEN(out,1))
 
 	# Compute the mean from the sum of the output pixels.
 	if (findmean == YES)

@@ -50,7 +50,7 @@ o_undefined ()
  * fake parameter the same as the type of the operand.
  */
 o_absargset (argp)
-unsigned *argp;
+memel *argp;
 {
 	char	*argname = (char *) argp;
 	char	*pk, *t, *p, *f;
@@ -98,7 +98,7 @@ o_add ()
 /* <increment to be added to named parameter> .
  */
 o_addassign (argp)
-unsigned *argp;
+memel *argp;
 {
 	/* order of operands will be incorrect.
 	 * strictly speaking, only strings are not commutative but we need
@@ -121,7 +121,7 @@ unsigned *argp;
 	     * as long as whatever code copies the string works when the
 	     * strings overlap.
 	     */
-	    unsigned oldtopd = topd;
+	    int oldtopd = topd;
 	    char *s2 = memneed (btoi (strlen (o2.o_val.v_s) + 1));
 	    strcpy (s2, o2.o_val.v_s);
 	    o2.o_val.v_s = s2;
@@ -241,7 +241,7 @@ o_append()
 /* <new value for named parameter> .
  */
 o_assign (argp)
-unsigned *argp;
+memel *argp;
 {
 	char *pname = (char *) argp;
 	char *pk, *t, *p, *f;
@@ -257,9 +257,9 @@ unsigned *argp;
  * branch if false (or INDEF).
  */
 o_biff (argp)
-unsigned *argp;
+memel *argp;
 {
-	extern unsigned pc;
+	extern int pc;
 	struct operand o;
 
 	opcast (OT_BOOL);
@@ -273,7 +273,7 @@ unsigned *argp;
  * see runtime.c
  */
 o_call (argp)
-unsigned *argp;
+memel *argp;
 {
 	callnewtask ((char *) argp);
 }
@@ -307,7 +307,7 @@ o_doend()
 /* <value to be divided into named parameter> .
  */
 o_divassign (argp)
-unsigned *argp;
+memel *argp;
 {
 	char	*pname = (char *) argp;
 	char	*pk, *t, *p, *f;
@@ -330,7 +330,7 @@ unsigned *argp;
 /* <value to be concatenated onto named parameter> .
  */
 o_catassign (argp)
-unsigned *argp;
+memel *argp;
 {
 	char	*pname = (char *) argp;
 	char	*pk, *t, *p, *f;
@@ -389,9 +389,9 @@ o_ge ()
  * *argp is the SIGNED increment to be added to pc.
  */
 o_dogoto (argp)
-unsigned int *argp;
+memel *argp;
 {
-	extern unsigned pc;
+	extern int pc;
 	pc += (int)*argp;
 	if (pc >= STACKSIZ)
 	    cl_error (E_IERR, "pc set wildly to %d during goto", pc);
@@ -415,7 +415,7 @@ o_gt ()
  *   indirection.
  */
 o_indirabsset (argp)
-unsigned *argp;
+memel *argp;
 {
 	char	*argname = (char *) argp;
 	char	*pk, *t, *p, *f;
@@ -474,7 +474,7 @@ unsigned *argp;
  *   this avoids quotes around simple strings and filenames.
  */
 o_indirposset (argp)
-unsigned *argp;
+memel *argp;
 {
 	int pos = (int) *argp;
 	struct pfile *pfp;
@@ -517,7 +517,7 @@ unsigned *argp;
 /* Increment the loop counters for an implicit loop.
  */
 o_indxincr (argp)
-int	*argp;
+memel	*argp;
 {
 	int	i;
 	i = 0;
@@ -545,7 +545,7 @@ int	*argp;
  * given the name of a parameter, print it on t_out, the task pipe channel.
  */
 o_inspect (argp)
-unsigned *argp;
+memel *argp;
 {
 	char *pname = (char *) argp;
 	char *pk, *t, *p, *f;
@@ -586,7 +586,7 @@ unsigned *argp;
  * done by intrfunc() in gram.c.
  */
 o_intrinsic (argp)
-unsigned *argp;
+memel *argp;
 {
 	char *funcname = (char *) argp;
 	struct operand o;
@@ -622,7 +622,7 @@ o_mul()
 /* <value to be multiplied into named parameter> .
  */
 o_mulassign (argp)
-unsigned *argp;
+memel *argp;
 {
 	char	*pname = (char *) argp;
 	char	*pk, *t, *p, *f;
@@ -664,7 +664,7 @@ o_or()
  * and t_stderr of the current task.
  */
 o_osesc (argp)
-unsigned *argp;
+memel *argp;
 {
 	char *command = (char *)argp;
 
@@ -675,7 +675,7 @@ unsigned *argp;
 /* <new value for argument at command position *argp> .
  */
 o_posargset (argp)
-unsigned *argp;
+memel *argp;
 {
 	int	pos = (int) *argp;
 	struct	pfile *pfp;
@@ -751,7 +751,7 @@ o_immed()
  * response and producing a quiet undefined op there is correct.
  */
 o_pushconst (argp)
-unsigned *argp;
+memel *argp;
 {
 	/* argument is pointer to an operand */
 	struct operand *op;
@@ -816,7 +816,7 @@ int	*mode;
 /* . <value of parameter>
  */
 o_pushparam (argp)
-unsigned *argp;
+memel *argp;
 {
 	char *pname = (char *) argp;
 	char *pk, *t, *p, *f;
@@ -843,6 +843,12 @@ o_redir ()
 	    /* If foreign task let ZOSCMD open the spool file.
 	     */
 	    newtask->ft_out = comdstr (fname);
+
+	} else if (strcmp (fname, IPCOUT) == 0) {
+	    /* Redirect the task stdout via IPC to a subprocess. */
+	    newtask->t_stdout = newtask->t_out;
+	    newtask->t_flags |= T_IPCIO;
+
 	} else {
 	    mode = (newtask->t_flags & T_STDOUTB) ? "wb" : "w";
 
@@ -884,7 +890,7 @@ o_redirin ()
  * <filename> .
  */
 o_gsredir (argp)
-unsigned *argp;
+memel *argp;
 {
 	register char	*ip;
 	register FILE	*fp;
@@ -931,7 +937,7 @@ unsigned *argp;
 
 
 o_doaddpipe (argp)
-unsigned *argp;
+memel *argp;
 {
 	int	getpipe_pc = *argp;
 	char	*x1, *pk, *t, *x2;	
@@ -966,7 +972,7 @@ unsigned *argp;
 
 
 o_dogetpipe (argp)
-unsigned *argp;			/* name of ltask (not used) */
+memel *argp;			/* name of ltask (not used) */
 {
 	struct	operand o;
 	char	*getpipe(), *comdstr();
@@ -986,7 +992,7 @@ unsigned *argp;			/* name of ltask (not used) */
 
 
 o_rmpipes (argp)
-unsigned *argp;
+memel *argp;
 {
 	delpipes ((int)*argp);
 }
@@ -1010,6 +1016,36 @@ o_doscan()
 	cl_scan (o.o_val.v_i - 1, "stdin");
 }
 
+o_doscanf()
+{
+	struct operand o;
+	struct operand o_sv[64];
+	char	format[SZ_LINE];
+	int	nargs, i;
+
+	/* Get number of arguments. */
+	o = popop();
+	nargs = o.o_val.v_i;
+
+	/* Get scan format.  Unfortunately the way the parser works this
+	 * is the last operand on the stack.  We need to pop and save the
+	 * first nargs-1 operands and restore them when done.
+	 */
+	for (i=0;  i < nargs-1;  i++)
+	    o_sv[i] = popop();
+
+	o = popop();
+	if ((o.o_type & OT_BASIC) != OT_STRING)
+	    cl_error (E_UERR, "scanf: bad format string\n");
+	strcpy (format, o.o_val.v_s);
+
+	for (--i;  i >= 0;  i--)
+	    pushop (&o_sv[i]);
+
+	/* Do the scan. */
+	cl_scanf (format, nargs-2, "stdin");
+}
+
 /* <paramn> ... <param1> <source> <n> .
  * Do the fscan function.  First op on stack is number of string ops to
  * follow.  Next one is the name of the source parameter, rest are names of
@@ -1023,6 +1059,52 @@ o_dofscan()
 	cl_scan (o.o_val.v_i - 1, "");
 }
 
+o_dofscanf()
+{
+	struct operand o, param;
+	struct operand o_sv[64];
+	char	format[SZ_LINE];
+	char	pname[SZ_FNAME];
+	int	nargs, i;
+
+	/* Get number of arguments. */
+	o = popop();
+	nargs = o.o_val.v_i;
+
+	/* Get scan format and input parameter name.  The arguments on the
+	 * stack are pushed in the order input param name, format string,
+	 * and then the output arguments.
+	 */
+
+	/* Get output arguments. */
+	for (i=0;  i < nargs-2;  i++)
+	    o_sv[i] = popop();
+
+	/* Get format string. */
+	o = popop();
+	if ((o.o_type & OT_BASIC) != OT_STRING)
+	    cl_error (E_UERR, "fscanf: bad format string\n");
+	strcpy (format, o.o_val.v_s);
+
+	/* Get parameter name. */
+	o = popop();
+	if ((o.o_type & OT_BASIC) != OT_STRING)
+	    cl_error (E_UERR, "fscanf: bad input parameter specification\n");
+	strcpy (pname, o.o_val.v_s);
+
+	/* Restore the output argument operands. */
+	for (--i;  i >= 0;  i--)
+	    pushop (&o_sv[i]);
+
+	/* Restore the input parameter name operand. */
+	o.o_type = OT_STRING;
+	o.o_val.v_s = pname;
+	pushop (&o);
+
+	/* Do the scan. */
+	cl_scanf (format, nargs-2, "");
+}
+
 /* <op1> <op2> . <op1 - op2>
  */
 o_sub()
@@ -1033,7 +1115,7 @@ o_sub()
 /* <value to be subtracted from named parameter> .
  */
 o_subassign (argp)
-unsigned *argp;
+memel *argp;
 {
 	/* operands are backwards on stack, so negate and add. can get by
 	 * with this as long as subtraction is never defined for strings.
@@ -1063,7 +1145,7 @@ int	*jmpdelta;
 	int pdft, icase, jmptable;
 	int value;
 	struct operand o;
-	unsigned int delta;
+	memel delta;
 	/* Remember to subtract 3 because PC has already been incremented. */
 	jmptable = *jmpdelta + pc - 3;
 
@@ -1087,7 +1169,7 @@ int	*jmpdelta;
 	 */
 	for (icase= jmptable + 1; stack[icase] != 0; icase++) {
 	    int nval, ival, pcase;
-	    unsigned int *val;
+	    memel *val;
 
 	    pcase = stack[icase] + pc - 3;
 	    nval = coderef(pcase)->c_length - 2;
@@ -1122,7 +1204,7 @@ int	*jmpdelta;
 
 
 o_swoff (argp)
-unsigned *argp;
+memel *argp;
 {
 	register char *pname = (char *)argp;
 	register struct param *pp;
@@ -1151,7 +1233,7 @@ unsigned *argp;
 }
 
 o_swon (argp)
-unsigned *argp;
+memel *argp;
 {
 	register char *pname = (char *)argp;
 	register struct param *pp;
@@ -1207,73 +1289,76 @@ o_fixlanguage()
 
 int (*opcodetbl[])() = {
 /*  0 */	o_undefined,
+
 /*  1 */	o_absargset,
 /*  2 */	o_add,
 /*  3 */	o_addassign,
 /*  4 */	o_doaddpipe,
-
 /*  5 */	o_allappend,
+
 /*  6 */	o_allredir,
 /*  7 */	o_and,
 /*  8 */	o_append,
 /*  9 */	o_assign,
-
 /* 10 */	o_biff,
+
 /* 11 */	o_call,
 /* 12 */	0,		/* The CASE operand is never executed.*/
 /* 13 */	o_chsign,
 /* 14 */	o_concat,
-
 /* 15 */	0,		/* The DEFAULT operand is never executed. */
+
 /* 16 */	o_div,
 /* 17 */	o_divassign,
 /* 18 */	o_doend,
 /* 19 */	o_eq,
-
 /* 20 */	o_exec,
+
 /* 21 */	o_dofscan,
-/* 22 */	o_ge,
-/* 23 */	o_dogoto,
-/* 24 */	o_dogetpipe,
+/* 22 */	o_dofscanf,
+/* 23 */	o_ge,
+/* 24 */	o_dogoto,
+/* 25 */	o_dogetpipe,
 
-/* 25 */	o_gt,
-/* 26 */	o_immed,
-/* 27 */	o_indirabsset,
-/* 28 */	o_indirposset,
-/* 29 */	o_indxincr,
+/* 26 */	o_gt,
+/* 27 */	o_immed,
+/* 28 */	o_indirabsset,
+/* 29 */	o_indirposset,
+/* 30 */	o_indxincr,
 
-/* 30 */	o_inspect,
-/* 31 */	o_intrinsic,
-/* 32 */	o_le,
-/* 33 */	o_lt,
-/* 34 */	o_mul,
+/* 31 */	o_inspect,
+/* 32 */	o_intrinsic,
+/* 33 */	o_le,
+/* 34 */	o_lt,
+/* 35 */	o_mul,
 
-/* 35 */	o_mulassign,
-/* 36 */	o_ne,
-/* 37 */	o_not,
-/* 38 */	o_or,
-/* 39 */	o_osesc,
+/* 36 */	o_mulassign,
+/* 37 */	o_ne,
+/* 38 */	o_not,
+/* 39 */	o_or,
+/* 40 */	o_osesc,
 
-/* 40 */	o_posargset,
-/* 41 */	o_dopow,
-/* 42 */	o_doprint,
-/* 43 */	o_pushconst,
-/* 44 */	o_pushindex,
+/* 41 */	o_posargset,
+/* 42 */	o_dopow,
+/* 43 */	o_doprint,
+/* 44 */	o_pushconst,
+/* 45 */	o_pushindex,
 
-/* 45 */	o_pushparam,
-/* 46 */	o_redir,
-/* 47 */	o_redirin,
-/* 48 */	o_rmpipes,
-/* 49 */	o_doreturn,
+/* 46 */	o_pushparam,
+/* 47 */	o_redir,
+/* 48 */	o_redirin,
+/* 49 */	o_rmpipes,
+/* 50 */	o_doreturn,
 
-/* 50 */	o_doscan,
-/* 51 */	o_sub,
-/* 52 */	o_subassign,
-/* 53 */	o_doswitch,
-/* 54 */	o_swoff,
+/* 51 */	o_doscan,
+/* 52 */	o_doscanf,
+/* 53 */	o_sub,
+/* 54 */	o_subassign,
+/* 55 */	o_doswitch,
 
-/* 55 */	o_swon,
-/* 56 */	o_fixlanguage,
-/* 57 */	o_gsredir,
-/* 58 */	o_catassign
+/* 56 */	o_swoff,
+/* 57 */	o_swon,
+/* 58 */	o_fixlanguage,
+/* 59 */	o_gsredir,
+/* 60 */	o_catassign
 };

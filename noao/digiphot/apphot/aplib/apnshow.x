@@ -8,7 +8,8 @@ procedure ap_nshow (ap)
 pointer	ap	# pointer to the apphot structure
 
 pointer	sp, str1, str2
-int	apstati(), itob()
+bool	itob()
+int	apstati()
 real	apstatr()
 
 begin
@@ -40,17 +41,17 @@ begin
 	call printf ("    %s = %g %s    %s = %b\n")
 	    call pargstr (KY_FWHMPSF)
 	    call pargr (apstatr (ap, FWHMPSF))
-	    call pargstr (UN_FWHMPSF)
+	    call pargstr (UN_ASCALEUNIT)
 	    call pargstr (KY_POSITIVE)
 	    call pargb (itob (apstati (ap, POSITIVE)))
 
 	call printf ("    %s = %g %s    %s = %g %s\n")
 	    call pargstr (KY_DATAMIN)
 	    call pargr (apstatr (ap, DATAMIN))
-	    call pargstr (UN_DATAMIN)
+	    call pargstr (UN_ACOUNTS)
 	    call pargstr (KY_DATAMAX)
 	    call pargr (apstatr (ap, DATAMAX))
-	    call pargstr (UN_DATAMAX)
+	    call pargstr (UN_ACOUNTS)
 
 	call apstats (ap, EXPOSURE, Memc[str1], SZ_FNAME)
 	call printf ("    %s = %s    %s = %g %s\n")
@@ -58,7 +59,7 @@ begin
 	    call pargstr (Memc[str1])
 	    call pargstr (KY_ITIME)
 	    call pargr (apstatr (ap, ITIME))
-	    call pargstr (UN_ITIME)
+	    call pargstr (UN_ATIMEUNIT)
 
 	# Set the filter ID.
 	call apstats (ap, FILTER, Memc[str1], SZ_FNAME)
@@ -77,24 +78,25 @@ begin
 	    call pargstr (KY_XAIRMASS)
 	    call pargr (apstatr (ap, XAIRMASS))
 
+	# Set the time of observation.
+	call apstats (ap, OBSTIME, Memc[str1], SZ_FNAME)
+	call apstats (ap, OTIME, Memc[str2], SZ_FNAME)
+	call printf ("    %s = %s    %s = %s\n")
+	    call pargstr (KY_OBSTIME)
+	    call pargstr (Memc[str1])
+	    call pargstr (KY_OTIME)
+	    call pargstr (Memc[str2])
+
 	# Set the noise model.
 	call printf ("\nNoise Model\n")
 	call apstats (ap, NSTRING, Memc[str1], SZ_FNAME)
 	call printf ("    %s = %s  %s    %s = %g %s\n")
 	    call pargstr (KY_NSTRING)
 	    call pargstr (Memc[str1])
-	    call pargstr (UN_NSTRING)
+	    call pargstr (UN_NMODEL)
 	    call pargstr (KY_SKYSIGMA)
 	    call pargr (apstatr (ap, SKYSIGMA))
-	    call pargstr (UN_SKYSIGMA)
-
-	call printf ("    %s = %g %s    %s = %g %s\n")
-	    call pargstr (KY_THRESHOLD)
-	    call pargr (apstatr (ap, THRESHOLD))
-	    call pargstr (UN_THRESHOLD)
-	    call pargstr (KY_CTHRESHOLD)
-	    call pargr (apstatr (ap, CTHRESHOLD))
-	    call pargstr (UN_CTHRESHOLD)
+	    call pargstr (UN_NCOUNTS)
 
 	call apstats (ap, GAIN, Memc[str1], SZ_LINE)
 	call printf ("    %s = %s    %s = %g %s\n")
@@ -102,7 +104,7 @@ begin
 	    call pargstr (Memc[str1])
 	    call pargstr (KY_EPADU)
 	    call pargr (apstatr (ap, EPADU))
-	    call pargstr (UN_EPADU)
+	    call pargstr (UN_NEPADU)
 
 	call apstats (ap, CCDREAD, Memc[str1], SZ_LINE)
 	call printf ("    %s = %s    %s = %g %s\n")
@@ -110,7 +112,7 @@ begin
 	    call pargstr (Memc[str1])
 	    call pargstr (KY_READNOISE)
 	    call pargr (apstatr (ap, READNOISE))
-	    call pargstr (UN_READNOISE)
+	    call pargstr (UN_NELECTRONS)
 
 	call sfree (sp)
 end

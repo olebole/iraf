@@ -14,16 +14,12 @@ define	IMAX	1.1		# Maximum intensity value for plot
 
 # AP_RPPLOT -- Procedure to plot the radial profile.
 
-procedure ap_rpplot (ap, sid, cier, sier, pier, rier, gd, makeplots)
+procedure ap_rpplot (ap, sid, gd, makeplots)
 
 pointer	ap		# pointer to the apphot structure
-int	sid		# output file id number
-int	cier		# centering error code
-int	sier		# sky fitting error code
-int	pier		# photometry error code
-int	rier		# radprof error code
+int	sid		# output file id number (not used)
 pointer	gd		# pointer to the plot stream
-int	makeplots	# make plots on the screen
+int	makeplots	# make plots on the screen ?
 
 int	nxpts, nypts, nrpts
 pointer	rprof, gt
@@ -67,13 +63,13 @@ begin
 	    YCENTER))
 	call gclear (gd)
 	call ap_rpset (gd, gt, ap, rmin, rmax, IMIN, IMAX)
-	call ap_rpannotate (gd, gt, ap, rmin, rmax, IMIN, IMAX)
+	call ap_rpannotate (gd, ap, rmin, rmax, IMIN, IMAX)
 
-	# Plot the intensity aand total intensity.
+	# Plot the intensity and total intensity.
 	call ap_plothist (gd, gt, Memr[AP_RPDIST(rprof)],
-	    Memr[AP_INTENSITY(rprof)], nrpts, GL_SOLID)
+	    Memr[AP_INTENSITY(rprof)], nrpts, "line", GL_SOLID)
 	call ap_plothist (gd, gt, Memr[AP_RPDIST(rprof)],
-	    Memr[AP_TINTENSITY(rprof)], nrpts, GL_DOTDASH)
+	    Memr[AP_TINTENSITY(rprof)], nrpts, "line", GL_DOTDASH)
 
 	# Plot the points.
 	call gswind (gd, rmin, rmax, (IMIN * inorm), (IMAX * inorm))
@@ -98,7 +94,7 @@ pointer	gd		# graphics stream
 pointer	gt		# gtools pointer
 pointer	ap		# apphot pointer
 real	xmin, xmax	# minimum and maximum radial distance
-real	ymin, ymax	# min and max of x axis
+real	ymin, ymax	# minimum and maximum of the y axis
 
 int	fd, naperts
 pointer	sp, str, tstr, temp
@@ -195,10 +191,9 @@ end
 
 # AP_RPANNOTATE -- Procedure to annotate the radial plot in radprof.
 
-procedure ap_rpannotate (gd, gt, ap, xmin, xmax, ymin, ymax)
+procedure ap_rpannotate (gd, ap, xmin, xmax, ymin, ymax)
 
 pointer	gd		# graphics stream
-pointer	gt		# gtools stream
 pointer	ap		# apphot structure
 real	xmin, xmax	# min and max of x axis
 real	ymin, ymax	# min and max of y axis

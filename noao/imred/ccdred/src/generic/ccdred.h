@@ -8,7 +8,7 @@
 # include a step size.  A step size is assumed.  If arbitrary subsampling
 # is desired this would be the next generalization.
 
-define	LEN_CCD		69		# Length of CCD structure
+define	LEN_CCD		71		# Length of CCD structure
 
 # CCD data coordinates
 define	CCD_C1		Memi[$1]	# CCD starting column
@@ -88,14 +88,15 @@ define	DARKSCALE	Memr[$1+54]	# Dark count scale factor
 define	FRINGESCALE	Memr[$1+55]	# Fringe scale factor
 define	FLATSCALE	Memr[$1+56]	# Flat field scale factor
 define	ILLUMSCALE	Memr[$1+57]	# Illumination scale factor
-define	MEAN		Memr[$1+58]	# Mean of output image
-define	COR		Memi[$1+59]	# Overall correction flag
-define	CORS		Memi[$1+60+($2-1)]  # Individual correction flags
+define	MINREPLACE	Memr[$1+58]	# Minimum replacement value
+define	MEAN		Memr[$1+59]	# Mean of output image
+define	COR		Memi[$1+60]	# Overall correction flag
+define	CORS		Memi[$1+61+($2-1)]  # Individual correction flags
 
 # The correction array contains the following elements with array indices
 # given by the macro definitions.
 
-define	NCORS		9		# Number of corrections
+define	NCORS		10		# Number of corrections
 
 define	FIXPIX		1		# Fix bad pixels
 define	TRIM		2		# Trim image
@@ -106,6 +107,7 @@ define	FLATCOR		6		# Apply flat field correction
 define	ILLUMCOR	7		# Apply illumination correction
 define	FRINGECOR	8		# Apply fringe correction
 define	FINDMEAN	9		# Find the mean of the output image
+define	MINREP		10		# Check and replace minimum value
 
 # The following definitions identify the correction values in the correction
 # array.  They are defined in terms of bit fields so that it is possible to

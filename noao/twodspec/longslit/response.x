@@ -157,17 +157,17 @@ real	threshold		# Response threshold
 int	interactive		# Interactive?
 
 char	graphics[SZ_FNAME]	# Graphics output device
-int	axis, npts
+int	laxis, paxis, npts
 pointer	cv, gp, sp, wavelengths, spectrum, wts
 
-int	imgeti()
 pointer	gopen()
+errchk	get_daxis
 
 begin
 	# Determine the dispersion axis and set the axis labels.
+	call get_daxis (cal, laxis, paxis)
 
-	axis = imgeti (cal, "dispaxis")
-	switch (axis) {
+	switch (laxis) {
 	case 1:
 	    call ic_pstr (ic, "xlabel", "Column")
 	case 2:
@@ -176,7 +176,7 @@ begin
 
 	# Get the normalization spectrum.
 
-	call ls_aimavg (norm, axis, 1, IM_LEN(norm, 1), 1, IM_LEN(norm, 2),
+	call ls_aimavg (norm, laxis, 1, IM_LEN(norm, 1), 1, IM_LEN(norm, 2),
 	    wavelengths, spectrum, npts)
 
 	# Allocate memory for the fit.
@@ -207,7 +207,7 @@ begin
 	# Compute the response image by normalizing the calibration
 	# image by the normalization spectrum.
 
-	call re_normalize (cal, resp, axis, threshold, Memr[spectrum], npts)
+	call re_normalize (cal, resp, laxis, threshold, Memr[spectrum], npts)
 
 	# Free allocated memory.
 

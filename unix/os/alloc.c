@@ -2,9 +2,9 @@
  */
 
 #include <stdio.h>
+#include <sys/types.h>
 #include <utmp.h>
 #include <pwd.h>
-#include <sys/types.h>
 #include <sys/stat.h>
 #include <ctype.h>
 
@@ -17,7 +17,7 @@
  * ALLOC -- Unix task to allocate and deallocate devices given their generic
  * name.  These names are associated with special files in the ALLOCFILE file.
  * Allocation is accomplished by setting the device file owner and permissions
- * for the /dev/* entries associated with a particular logical device.
+ * for the /dev entries associated with a particular logical device.
  * Although we are called by the IRAF kernel, we are implemented as a task
  * rather than as a function since super user permission is required to modify
  * directory entries in /dev.
@@ -102,7 +102,14 @@ int	statonly;		/* if set, just return device status */
 	    ruid = fp->f_sbuf.st_uid;
 	    mode = fp->f_sbuf.st_mode;
 
-	    if (ruid == 0 && (mode & 06) == 0) {
+	    /* We don't really care if the uid when the device is not
+	     * allocated is root, bin, or whatever, so long at it is some
+	     * system uid.
+	     */
+	    if (ruid < 10)
+		ruid = 0;
+
+	    if (ruid == 0 && (mode & 06) != 06) {
 		if (!statonly)
 		    printf ("rw access to %s is denied\n", fp->f_name);
 		return (DV_DEVINUSE);
@@ -110,7 +117,7 @@ int	statonly;		/* if set, just return device status */
 		if (ruid != getuid()) {
 		    if (!statonly)
 			printf ("%s already allocated to %s\n",
-			    fp->f_name, (getpwuid (ruid))->pw_name);
+			    fp->f_name, (getpwuid(ruid))->pw_name);
 		    return (DV_DEVINUSE);
 		} else
 		    return (statonly ? DV_DEVALLOC : XOK);
@@ -199,8 +206,11 @@ char	*argv[];
 
 	    sprintf (fp->f_name, "/dev/%s", fname);
 	    if (stat (fp->f_name, &fp->f_sbuf) == -1) {
-		printf ("alloc: cannot fstat %s\n", fp->f_name);
-		continue;
+		sprintf (fp->f_name, "/dev/rmt/%s", fname);
+		if (stat (fp->f_name, &fp->f_sbuf) == -1) {
+		    printf ("alloc: cannot fstat %s\n", fp->f_name);
+		    continue;
+		}
 	    }
 	}
 

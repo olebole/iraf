@@ -43,6 +43,7 @@ libsys.a:
 	gethost.x	
 	getpid.x	
 	getuid.x	
+	gqsort.x	
 	intr.x		<xwhen.h>
 	itob.x	
 	lineoff.x	
@@ -54,7 +55,7 @@ libsys.a:
 			<knet.h> <printf.h> <xwhen.h>
 	miireadc.x	<mii.h>
 	miiwritec.x	<mii.h>
-	onentry.x	<clset.h> <fset.h> <knet.h>
+	onentry.x	<clset.h> <error.h> <fset.h> <knet.h>
 	onerror.x	<config.h> <error.h>
 	onexit.x	<config.h> <error.h>
 	oscmd.x		<clset.h> <ctype.h> <error.h> <knet.h>
@@ -101,7 +102,7 @@ libsys.a:
 	xerreset.x	error.com <error.h>
 	xerstmt.x	error.com <error.h>
 	xerverify.x	error.com <error.h>
-	xgdevlist.x	<ctype.h> <xalloc.h>
+	xgdevlist.x	<xalloc.h>
 	xisatty.x	<clset.h> <fset.h>
 	xmjbuf.x	<config.h>
 	xttysize.x	<clset.h>

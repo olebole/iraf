@@ -6,53 +6,59 @@ lists		# List package for table
 
 # Define necessary paths
 
-set	onedstds	= "noao$lib/onedstds/"
 set	iidscal		= "onedstds$iidscal/"
+set	irsiids		= "onedspec$irsiids/"
 
 package iids
 
-task	addsets,
-	bswitch,
-	calibrate,
-	coincor,
-	dispcor,
-	flatfit,
-	flatdiv,
-	identify,
-	reidentify,
-	refspectra,
-	sensfunc,
-	splot,
-	shedit,
-	slist,
-	specplot,
-	standard,
-	subsets		= iids$x_onedspec.e
-
-task	coefs,
-	combine,
-	lcalib,
+# Standard ONEDSPEC tasks
+task	continuum,
+	deredden,
+	dopcor,
 	mkspec,
-	rebin,
+	names,
+	sarith,
+	scombine,
 	sflip,
 	sinterp,
-	sums		= onedspec$x_onedspec.e
-
-task	names		= iids$x_onedspec.e
-
-# Scripts
-
-task	batchred	= iids$batchred.cl
-task	continuum	= iids$continuum.cl
-task	powercor	= iids$powercor.cl
-task	shparams	= onedspec$shparams.par
+	splot,
+	specplot,
+	specshift	= onedspec$x_onedspec.e
 task	dispcor1	= onedspec$dispcor1.par
-task	bplot		= onedspec$bplot.cl
-task	sextract	= onedspec$sextract.cl
+task	scopy		= onedspec$scopy.cl
+hidetask dispcor1
+
+# Special  IRS/IIDS tasks
+task	addsets,
+	bswitch,
+	coefs,
+	coincor,
+	flatdiv,
+	flatfit,
+	slist1d,
+	subsets,
+	sums		= irsiids$x_onedspec.e
+task	batchred	= irsiids$batchred.cl
+task	bplot		= irsiids$bplot.cl
+task	extinct		= irsiids$extinct.cl
+task	powercor	= irsiids$powercor.cl
+
+# Different default parameters
+task	calibrate,
+	dispcor,
+	identify,
+	lcalib,
+	refspectra,
+	reidentify,
+	sensfunc,
+	standard	= iids$x_onedspec.e
+
+# Astutil tasks
+task	setairmass,
+	setjd		= "astutil$x_astutil.e"
 
 # Define a task living in the users directory - it is created by BATCHRED
 
 task	$process	= process.cl
-hidetask shparams,dispcor1
 
 clbye()

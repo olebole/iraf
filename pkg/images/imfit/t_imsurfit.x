@@ -132,7 +132,7 @@ begin
 
 	    call imunmap (im1)
 	    call imunmap (im2)
-	    call plfree (gl)
+	    call prl_free (gl)
 	}
 
 	# Cleanup.
@@ -155,31 +155,40 @@ pointer	gl			# good pixel list descriptor
 int	region_type		# type of good region
 char	region_string[ARB]	# region parameters
 
-int	i, ip, zero, nvals, range_min, r2, xdist
-int	x1, x2, y1, y2, border, xcenter, ycenter, radius
-int	ranges[3 * MAX_NRANGES], columns[7]
-pointer	list
+int	i, ip, zero, nvals, range_min, r2, xdist, max_nranges
+int	x1, x2, y1, y2, temp, border, xcenter, ycenter, radius
+int	columns[7]
+pointer	sp, ranges, list
 
 bool	is_in_range()
 int	get_next_number(), decode_ranges(), open(), fscan(), nscan(), ctoi()
 errchk	open, close
 
 begin
-	# compute the good pixel list
+	# Determine the maximum number of images.
+	max_nranges = IM_LEN(im,1)
+
+	# Allocate working space.
+	call smark (sp)
+	call salloc (ranges, 3 * max_nranges + 1, TY_INT)
+
+	# Compute the good pixel list.
 	switch (region_type) {
 	case ROWS:
 
 	    # Decode the row ranges.
-	    if (decode_ranges (region_string, ranges, MAX_NRANGES, 1,
+	    if (decode_ranges (region_string, Memi[ranges], max_nranges, 1,
 	        int (IM_LEN(im,2)), nvals) == ERR)
 		call error (0, "MAKE_GOOD_LIST: Error decoding row string.")
-	    if (nvals == 0)
+	    if (nvals == 0) 
 		call error (0, "MAKE_GOOD_LIST: no good rows.") 
-	    if (nvals == IM_LEN(im,2))
+	    if (nvals == IM_LEN(im,2)) {
+		call sfree (sp)
 		return
+	    }
 
 	    # Intialize the good pixel list.
-	    call plinit (gl, int (IM_LEN(im,1)), int (IM_LEN(im,2)))
+	    call prl_init (gl, int (IM_LEN(im,1)), int (IM_LEN(im,2)))
 
 	    # Set column limits using the ranges format.
 	    columns[1] = 1
@@ -189,31 +198,33 @@ begin
 
 	    # Set column limits for the specied lines.
 	    zero = 0
-	    range_min = get_next_number (ranges, zero)
+	    range_min = get_next_number (Memi[ranges], zero)
 	    while (range_min != EOF) {
 	        for (i = range_min; i <= IM_LEN(im,2) + 1; i = i + 1) {
-		    if (!is_in_range (ranges, i) || i == IM_LEN(im,2)+1) {
-		        call pl_put_ranges (gl, range_min, i-1, columns)
+		    if (!is_in_range (Memi[ranges], i) || i == IM_LEN(im,2)+1) {
+		        call prl_put_ranges (gl, range_min, i-1, columns)
 		        break
 		    }
 		}
-		range_min = get_next_number (ranges, i)
+		range_min = get_next_number (Memi[ranges], i)
 	    }
 
 	case COLUMNS:
 
 	    # Set the specified columns.
-	    if (decode_ranges (region_string, ranges, MAX_NRANGES, 1,
+	    if (decode_ranges (region_string, Memi[ranges], max_nranges, 1,
 	        int (IM_LEN(im,1)), nvals) == ERR)
 		call error (0, "MAKE_GOOD_LIST: Error decoding column string.")
 	    if (nvals == 0)
 		call error (0, "MAKE_GOOD_LIST: No good columns.")
-	    if (nvals == IM_LEN(im,1))
+	    if (nvals == IM_LEN(im,1)) {
+		call sfree (sp)
 		return
+	    }
 
 	    # Make the good pixel list.
-	    call plinit (gl, int (IM_LEN(im,1)), int (IM_LEN(im,2)))
-	    call pl_add_ranges (gl, 1, int (IM_LEN(im,2)), ranges)
+	    call prl_init (gl, int (IM_LEN(im,1)), int (IM_LEN(im,2)))
+	    call prl_add_ranges (gl, 1, int (IM_LEN(im,2)), Memi[ranges])
 
 	case CIRCLE, INVCIRCLE:
 	    
@@ -236,7 +247,7 @@ begin
 	    }
 
 	    # Create the good pixel list.
-	    call plinit (gl, int (IM_LEN(im,1)), int (IM_LEN(im,2)))
+	    call prl_init (gl, int (IM_LEN(im,1)), int (IM_LEN(im,2)))
 
 	    r2 = radius ** 2
 	    if (region_type == CIRCLE) {
@@ -248,7 +259,7 @@ begin
 		    columns[2] = x2
 		    columns[3] = 1
 		    columns[4] = NULL
-		    call pl_put_ranges (gl, i, i, columns)
+		    call prl_put_ranges (gl, i, i, columns)
 	        }
 	    } else if (region_type == INVCIRCLE) {
 		do i = 1, y1 - 1 {
@@ -256,14 +267,14 @@ begin
 		    columns[2] = IM_LEN(im,1)
 		    columns[3] = 1
 		    columns[4] = NULL
-		    call pl_put_ranges (gl, i, i, columns)
+		    call prl_put_ranges (gl, i, i, columns)
 		}
 		do i = y2 + 1, IM_LEN(im,2) {
 		    columns[1] = 1
 		    columns[2] = IM_LEN(im,1)
 		    columns[3] = 1
 		    columns[4] = NULL
-		    call pl_put_ranges (gl, i, i, columns)
+		    call prl_put_ranges (gl, i, i, columns)
 		}
 		do i = y1, y2 {
 		    xdist = sqrt (real (r2 - (ycenter - i) ** 2))
@@ -287,7 +298,7 @@ begin
 			columns[4] = NULL
 		    } else
 			columns[1] = NULL
-		    call pl_put_ranges (gl, i, i, columns)
+		    call prl_put_ranges (gl, i, i, columns)
 		}
 	    }
 
@@ -296,7 +307,7 @@ begin
 
 	    # Open file of sections.
 	    list = open (region_string, READ_ONLY, TEXT_FILE)
-	    call plinit (gl, int (IM_LEN(im,1)), int (IM_LEN(im,2)))
+	    call prl_init (gl, int (IM_LEN(im,1)), int (IM_LEN(im,2)))
 
 	    # Scan the list.
 	    while (fscan (list) != EOF) {
@@ -310,15 +321,27 @@ begin
 		    next
 		
 		# Check and correct for out of bounds limits.
-		x1 = max (1, x1)
-		x2 = min (IM_LEN(im,1), x2)
-		y1 = max (1, y1)
-		y2 = min (IM_LEN(im,2), y2)
+		x1 = max (1, min (IM_LEN(im,1), x1))
+		x2 = min (IM_LEN(im,1), max (1, x2))
+		y1 = max (1, min (IM_LEN(im,2), y1))
+		y2 = min (IM_LEN(im,2), max (1, y2))
+
+		# Check the order.
+		if (x2 < x1) {
+		    temp = x1
+		    x1 = x2
+		    x2 = temp
+		}
+		if (y2 < y1) {
+		    temp = y1
+		    y1 = y2
+		    y2 = temp
+		}
 
 		# If entire image return.
 		if ((x1 == 1) && (x2 == IM_LEN(im,1)) && (y1 == 1) &&
 		    (y2 == IM_LEN(im,2))) {
-		    call plfree (gl)
+		    call prl_free (gl)
 		    gl = NULL
 		    break
 		}
@@ -328,7 +351,7 @@ begin
 		columns[2] = x2
 		columns[3] = 1
 		columns[4] = NULL
-		call pl_add_ranges (gl, y1, y2, columns)
+		call prl_add_ranges (gl, y1, y2, columns)
 	    }
 
 	    call close (list)
@@ -341,11 +364,13 @@ begin
 		call error (0, "MAKE_GOOD_LIST: Error decoding border string.")
 	    if (border < 1)
 		call error (0, "MAKE_GOOD_LIST: No border.")
-	    if ((border > IM_LEN(im,1)/2) && (border > IM_LEN(im,2)/2))
+	    if ((border > IM_LEN(im,1)/2) && (border > IM_LEN(im,2)/2)) {
+		call sfree (sp)
 		return
+	    }
 
 	    # Intialize list.
-	    call plinit (gl, int (IM_LEN(im,1)), int (IM_LEN(im,2)))
+	    call prl_init (gl, int (IM_LEN(im,1)), int (IM_LEN(im,2)))
 	    y1 = 1 + border - 1
 	    y2 = IM_LEN(im,2) - border + 1
 	    columns[1] = 1
@@ -354,19 +379,21 @@ begin
 	    columns[4] = NULL
 
 	    # Set ranges for top and bottom edges of image.
-	    call pl_put_ranges (gl, 1, y1, columns)
-	    call pl_put_ranges (gl, y2, int (IM_LEN(im,2)), columns)
+	    call prl_put_ranges (gl, 1, y1, columns)
+	    call prl_put_ranges (gl, y2, int (IM_LEN(im,2)), columns)
 
 	    columns[1] = 1
 	    columns[2] = y1
 	    columns[3] = 1
 	    columns[4] = NULL
-	    call pl_put_ranges (gl, y1 + 1, y2 - 1, columns)
+	    call prl_put_ranges (gl, y1 + 1, y2 - 1, columns)
 
 	    columns[1] = IM_LEN(im,1) - border + 1
 	    columns[2] = IM_LEN(im,1)
 	    columns[3] = 1
 	    columns[4] = NULL
-	    call pl_add_ranges (gl, y1 + 1, y2 - 1, columns)
+	    call prl_add_ranges (gl, y1 + 1, y2 - 1, columns)
 	}
+
+	call sfree (sp)
 end

@@ -1,25 +1,26 @@
 include <error.h>
 include "../lib/apphot.h"
 
-# AP_APCOLON -- Procedure to process colon commands for setting
-# noise fitting parameters.
+# AP_APCOLON -- Process colon commands for setting the top level apphot package
+# parameters.
 
-procedure ap_apcolon (ap, im, cl, out, stid, ltid, cmdstr, newcenterbuf,
-    newcenter, newskybuf, newsky, newbuf, newfit)
+procedure ap_apcolon (ap, im, cl, out, stid, ltid, cmdstr, newimage,
+	newcenterbuf, newcenter, newskybuf, newsky, newbuf, newfit)
 
 pointer	ap			# pointer to the apphot structure
 pointer	im			# pointer to the iraf image
 int	cl			# coordinate file descriptor
-pointer	out			# output file descriptor
+int	out			# output file descriptor
 int	stid			# output file sequence number
-int	ltid			# coord file sequence number
+int	ltid			# coordinate file sequence number
 char	cmdstr[ARB]		# command string
-int	newcenterbuf, newcenter	# change centering parameters
-int	newskybuf, newsky	# change sky fitting parameters
-int	newbuf, newfit		# change magnitude parameters
+int	newimage		# new image ?
+int	newcenterbuf, newcenter	# new centering parameters ?
+int	newskybuf, newsky	# new sky fitting parameters ?
+int	newbuf, newfit		# new photometry parameters ?
 
 bool	bval
-int	ncmd, ip, nchars
+int	ncmd, ip
 pointer	sp, cmd, str
 real	rval
 
@@ -27,10 +28,10 @@ bool	streq(), itob()
 int	strdic(), nscan(), btoi(), apstati(), ctowrd(), open()
 pointer	immap()
 real	apstatr()
-
 errchk	immmap, open
 
 begin
+	# Allocate working space.
 	call smark (sp)
 	call salloc (cmd, SZ_LINE, TY_CHAR)
 	call salloc (str, SZ_LINE, TY_CHAR)
@@ -54,11 +55,11 @@ begin
 		call printf ("%s = %g %s\n")
 		    call pargstr (KY_FWHMPSF)
 		    call pargr (apstatr (ap, FWHMPSF))
-		    call pargstr (UN_FWHMPSF)
+		    call pargstr (UN_ASCALEUNIT)
 	    } else {
 		call apsetr (ap, FWHMPSF, rval)
 		if (stid > 1)
-		    call ap_rparam (out, KY_FWHMPSF, rval, UN_FWHMPSF,
+		    call ap_rparam (out, KY_FWHMPSF, rval, UN_ASCALEUNIT,
 			"full width half max of psf")
 		newcenterbuf = YES; newcenter = YES
 		newskybuf = YES; newsky = YES
@@ -71,11 +72,11 @@ begin
 		call printf ("%s = %g %s\n")
 		    call pargstr (KY_SCALE)
 		    call pargr (1.0 / apstatr (ap, SCALE))
-		    call pargstr (UN_SCALE)
+		    call pargstr (UN_AUNITS)
 	    } else if (rval > 0.0) {
 		call apsetr (ap, SCALE, (1.0 / rval))
 		if (stid > 1)
-		    call ap_rparam (out, KY_SCALE, (1.0 / rval), UN_SCALE,
+		    call ap_rparam (out, KY_SCALE, (1.0 / rval), UN_AUNITS,
 			"scale in units / pixel")
 		newcenterbuf = YES; newcenter = YES
 		newskybuf = YES; newsky = YES
@@ -91,7 +92,7 @@ begin
 	    } else {
 		call apseti (ap, POSITIVE, btoi (bval))
 		if (stid > 1)
-		    call ap_bparam (out, KY_POSITIVE, bval, UN_POSITIVE,
+		    call ap_bparam (out, KY_POSITIVE, bval, UN_ASWITCH,
 			"emission feature")
 		newcenterbuf = YES; newcenter = YES
 		newskybuf = YES; newsky = YES
@@ -106,12 +107,13 @@ begin
 		    call pargstr (KY_FILTER)
 		    call pargstr (Memc[str])
 	    } else {
-	        nchars = ctowrd (Memc[cmd], ip, Memc[str], SZ_LINE)
+	        if (ctowrd (Memc[cmd], ip, Memc[str], SZ_LINE) <= 0)
+		    Memc[str] = EOS
 		call apsets (ap, FILTER, Memc[str])
 		if (im != NULL)
 		    call ap_filter (im, ap)
 		if (stid > 1)
-		    call ap_sparam  (out, KY_FILTER, Memc[str], UN_FILTER,
+		    call ap_sparam  (out, KY_FILTER, Memc[str], UN_AKEYWORD,
 			"filter keyword")
 	    }
 
@@ -123,11 +125,41 @@ begin
 		    call pargstr (KY_FILTERID)
 		    call pargstr (Memc[str])
 	    } else {
-	        nchars = ctowrd (Memc[cmd], ip, Memc[str], SZ_LINE)
+	        if (ctowrd (Memc[cmd], ip, Memc[str], SZ_LINE) <= 0)
+		    Memc[str] = EOS
 		call apsets (ap, FILTERID, Memc[str])
-		#if (stid > 1)
-		    #call ap_sparam  (out, KY_FILTERID, Memc[str], UN_FILTERID,
-			#"filter")
+	    }
+
+	case APCMD_OBSTIME:
+	    call gargstr (Memc[cmd], SZ_LINE)
+	    if (Memc[cmd] == EOS) {
+		call apstats (ap, OBSTIME, Memc[str], SZ_LINE)
+		call printf ("%s = %s\n")
+		    call pargstr (KY_OBSTIME)
+		    call pargstr (Memc[str])
+	    } else {
+	        if (ctowrd (Memc[cmd], ip, Memc[str], SZ_LINE) <= 0)
+		    Memc[str] = EOS
+		call apsets (ap, OBSTIME, Memc[str])
+		if (im != NULL)
+		    call ap_otime (im, ap)
+		if (stid > 1)
+		    call ap_sparam  (out, KY_OBSTIME, Memc[str], UN_AKEYWORD,
+			"obstime keyword")
+	    }
+
+	case APCMD_OTIME:
+	    call gargstr (Memc[cmd], SZ_LINE)
+	    if (Memc[cmd] == EOS) {
+		call apstats (ap, OTIME, Memc[str], SZ_LINE)
+		call printf ("%s = %s %s\n")
+		    call pargstr (KY_OTIME)
+		    call pargstr (Memc[str])
+		    call pargstr (UN_ATIMEUNIT)
+	    } else {
+	        if (ctowrd (Memc[cmd], ip, Memc[str], SZ_LINE) <= 0)
+		    Memc[str] = EOS
+		call apsets (ap, OTIME, Memc[str])
 	    }
 
 	case APCMD_AIRMASS:
@@ -138,12 +170,13 @@ begin
 		    call pargstr (KY_AIRMASS)
 		    call pargstr (Memc[str])
 	    } else {
-	        nchars = ctowrd (Memc[cmd], ip, Memc[str], SZ_LINE)
+	        if (ctowrd (Memc[cmd], ip, Memc[str], SZ_LINE) <= 0)
+		    Memc[str] = EOS
 		call apsets (ap, AIRMASS, Memc[str])
 		if (im != NULL)
 		    call ap_airmass (im, ap)
 		if (stid > 1)
-		    call ap_sparam  (out, KY_AIRMASS, Memc[str], UN_AIRMASS,
+		    call ap_sparam  (out, KY_AIRMASS, Memc[str], UN_AKEYWORD,
 			"airmass keyword")
 	    }
 
@@ -153,11 +186,11 @@ begin
 		call printf ("%s = %g %s\n")
 		    call pargstr (KY_XAIRMASS)
 		    call pargr (apstatr (ap, XAIRMASS))
-		    call pargstr (UN_XAIRMASS)
+		    call pargstr (UN_ANUMBER)
 	    } else {
 		call apsetr (ap, XAIRMASS, rval)
 		#if (stid > 1)
-		    #call ap_rparam (out, KY_XAIRMASS, rval, UN_XAIRMASS,
+		    #call ap_rparam (out, KY_XAIRMASS, rval, UN_ANUMBER,
 			#"airmass")
 	    }
 
@@ -169,12 +202,13 @@ begin
 		    call pargstr (KY_EXPOSURE)
 		    call pargstr (Memc[str])
 	    } else {
-	        nchars = ctowrd (Memc[cmd], ip, Memc[str], SZ_LINE)
+	        if (ctowrd (Memc[cmd], ip, Memc[str], SZ_LINE) <= 0)
+		    Memc[str] = EOS
 		call apsets (ap, EXPOSURE, Memc[str])
 		if (im != NULL)
 		    call ap_itime (im, ap)
 		if (stid > 1)
-		    call ap_sparam  (out, KY_EXPOSURE, Memc[str], UN_EXPOSURE,
+		    call ap_sparam  (out, KY_EXPOSURE, Memc[str], UN_AKEYWORD,
 			"exposure time keyword")
 		newfit = YES
 	    }
@@ -185,11 +219,11 @@ begin
 		call printf ("%s = %g %s\n")
 		    call pargstr (KY_ITIME)
 		    call pargr (apstatr (ap, ITIME))
-		    call pargstr (UN_ITIME)
+		    call pargstr (UN_ATIMEUNIT)
 	    } else {
 		call apsetr (ap, ITIME, rval)
 		#if (stid > 1)
-		    #call ap_rparam (out, KY_ITIME, rval, UN_ITIME,
+		    #call ap_rparam (out, KY_ITIME, rval, UN_ATIMEUNIT,
 			#"exposure time")
 		newfit = YES
 	    }
@@ -200,11 +234,11 @@ begin
 		call printf ("%s = %g %s\n")
 		    call pargstr (KY_DATAMIN)
 		    call pargr (apstatr (ap, DATAMIN))
-		    call pargstr (UN_DATAMIN)
+		    call pargstr (UN_ACOUNTS)
 	    } else {
 		call apsetr (ap, DATAMIN, rval)
 		if (stid > 1)
-		    call ap_rparam (out, KY_DATAMIN, rval, UN_DATAMIN,
+		    call ap_rparam (out, KY_DATAMIN, rval, UN_ACOUNTS,
 			"minimim good data value")
 		newcenterbuf = YES; newcenter = YES
 		newskybuf = YES; newsky = YES
@@ -217,11 +251,11 @@ begin
 		call printf ("%s = %g %s\n")
 		    call pargstr (KY_DATAMAX)
 		    call pargr (apstatr (ap, DATAMAX))
-		    call pargstr (UN_DATAMAX)
+		    call pargstr (UN_ACOUNTS)
 	    } else {
 		call apsetr (ap, DATAMAX, rval)
 		if (stid > 1)
-		    call ap_rparam (out, KY_DATAMAX, rval, UN_DATAMAX,
+		    call ap_rparam (out, KY_DATAMAX, rval, UN_ACOUNTS,
 			"maximum good data value")
 		newcenterbuf = YES; newcenter = YES
 		newskybuf = YES; newsky = YES
@@ -252,6 +286,8 @@ begin
 		    call ap_rdnoise (im, ap)
 		    call ap_filter (im, ap)
 		    call ap_airmass (im, ap)
+		    call ap_otime (im, ap)
+		    newimage = YES
 		    newcenterbuf = YES; newcenter = YES
 		    newskybuf = YES; newsky = YES
 		    newbuf = YES; newfit = YES

@@ -15,8 +15,8 @@ char	s1[ARB]			#I input string containing macros
 char	s2[maxch]		#O output string buffer
 int	maxch			#I max chars out
 
-int	op
 pointer	sp, tokbuf, in
+int	token, op, otop
 int	gstrcpy(), qp_gettok()
 pointer	qp_opentext()
 
@@ -26,18 +26,30 @@ begin
 
 	# Open input text for macro expanded token input.
 	in = qp_opentext (qp, s1)
+	otop = maxch + 1
 	op = 1
 
 	# Copy tokens to the output, inserting a space after every token.
-	while (qp_gettok (in, Memc[tokbuf], SZ_TOKBUF) != EOF) {
-	    op = op + gstrcpy (Memc[tokbuf], s2[op], maxch-op+1)
-	    s2[op] = ' ';  op = op + 1
-	    if (op > maxch)
-		break
-	}
+	repeat {
+	    token = qp_gettok (in, Memc[tokbuf], SZ_TOKBUF)
+	    if (token != EOF) {
+		if (token == TOK_STRING) {
+		    s2[op] = '"'  
+		    op = min (otop, op + 1)
+		}
+		op = op + gstrcpy (Memc[tokbuf], s2[op], otop-op)
+		if (token == TOK_STRING) {
+		    s2[op] = '"'  
+		    op = min (otop, op + 1)
+		}
+		s2[op] = ' ';  op = min (otop, op + 1)
+		if (op >= otop)
+		    break
+	    }
+	} until (token == EOF)
 
 	# Cancel the trailing blank and add the EOS.
-	if (op > 1)
+	if (op > 1 && op < otop)
 	    op = op - 1
 	s2[op] = EOS
 

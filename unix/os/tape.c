@@ -23,8 +23,9 @@
  *	bsf [n]				backspace N filemarks
  *	fsr [n]				forward space N records
  *	bsr [n]				backspace N records
- *	r [n [bufsize]]			read N records
- *	w [n [bufsize]]			write N records
+ *	read [n [bufsize]]		read N records
+ *	write [n [bufsize]]		write N records
+ *	seek [offset[bkm]]              seek (b=block#, k=x1024, m=x1024*1024)
  *	weof				write end of file
  *
  *	s[tatus]			print tape status (device dependent)
@@ -53,8 +54,8 @@
 
 #define	SZ_COMMAND	512
 #define SZ_FNAME	256
-#define SZ_IOBUF	65535
-#define NREAD		65535
+#define SZ_IOBUF	262144
+#define NREAD		64512
 #define	NWRITE		1024
 #define	EOS		'\0'
 
@@ -67,6 +68,7 @@ static	char logfile[SZ_FNAME];
 static	int rbufsz, wbufsz;
 static	int t_fileno;
 static	int t_blkno;
+static	int t_acmode;
 static	int verbose;
 static	int status;
 extern	int errno;
@@ -138,7 +140,7 @@ quit:		if (in != stdin)
 	    } else if (!strcmp (token, "?") || !strcmp (token, "help")) {
 		phelp();
 		continue;
-	    } else if (!strncmp (token, "status", 1)) {
+	    } else if (!strncmp (token, "status", 2)) {
 		pstatus();
 		continue;
 	    } else if (!strncmp (token, "verbose", 3)) {
@@ -197,8 +199,8 @@ quit:		if (in != stdin)
 		}
 
 		/* Open device. */
-		if ((tape = open (mtdev, 
-		    ((token=gettok()) && *token == 'w') ? 1 : 0)) == -1) {
+		if ((tape = open (mtdev, t_acmode =
+		    ((token=gettok()) && *token == 'w') ? 2 : 0)) == -1) {
 		    sprintf (lbuf, "cannot open device %s\n", mtdev);
 		    output (lbuf);
 		    mtdev[0] = EOS;
@@ -210,6 +212,10 @@ quit:		if (in != stdin)
 		strcpy (o_mtdev, mtdev);
 	    } else if (!strncmp (token, "close", 1)) {
 		close (tape);
+		if (t_acmode) {
+		    t_fileno++;
+		    t_blkno = 0;
+		}
 		mtdev[0] = EOS;
 		errno = 0;
 	    } else if (!strncmp (token, "rew", 3)) {
@@ -283,6 +289,49 @@ quit:		if (in != stdin)
 		}
 
 		continue;
+
+	    } else if (!strncmp (token, "seek", 2)) {
+		char *ip;
+		int fwd, bak, i;
+
+		if (token = gettok()) {
+		    ip = token;
+		    fwd = bak = 0;
+		    if (*ip == '-') {
+			bak++;
+			ip++;
+		    } else if (*ip == '+') {
+			fwd++;
+			ip++;
+		    }
+
+		    for (i=0;  isdigit(*ip);  ip++)
+			i = i * 10 + (*ip - '0');
+
+		    switch (*ip) {
+		    case 'b':
+			i *= rbufsz;
+			break;
+		    case 'k':
+			i *= 1024;
+			break;
+		    case 'm':
+			i *= (1024*1024);
+			break;
+		    }
+
+		    if (fwd)
+			status = lseek (tape, (long)i, 1);
+		    else if (bak)
+			status = lseek (tape, -(long)i, 1);
+		    else
+			status = lseek (tape, (long)i, 0);
+		    pstatus();
+
+		} else {
+		    status = lseek (tape, 0, 1);
+		    pstatus();
+		}
 
 	    } else
 		output ("unrecognized command\n");
@@ -379,20 +428,23 @@ pstatus()
 	struct	mtget mt;
 	char	*tn;
 
-	if (ioctl (tape, MTIOCGET, &mt) != 0)
-	    sprintf (obuf, "MTIOCGET ioctl fails\n");
-	else {
-	    for (tn="unknown", tp=info;  tp->t_type;  tp++)
-		if (tp->t_type == mt.mt_type) {
-		    tn = tp->t_name;
-		    break;
-		}
+	if (verbose) {
+	    if (ioctl (tape, MTIOCGET, &mt) != 0)
+		sprintf (obuf, "MTIOCGET ioctl fails\n");
+	    else {
+		for (tn="unknown", tp=info;  tp->t_type;  tp++)
+		    if (tp->t_type == mt.mt_type) {
+			tn = tp->t_name;
+			break;
+		    }
 
-	    sprintf (obuf,
+		sprintf (obuf,
 	    "status %d (%d) file=%d block=%d resid=%d [ds=0x%x er=0x%x] %s\n",
-		status, errno, mt.mt_fileno, mt.mt_blkno,
-		mt.mt_resid, mt.mt_dsreg, mt.mt_erreg, tn);
-	}
+		    status, errno, mt.mt_fileno, mt.mt_blkno,
+		    mt.mt_resid, mt.mt_dsreg, mt.mt_erreg, tn);
+	    }
+	} else
+	    sprintf (obuf, "status %d (%d)\n", status, errno);
 #else
 	sprintf (obuf, "status %d (%d)\n", status, errno);
 #endif

@@ -27,11 +27,12 @@ pointer	im				# image descriptor
 int	status				# return status
 
 long	pixoff
-int	nchars, pfd, blklen
 pointer	sp, pixhdr, pixfile
+int	nchars, pfd, blklen
+
 bool	strne()
 int	open(), read(), fdevblk()
-errchk	open, read, falloc, fdevblk
+errchk	open, read, falloc, fdevblk, imerr
 errchk	imioff, oif_wphdr, oif_mkpixfname, oif_gpixfname
 
 begin
@@ -39,12 +40,16 @@ begin
 	if (IM_PFD(im) != NULL)
 	    return
 
+
 	call smark (sp)
 	call salloc (pixhdr, LEN_IMDES + LEN_PIXHDR, TY_STRUCT)
 	call salloc (pixfile, SZ_PATHNAME, TY_CHAR)
 
 	switch (IM_ACMODE(im)) {
 	case READ_ONLY, READ_WRITE, WRITE_ONLY, APPEND:
+	    if (IM_PIXFILE(im) == EOS)
+		call imerr (IM_NAME(im), SYS_IMRDPIXFILE)
+
 	    call oif_gpixfname (IM_PIXFILE(im), IM_HDRFILE(im), Memc[pixfile],
 		SZ_PATHNAME)
 	    pfd = open (Memc[pixfile], IM_ACMODE(im), STATIC_FILE)
@@ -88,6 +93,9 @@ begin
 	    # headerless pixfiles, and reconstruction of header if it gets lost.
 
 	    call oif_wphdr (pfd, im, IM_HDRFILE(im))
+
+	    # Update the image header so that it knows about the pixel file.
+	    call oif_updhdr (im, status)
 
 	default:
 	    call imerr (IM_NAME(im), SYS_IMACMODE)

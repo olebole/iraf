@@ -6,7 +6,7 @@
 
 extern	char *environ[];
 
-#ifdef BSDUNIX
+#ifdef LINUX
 extern	char **xargv;		/* defined in getarg(3f); requires libU77! */
 extern	int xargc;
 #else
@@ -26,7 +26,7 @@ XINT	*maxch;			/* maxch chars out		*/
 XINT	*status;
 {
 	register char	*ip, *op;
-	unsigned int	*ep, ev;
+	unsigned int	*ep;
 	register int	n;
 	char	**argv;
 

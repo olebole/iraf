@@ -1,24 +1,27 @@
+include <gset.h>
 include <mach.h>
 include <imhdr.h>
-include <gset.h>
 
 # AP_FIND -- Detect images in the convolved image and then compute image
 # characteristics using the original image.
 
-int procedure ap_find (im, cnv, out, id, ker1x, ker1y, skip, nxk, nyk,
-	threshold, emission, sharplo, sharphi, roundlo, roundhi, interactive,
-	stid, mkdetections)
+int procedure ap_find (im, cnv, out, id, ker2d, skip, nxk, nyk, skymode,
+	threshold, relerr, emission, xsigsq, ysigsq, datamin, datamax,
+	sharplo, sharphi, roundlo, roundhi, interactive, stid, mkdetections)
 
 pointer	im			# pointer to the input image
 pointer	cnv			# pointer to the output image
-pointer	out			# pointer to the output text file
+int	out			# the output file descriptor
 pointer	id			# pointer to the display stream
-real	ker1x[ARB]		# 1D X Gaussian kernel
-real	ker1y[ARB]		# 1D Y Gaussian kernel
-int	skip[nxk,ARB]		# 2D Gaussian kernel
+real	ker2d[nxk,ARB]		# 2D Gaussian kernel
+int	skip[nxk,ARB]		# 2D skip kernel
 int	nxk, nyk		# dimensions of the kernel
+real	skymode			# estimate of the sky
 real	threshold		# threshold for image detection
+real	relerr			# the relative error of the convolution kernel
 int	emission		# emission features
+real	xsigsq, ysigsq		# sigma of gaussian in x and y
+real	datamin, datamax	# minimum and maximum good data values
 real	sharplo, sharphi	# sharpness limits
 real	roundlo,roundhi		# roundness parameter limits
 int	interactive		# interactive mode
@@ -27,7 +30,9 @@ int	mkdetections		# mark detections
 
 int	inline, i, j, ncols, col1, col2, line1, line2, index, pos
 int	xmiddle, ymiddle, nonzero, nobjs, nstars, ntotal
-pointer	sp, bufptrs, imlbuf, cnvlbuf, imbuf, cnvbuf, cols, sharp, round, x, y
+pointer	sp, bufptrs, imlbuf, cnvlbuf, imbuf, cnvbuf, cols
+pointer	satur, sharp, round1, round2, x, y
+
 int	ap_detect(), ap_test()
 pointer	imgs2r()
 errchk	imgs2r()
@@ -44,7 +49,7 @@ begin
 
 	# Compute find the number of defined elements in the kernel.
 	nonzero = 0
-	skip[xmiddle,ymiddle] = NO
+	#skip[xmiddle,ymiddle] = NO
 	do j = 1, nyk {
 	    do i = 1, nxk {
 		if (skip[i,j] == NO)
@@ -61,8 +66,10 @@ begin
 	call salloc (imbuf, nyk * ncols, TY_REAL)
 	call salloc (cnvbuf, nyk * ncols, TY_REAL)
 	call salloc (cols, ncols, TY_INT)
+	call salloc (satur, ncols, TY_INT)
 	call salloc (sharp, ncols, TY_REAL)
-	call salloc (round, ncols, TY_REAL)
+	call salloc (round1, ncols, TY_REAL)
+	call salloc (round2, ncols, TY_REAL)
 	call salloc (x, ncols, TY_REAL)
 	call salloc (y, ncols, TY_REAL)
 
@@ -121,36 +128,35 @@ begin
 		pos = pos + 1
 
 	    nobjs = ap_detect (Memr[cnvbuf], Memi[bufptrs], ncols, skip, nxk,
-	        nyk, threshold, Memi[cols])
+	        nyk, relerr * threshold, Memi[cols])
 	    if (nobjs <= 0)
 		next
 
 	    # Compute the sharpness parameter.
-	    call ap_sharp (Memr[imbuf], Memr[cnvbuf], Memi[bufptrs], ncols,
-	        skip, nxk, nyk, Memi[cols], Memr[sharp], nobjs, nonzero) 
+	    call ap_sharp_round (Memr[imbuf], Memr[cnvbuf], Memi[bufptrs],
+	        ncols, skip, nxk, nyk, Memi[cols], Memi[satur], Memr[round1],
+		Memr[sharp], nobjs, nonzero, skymode, datamin, datamax) 
 
 	    # Compute the roundness parameters.
-	    call ap_round (Memr[imbuf], Memi[bufptrs], ncols, ker1x, nxk,
-	        ker1y, nyk, Memi[cols], Memr[round], nobjs)
-
-	    # Compute the x and y centroid positions.
-	    call ap_xypos (Memr[imbuf], Memi[bufptrs], ncols, nxk, nyk,
-	        Memi[cols], Memr[x], Memr[y], nobjs, inline)
+	    call ap_xy_round (Memr[imbuf], Memi[bufptrs], ncols, ker2d, nxk,
+	         nyk, Memi[cols], inline, Memr[round2], Memr[x],
+		 Memr[y], nobjs, skymode, datamin, datamax, xsigsq, ysigsq)
 
 	    # Test the image characeteristics of detected objects.
-	    nstars = ap_test (Memi[cols], Memr[x], Memr[y], Memr[round],
-	        Memr[sharp], nobjs, sharplo, sharphi, roundlo, roundhi)
+	    nstars = ap_test (Memi[cols], Memr[x], Memr[y], Memi[satur],
+		Memr[round1], Memr[round2], Memr[sharp], nobjs, IM_LEN(im,1),
+		IM_LEN(im,2), sharplo, sharphi, roundlo, roundhi)
 
 	    # Print results on the standard output.
 	    if (interactive == YES)
 	        call apstdout (Memr[cnvbuf], Memi[bufptrs], ncols, nyk,
-	            Memi[cols], Memr[x], Memr[y], Memr[sharp], Memr[round],
-		    nstars, ntotal, threshold)
+	            Memi[cols], Memr[x], Memr[y], Memr[sharp], Memr[round1],
+		    Memr[round2], nstars, ntotal, relerr * threshold)
 
 	    # Save the results in the file.
 	    call apdtfout (out, Memr[cnvbuf], Memi[bufptrs], ncols, nyk,
-	        Memi[cols], Memr[x], Memr[y], Memr[sharp], Memr[round],
-		nstars, ntotal, threshold, stid)
+	        Memi[cols], Memr[x], Memr[y], Memr[sharp], Memr[round1],
+		Memr[round2], nstars, ntotal, relerr * threshold, stid)
 
 	    # Mark the stars on the display.
 	    if ((nstars > 0) && (interactive == YES) && (id != NULL) &&
@@ -164,8 +170,8 @@ begin
 	    ntotal = ntotal + nstars
 
 	}
-	 
-	# free space
+
+	# Free space
 	call sfree (sp)
 
 	return (ntotal)
@@ -219,7 +225,7 @@ begin
 
 	    # If a local maximum is detected there can be no need to
 	    # check pixels in this row between i and i + nhalf.
-	    # i = i + nhalf
+	    i = i + nhalf
 nextpix_
 	    # Work on the next pixel.
 	    i = i + 1
@@ -229,13 +235,15 @@ nextpix_
 end
 
 
-# AP_SHARP -- Compute an estimate of the sharpness of the detected
-# objects. The sharpness parameter is defined as the ratio of the difference
-# between the height of the central pixel and the mean of the surrounding
-# pixels to the density enhancement of the central pixel.
+# AP_SHARP_ROUND -- Compute an estimate of the roundness and sharpness of the
+# detected objects. The roundness parameter is computed by comparing a measure
+# of the bilateral symmetry with a measure of the four-fold symmetry. The
+# sharpness parameter is defined as the ratio of the difference between the
+# height of the central pixel and the mean of the surrounding pixels to the
+# density enhancement of the central pixel.
 
-procedure ap_sharp (data, density, ptrs, ncols, skip, nxk, nyk, cols, sharps,
-        nobjs, nonzero) 
+procedure ap_sharp_round (data, density, ptrs, ncols, skip, nxk, nyk, cols,
+        satur, round, sharps, nobjs, nonzero, skymode, datamin, datamax) 
 
 real	data[ncols,ARB]		# image data
 real	density[ncols,ARB]	# density enhancements
@@ -243,192 +251,295 @@ int	ptrs[ARB]		# buffer pointers
 int	ncols			# length of data array
 int	skip[nxk,ARB]		# 2D kernel
 int	nxk, nyk		# size of convolution kernel
-int	cols[ARB]		# columns
+int	cols[ARB]		# array of columns
+int	satur[ARB]		# array of saturated state parameters
+real	round[ARB]		# array of roundness parameters
 real	sharps[ARB]		# array of sharpness parameters
 int	nobjs			# number of objects
 int	nonzero			# number of nonzero kernel elements
+real	skymode			# estimate of the sky mode
+real	datamin, datamax	# minimum and maximum good data values
 
-int	i, j, k, xmiddle, ymiddle
-real	sharp
+int	i, j, k, xmiddle, ymiddle, npixels, nhalf
+real	pixval, midpix, temp, sharp, sum2, sum4
 
 begin
 	# Loop over the detected objects.
+	nhalf = min (nxk / 2, nyk / 2)
 	xmiddle = 1 + nxk / 2 
 	ymiddle = 1 + nyk / 2
 	do i = 1, nobjs {
 
+	    # Compute the first estimate of roundness.
+	    sum2 = 0.0
+	    sum4 = 0.0
+	    do k = 0, nhalf {
+		do j = 1, nhalf {
+		    sum2 = sum2 +
+		        density[cols[i]-k,ptrs[ymiddle-j]] +
+		        density[cols[i]+k,ptrs[ymiddle+j]] -
+		        density[cols[i]-j,ptrs[ymiddle+k]] -
+		        density[cols[i]+j,ptrs[ymiddle-k]]
+		    sum4 = sum4 +
+		        abs (density[cols[i]-k,ptrs[ymiddle-j]]) +
+		        abs (density[cols[i]+k,ptrs[ymiddle+j]]) +
+		        abs (density[cols[i]-j,ptrs[ymiddle+k]]) +
+		        abs (density[cols[i]+j,ptrs[ymiddle-k]])
+		}
+	    }
+	    round[i] = 2.0 * sum2 / sum4
+
+	    satur[i] = NO
+
+	    # Eliminate the sharpness test if the central pixel is bad.
+	    midpix = data[cols[i],ptrs[ymiddle]]
+	    if (midpix > datamax) {
+		satur[i] = YES
+		sharps[i] = INDEFR
+		next
+	    }
+	    if (midpix < datamin) {
+		sharps[i] = INDEFR
+		next
+	    }
+
 	    # Accumulate the sharpness statistic.
 	    sharp = 0.0
+	    npixels = nonzero
 	    do j = 1, nyk {
+		temp = 0.0
 	        do k = 1, nxk {
-		    if (skip[k,j] == NO)
-		        sharp = sharp + data[cols[i]-xmiddle+k,ptrs[j]]
+		    if (skip[k,j] == YES)
+			next
+		    pixval = data[cols[i]-xmiddle+k,ptrs[j]]
+		    if (pixval > datamax) {
+			satur[i] = YES
+			npixels = npixels - 1
+		    } else if (pixval < datamin) {
+			npixels = npixels - 1
+		    } else {
+		        temp = temp + (pixval - skymode)
+		    }
 		}
+		sharp = sharp + temp
 	    }
 
 	    # Compute the sharpness statistic.
 	    if (density[cols[i],ptrs[ymiddle]] <= 0.0)
-		sharps[i] = MAX_REAL
+		sharps[i] = INDEFR
 	    else
-	        sharps[i] = (data[cols[i],ptrs[ymiddle]] - sharp / (nonzero)) /
+	        sharps[i] = (midpix - skymode - sharp / real (npixels)) /
 		    density[cols[i],ptrs[ymiddle]]
 
 	}
 end
 
 
-# AP_ROUND -- Estimate the roundness of the detected objects.
-# The height of the equivalent Gaussian function in x and y is fit by
-# least squares to the marginals. If either of these of these heights
-# is negative set the roundess characteristic to -MAX_REAL. Otherwise
-# compute a roundness characteristic
+# AP_XY_ROUND -- Estimate the x-y centers and the roundness of the detected
+# objects. The height of the equivalent Gaussian function in x and y is fit by
+# least squares to the marginal distribution of the image data. If either
+# of these of these heights is negative set the roundess characteristic to
+# -MAX_REAL, otherwise compute a roundness characteristic. At the same
+# time setup the necessary sums for computing the first order corection
+# to the centroid of the gaussian profile.
 
-procedure ap_round (data, ptrs, ncols, ker1x, nxk, ker1y, nyk, cols, rounds,
-        nobjs)
+procedure ap_xy_round (data, ptrs, ncols, ker2d, nxk, nyk, cols, inline,
+	rounds, x, y, nobjs, skymode, datamin, datamax, xsigsq, ysigsq)
 
 real	data[ncols,ARB]		# density enhancements
 int	ptrs[ARB]		# buffer pointers
 int	ncols			# number of columns in cylindrical buffer
-real	ker1x[ARB]		# 1D X kernel
-int	nxk			# size of X kernel
-real	ker1y[ARB]		# 1D Y kernel
-int	nyk			# size of Y kernel
-int	cols[ARB]		# columns
+real	ker2d[nxk,ARB]		# the gaussian convolution kernel
+int	nxk			# size of kernel in x
+int	nyk			# size of kernel in y
+int	cols[ARB]		# the input positions	
+int	inline			# the input image line
 real	rounds[ARB]		# array of sharpness parameters
-int	nobjs			# number of objects
-
-int	i, j, k, middle
-real	dx, dy
-
-begin
-	# Loop over the objects.
-	middle = 1 + nxk / 2
-	do i = 1, nobjs {
-
-	    # Accumulate the roundness statistic.
-	    dx = 0.0
-	    dy = 0.0
-	    do j = 1, nyk {
-		do k = 1, nxk {
-		    dx = dx + data[cols[i]-middle+k,ptrs[j]] * ker1x[k]
-		    dy = dy + data[cols[i]-middle+k,ptrs[j]] * ker1y[j]
-		}
-	    }
-
-	    # Compute the roundness statistic.
-	    if (dx <= 0.0 || dy <= 0.0)
-		rounds[i] = -MAX_REAL
-	    else
-	        rounds[i] = 2.0 * (dx - dy) / (dx + dy)
-	}
-end
-
-
-# AP_XYPOSS -- Compute the x and y centroids of the star. The computation
-# is done using an nx * (ny - 2) box to determine the x center and
-# an (nx - 2) * ny box to determine the y center. The (nx(y) - 2) pixels
-# in the perpendicular direction are added together and adjacent pixels
-# in the parallel direction are subtracted to yield (nx(y) - 1) numerical
-# first derivatives at positions delta x (or delta y) = - (nx(y) - 2) / 2, ...,
-# -1.5,-0.5,0.5,1.5,...,(nx(y) - 2) / 2 pixels from the center of the
-# array. A straight line is fitted to the derivatives by least squares
-# with with weight one-half at the end, unity in the middle, and linear
-# inbetween. The zero crossing of the line is taken to be the centroid.
-# If the slope of the line is non-negative or the coordinate is outside
-# the box set the dx and dy values to zero.
-
-procedure ap_xypos (data, ptrs, ncols, nxk, nyk, cols, x, y, nobjs, inline)
-
-real	data[ncols,ARB]		# density enhancements
-int	ptrs[ARB]		# buffer pointers
-int	ncols			# number of columns in cylindrical buffer
-int	nxk, nyk		# size of convolution kernel
-int	cols[ARB]		# columns
 real	x[ARB]			# output x coords
 real	y[ARB]			# output y coords
 int	nobjs			# number of objects
-int	inline			# input line number
+real	skymode			# estimate of the sky mode
+real	datamin, datamax	# minium and maximum data values
+real	xsigsq, ysigsq		# x-y gaussian sigma squared
 
-int	i, j, k, xmiddle, ymiddle, xnhalf, ynhalf, xnhalfm1, ynhalfm1
-real	sumd, sumxd, sumxsq, sumc, deriv, w, dx, dy
+int	i, j, k, xmiddle, ymiddle, n
+real	sumgd, sumgsq, sumg, sumd, sumdx, dgdx, sdgdx, sdgdxsq, sddgdx, sgdgdx
+real	pixval, p, sg, sd, wt, hx, hy, dx, dy, skylvl, xhalf, yhalf
 
 begin
+	xhalf = real (nxk / 2) + 0.5
+	yhalf = real (nyk / 2) + 0.5
 	xmiddle = 1 + nxk / 2
 	ymiddle = 1 + nyk / 2
-	xnhalf = nxk / 2
-	ynhalf = nyk / 2
-	xnhalfm1 = xnhalf - 1
-	ynhalfm1 = ynhalf - 1
 
-	# Loop over all the columns in an image line.
+	# Loop over the detected objects.
 	do i = 1, nobjs {
 
-	    # Zero the x accumulators.
+	    # Initialize the x fit.
+	    sumgd = 0.0
+	    sumgsq = 0.0
+	    sumg = 0.0
 	    sumd = 0.0
-	    sumxd = 0.0
-	    sumxsq = 0.0
-	    sumc = 0.0
+	    sumdx = 0.0
+	    sdgdx = 0.0
+	    sdgdxsq = 0.0
+	    sddgdx = 0.0
+	    sgdgdx = 0.0
+	    p = 0.0
+	    n = 0
 
-	    # Accumulate the x derivatives.
-	    do j = 1, nxk - 1 {
-		deriv = 0.0
-		dx = j + 0.5 - xmiddle
-		w = 1.0 - 0.5 * (abs (dx) - 0.5) / (xmiddle - 1.5)
-		do k = ymiddle - ynhalfm1, ymiddle + ynhalfm1
-		    deriv = deriv + (data[cols[i]-xmiddle+j+1,ptrs[k]] -
-		        data[cols[i]-xmiddle+j,ptrs[k]])
-		sumd = sumd + w * deriv
-		sumxd = sumxd + w * dx * deriv
-		sumxsq = sumxsq + w * dx ** 2
-		sumc = sumc + w
+	    # Compute the sums required for the x fit.
+	    do k = 1, nxk {
+
+		sg = 0.0
+		sd = 0.0
+		do j = 1, nyk {
+		    wt = real (ymiddle - abs (j - ymiddle))
+		    pixval = data[cols[i]-xmiddle+k,ptrs[j]]
+		    if (pixval < datamin || pixval > datamax)
+			next
+		    sd = sd + (pixval - skymode) * wt
+		    sg = sg + ker2d[k,j] * wt
+		}
+
+	        if (sg <= 0.0)
+		    next
+	        wt = real (xmiddle - abs (k - xmiddle))
+	        sumgd = sumgd + wt * sg * sd
+	        sumgsq = sumgsq + wt * sg ** 2
+	        sumg = sumg + wt * sg
+	        sumd = sumd + wt * sd
+		sumdx = sumdx + wt * sd * (xmiddle - k)
+	        p = p + wt
+	        n = n + 1
+	        dgdx = sg * (xmiddle - k)
+	        sdgdxsq = sdgdxsq + wt * dgdx ** 2
+	        sdgdx = sdgdx + wt * dgdx
+	        sddgdx = sddgdx + wt * sd * dgdx
+	        sgdgdx = sgdgdx + wt * sg * dgdx
 	    }
 
-	    # Reject if x derivative not decreasing.
-	    if (sumxd >= 0.0) {
-		x[i] = 0.0
+	    # Need at least three points to estimate the x height, position
+	    # and local sky brightness of the star.
+
+	    if (n <= 2 || p <= 0.0) {
+		x[i] = INDEFR
+		y[i] = INDEFR
+		rounds[i] = INDEFR
 		next
 	    }
 
-	    # Test whether x centroid is inside the box.
-	    dx = sumxsq * sumd / (sumc * sumxd)
-	    if (abs (dx) > real (xnhalf)) {
-		x[i] = 0.0
+	    # Solve for the height of the best-fitting gaussian to the
+	    # xmarginal. Reject the star if the height is non-positive.
+
+	    hx = sumgsq - (sumg ** 2) / p
+	    if (hx <= 0.0) {
+		x[i] = INDEFR
+		y[i] = INDEFR
+		rounds[i] = INDEFR
 		next
 	    }
-	    x[i] = cols[i] - xnhalf - dx
+	    hx = (sumgd - sumg * sumd / p) / hx
+	    if (hx <= 0.0) {
+		x[i] = INDEFR
+		y[i] = INDEFR
+		rounds[i] = INDEFR
+		next
+	    }
 
-	    # Zero the y accumulators.
+	    # Solve for the new x centroid.
+	    skylvl = (sumd - hx * sumg) / p
+	    dx = (sgdgdx - (sddgdx - sdgdx * (hx * sumg + skylvl * p))) /
+		(hx * sdgdxsq / xsigsq)
+	    if (abs (dx) > xhalf) {
+		dx = sumdx / sumd 
+		if (abs (dx) > xhalf)
+		    dx = 0.0
+	    }
+	    x[i] = (cols[i] - xmiddle + 1) + dx 
+
+	    # Initialize y fit.
+	    sumgd = 0.0
+	    sumgsq = 0.0
+	    sumg = 0.0
 	    sumd = 0.0
-	    sumxd = 0.0
-	    sumxsq = 0.0
-	    sumc = 0.0
+	    sumdx = 0.0
+	    sdgdx = 0.0
+	    sdgdxsq = 0.0
+	    sddgdx = 0.0
+	    sgdgdx = 0.0
+	    p = 0.0
+	    n = 0
 
-	    # Accumlate the y derivatives.
-	    do j = 1, nyk - 1 {
-		deriv = 0.0
-		dy = j + 0.5 - ymiddle
-		w = 1.0 - 0.5 * (abs (dy) - 0.5) / (ymiddle - 1.5)
-		do k = cols[i] - xnhalfm1, cols[i] + xnhalfm1
-		    deriv = deriv + (data[k,ptrs[j+1]] - data[k,ptrs[j]])
-		sumd = sumd + w * deriv
-		sumxd = sumxd + w * dy * deriv
-		sumxsq = sumxsq + w * dy ** 2
-		sumc = sumc + w
+	    do j = 1, nyk {
+		sg = 0.0
+		sd = 0.0
+		do k = 1, nxk {
+		    wt = real (xmiddle - abs (k - xmiddle))
+		    pixval = data[cols[i]-xmiddle+k,ptrs[j]]
+		    if (pixval < datamin || pixval > datamax)
+			next
+		    sd = sd + (pixval - skymode) * wt
+		    sg = sg + ker2d[k,j] * wt
+		}
+	        if (sg <= 0.0)
+		    next
+	        wt = real (ymiddle - abs (j - ymiddle))
+	        sumgd = sumgd + wt * sg * sd
+	        sumgsq = sumgsq + wt * sg ** 2
+	        sumg = sumg + wt * sg
+	        sumd = sumd + wt * sd
+		sumdx = sumdx + wt * sd * (j - ymiddle)
+	        p = p + wt
+	        n = n + 1
+	        dgdx = sg * (ymiddle - j)
+	        sdgdx = sdgdx + wt * dgdx
+	        sdgdxsq = sdgdxsq + wt * dgdx ** 2
+	        sddgdx = sddgdx + wt * sd * dgdx
+	        sgdgdx = sgdgdx + wt * sg * dgdx
 	    }
 
-	    # Reject if y derivative not decreasing.
-	    if (sumxd >= 0.0) {
-		y[i] = 0.0
+	    # Need at least three points to estimate the y height, position
+	    # and local sky brightness of the star.
+
+	    if (n <= 2 || p <= 0.0) {
+		x[i] = INDEFR
+		y[i] = INDEFR
+		rounds[i] = INDEFR
 		next
 	    }
 
-	    # Test whether y centroid is inside the box.
-	    dy = sumxsq * sumd / (sumc * sumxd)
-	    if (abs (dy) > real (ynhalf)) {
-		y[i] = 0.0
+	    # Solve for the height of the best-fitting gaussian to the
+	    # y marginal. Reject the star if the height is non-positive.
+
+	    hy = sumgsq - (sumg ** 2) / p 
+	    if (hy <= 0.0) {
+		x[i] = INDEFR
+		y[i] = INDEFR
+		rounds[i] = INDEFR
 		next
 	    }
-	    y[i] = inline - ynhalf - dy
+	    hy = (sumgd - sumg * sumd / p) / (sumgsq - (sumg ** 2) / p)
+	    if (hy <= 0.0) {
+		x[i] = INDEFR
+		y[i] = INDEFR
+		rounds[i] = INDEFR
+		next
+	    }
+
+	    # Solve for the new x centroid.
+	    skylvl = (sumd - hy * sumg) / p
+	    dy = (sgdgdx - (sddgdx - sdgdx * (hy * sumg + skylvl * p))) /
+		(hy * sdgdxsq / ysigsq)
+	    if (abs (dy) > yhalf) {
+		dy = sumdx / sumd 
+		if (abs (dy) > yhalf)
+		    dy = 0.0
+	    }
+	    y[i] = (inline - ymiddle + 1) + dy
+
+	    # Compute the roundness.
+	    rounds[i] = 2.0 * (hx - hy) / (hx + hy)
 	}
 end
 
@@ -436,15 +547,18 @@ end
 # AP_TEST -- Test the characteristic of the detected images for roundness
 # and sharpness.
 
-int procedure ap_test (cols, x, y, rounds, sharps, nobjs, sharplo, sharphi,
-        roundlo, roundhi)
+int procedure ap_test (cols, x, y, satur, round1, round2, sharps, nobjs,
+	ncols, nlines, sharplo, sharphi, roundlo, roundhi)
 
 int	cols[ARB]			# col IDS of detected images
 real	x[ARB]				# x positions
 real	y[ARB]				# y positions
-real	rounds[ARB]			# roundness parameters
+int	satur[ARB]			# saturation condition
+real	round1[ARB]			# first roundness parameters
+real	round2[ARB]			# second roundness parameters
 real	sharps[ARB]			# sharpness parameters
 int	nobjs				# number of objects
+int	ncols, nlines			# size of the input image
 real	sharplo, sharphi		# sharpness parameters
 real	roundlo, roundhi		# roundness parameters
 
@@ -456,11 +570,20 @@ begin
 	do i = 1, nobjs {
 
 	    # Compute the sharpness statistic
-	    if ((sharps[i] < sharplo) || (sharps[i] > sharphi))
+	    if (! IS_INDEFR(sharps[i]) && (sharps[i] < sharplo ||
+	        sharps[i] > sharphi))
 		next
-	    if (rounds[i] < roundlo || rounds[i] > roundhi)
+	    if (IS_INDEFR(round1[i]) || round1[i] < roundlo ||
+	        round1[i] > roundhi)
 		next
-	    if (x[i] <= 0.0 || y[i] <= 0.0)
+	    if (satur[i] == NO) {
+	        if (IS_INDEFR(round2[i]) || round2[i] < roundlo ||
+	            round2[i] > roundhi)
+		next
+	    }
+	    if (IS_INDEFR(x[i]) || x[i] < 0.5 || x[i] > (ncols+0.5))
+		next
+	    if (IS_INDEFR(y[i]) || y[i] < 0.5 || y[i] > (nlines+0.5))
 		next
 
 	    # Add object to the list.
@@ -469,7 +592,8 @@ begin
 	    x[nstars] = x[i]
 	    y[nstars] = y[i]
 	    sharps[nstars] = sharps[i]
-	    rounds[nstars] = rounds[i]
+	    round1[nstars] = round1[i]
+	    round2[nstars] = round2[i]
 	}
 
 	return (nstars)

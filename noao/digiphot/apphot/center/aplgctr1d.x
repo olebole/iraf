@@ -9,14 +9,15 @@ define	TOL	0.001		# tolerance for fitting algorithm
 # is streamlined by replacing the Gaussian with a simple triangle
 # following L.Goad.
 
-int procedure ap_lgctr1d (ctrpix, nx, ny, cx, cy, sigma, maxiter, skysigma, xc,
-    yc, xerr, yerr)
+int procedure ap_lgctr1d (ctrpix, nx, ny, cx, cy, sigma, maxiter, norm,
+	skysigma, xc, yc, xerr, yerr)
 
 real	ctrpix[nx, ny]		# object to be centered
 int	nx, ny			# dimensions of subarray
 real	cx, cy			# center in subraster coordinates
 real	sigma			# sigma of PSF
 int	maxiter			# maximum number of iterations
+real	norm			# the normalization factor
 real	skysigma		# standard deviation of the pixels
 real	xc, yc			# computed centers
 real	xerr, yerr		# first guess at errors
@@ -29,10 +30,12 @@ int	aptopt()
 real	asumr()
 
 begin
-	# Compute the marginal distributions.
+	# Allocate working space.
 	call smark (sp)
 	call salloc (xm, nx, TY_REAL)
 	call salloc (ym, ny, TY_REAL)
+
+	# Compute the marginal distributions.
 	call ap_mkmarg (ctrpix, Memr[xm], Memr[ym], nx, ny)
 	xerr = asumr (Memr[xm], nx)
 	yerr = asumr (Memr[ym], ny)
@@ -50,8 +53,10 @@ begin
 	    else
 	        constant = 4.0 * SQRTOFPI * sigma * skysigma ** 2 
 	    ratio = constant / xerr
-	    xerr = sigma ** 2 / xerr
+	    xerr = sigma ** 2 / (xerr * norm)
 	    xerr = sqrt (max (xerr, ratio * xerr))
+	    if (xerr > real (nx))
+		xerr = INDEFR
 	}
 
 	# Compute the y center and error.
@@ -65,13 +70,17 @@ begin
 	    else
 	        constant = 4.0 * SQRTOFPI * sigma * skysigma ** 2 
 	    ratio = constant / yerr
-	    yerr = sigma ** 2 / yerr
+	    yerr = sigma ** 2 / (yerr * norm)
 	    yerr = sqrt (max (yerr, ratio * yerr))
+	    if (yerr > real (ny))
+		yerr = INDEFR
 	}
 
 	# Return appropriate error code.
 	call sfree (sp)
 	if (nxiter < 0 || nyiter < 0)
+	    return (AP_CTR_SINGULAR)
+	else if (nxiter > maxiter || nyiter > maxiter)
 	    return (AP_CTR_NOCONVERGE)
 	else
 	    return (AP_OK)

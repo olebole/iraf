@@ -3,8 +3,7 @@ include "../lib/center.h"
 include "../lib/fitsky.h"
 include "../lib/polyphot.h"
 
-# AP_YPRINT -- Procedure to write the results of the polyphot task to the
-# output file.
+# AP_YPRINT -- Write the results of the polyphot task to the output file.
 
 procedure ap_yprint (py, fd, xver, yver, nver, id, lid, pid, cier, sier, pier)
 
@@ -14,7 +13,7 @@ real	xver[ARB]	# coords of x vertices
 real	yver[ARB]	# coords of y vertices
 int	nver		# number of vertices
 int	id		# id number of str
-int	lid		# list id of star
+int	lid		# list id number of star
 int	pid		# polygon number
 int	cier		# centering error
 int	sier		# sky fitting error
@@ -43,8 +42,8 @@ begin
 end
 
 
-# AP_QYPRINT -- Procedure to print a quick summary of the polyphot results on
-# the standard output.
+# AP_QYPRINT -- Print a quick summary of the polyphot results on the standard
+# output.
 
 procedure ap_qyprint (py, cier, sier, pier)
 
@@ -63,12 +62,12 @@ begin
 
 	# Print polyphot magnitudes.
 	call apstats (py, IMNAME, Memc[imname], SZ_FNAME)
-	call printf ("%s x: %0.2f y: %0.2f s: %.2f ")
+	call printf ("%s  %8.2f %8.2f  %8g  ")
 	    call pargstr (Memc[imname])
 	    call pargr (apstatr (py, PYCX))
 	    call pargr (apstatr (py, PYCY))
 	    call pargr (apstatr (py, SKY_MODE))
-	call printf ("mag: %0.2f err: %s\n")
+	call printf ("%7.3f  %s\n")
 	    call pargr (apstatr (py, PYMAG))
 	if (cier != AP_OK || sier != AP_OK || pier != AP_OK)
 	    call pargstr ("err")
@@ -79,7 +78,7 @@ begin
 end
 
 
-# AP_YHDR -- Procedure to write the polyphot header banner to the output file.
+# AP_YHDR -- Write the polyphot header banner to the output file.
 
 procedure ap_yhdr (ap, fd)
 

@@ -1,31 +1,54 @@
-# BPLOT -- Batch plotting of spectra
-#
-# Count the number of images in the list and create a temporary
-# cursor command file the users cursor commands repeated for each
-# image.  Call SPLOT with the cursor file to do the plotting.
-# Finally delete the temporary cursor file.
-#
-# WARNING: Error recovery is non-existant!
-#          An abort during this process leaves the
-#          stdgraph device assigned to the batch plotter
-#          and the CL list variable GCUR assigned a string
+# BPLOT -- Batch plotting of spectra with SPLOT
 
 procedure bplot (images)
 
-string	images {prompt="List of images to plot"}
-string	graphics="stdgraph" {prompt="Graphics output device"}
-file	cursor="onedspec$gcurval" {prompt="Cursor input file"}
+string	images				{prompt="List of images to plot"}
+string	apertures = ""			{prompt="List of apertures to plot"}
+int	band = 1			{prompt="Band to plot"}
+string	graphics = "stdgraph"		{prompt="Graphics output device"}
+string	cursor   = "onedspec$gcurval.dat"	{prompt="Cursor file(s)\n\nSPLOT query parameters to fix"}
 
-struct	*list
+string	next_image = ""			{prompt="Next image to plot"}
+string	new_image = ""			{prompt="Image to create"}
+bool	overwrite = yes			{prompt="Overwrite image?"}
+string	spec2 = ""			{prompt="Spectrum"}
+real	constant = 0.			{prompt="Constant to be applied"}
+real	wavelength = 0.			{prompt="Dispersion coordinate"}
+file	linelist = ""			{prompt="File"}
+real	wstart = 0.			{prompt="Starting wavelength"}
+real	wend = 0.			{prompt="Ending wavelength"}
+real	dw = 0.				{prompt="Wavelength per pixel"}
+int	boxsize = 2			{prompt="Smoothing box size\n"}
+
+struct	*ilist, *clist
 
 begin
-	file	tmpfile
-	string	image
+	int	line, ap
+	file	ifile, cfile, cur, image
 
-	tmpfile = mktemp ("tmp")
-	sections (images, > tmpfile)
-	list = tmpfile
-	while (fscan (list, image) != EOF)
-	    splot (image, line=1, graphics=graphics, cursor=cursor)
-	delete (tmpfile, verify=no)
+	ifile = mktemp ("bplot")
+	cfile = mktemp ("bplot")
+
+	slist (images, apertures=apertures, long_header=no, > ifile)
+	files (cursor, > cfile) 
+	cur = ""
+
+	ilist = ifile; clist = cfile
+	while (fscan (ilist, image, line, ap) != EOF) {
+	    if (nscan() < 3)
+		next
+	    if ((cursor != "") && (fscan (clist, cur) == EOF)) {
+		clist = cfile
+		line = fscan (clist, cur)
+	    }
+	    splot (image, line=ap, band=band, graphics=graphics, cursor=cur,
+		next_image=next_image, new_image=new_image,
+		overwrite=overwrite, spec2=spec2, constant=constant,
+		wavelength=wavelength, linelist=linelist, wstart=wstart,
+		wend=wend, dw=dw, boxsize=boxsize)
+	}
+	clist = ""; ilist = ""
+
+	delete (ifile, verify=no)
+	delete (cfile, verify=no)
 end

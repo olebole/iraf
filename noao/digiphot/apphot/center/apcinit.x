@@ -15,18 +15,9 @@ int	noise		# noise function
 begin
 	# Allocate space.
 	call malloc (ap, LEN_APSTRUCT, TY_STRUCT)
-	AP_IMNAME(ap) = EOS
-	AP_CWX(ap) = INDEFR
-	AP_CWY(ap) = INDEFR
-	AP_WX(ap) = INDEFR
-	AP_WY(ap) = INDEFR
-	AP_SCALE(ap) = DEF_SCALE
-	AP_FWHMPSF(ap) = fwhmpsf
-	AP_POSITIVE(ap) = DEF_POSITIVE
-	AP_DATAMIN(ap) = DEF_DATAMIN
-	AP_DATAMAX(ap) = DEF_DATAMAX
-	AP_EXPOSURE(ap) = EOS
-	AP_ITIME(ap) = DEF_ITIME
+
+	# Set up the global apphot package parameters.
+	call ap_defsetup (ap, fwhmpsf)
 
 	# Setup the noise structure.
 	call ap_noisesetup (ap, noise)
@@ -63,7 +54,6 @@ begin
 	AP_CXCUR(ctr) = INDEFR
 	AP_CYCUR(ctr) = INDEFR
 
-	AP_CAPERT(ctr) = cbox
 	AP_CENTERFUNCTION(ctr) = function
 	switch (function) {
 	case AP_CENTROID1D:
@@ -78,13 +68,15 @@ begin
 	    AP_CENTERFUNCTION(ctr) = DEF_CENTERFUNCTION
 	    call strcpy ("centroid", AP_CSTRING(ctr), SZ_FNAME)
 	}
-	AP_MAXSHIFT(ctr) = DEF_MAXSHIFT
+	AP_CAPERT(ctr) = cbox
+	AP_CTHRESHOLD(ctr) = DEF_CTHRESHOLD
 	AP_MINSNRATIO(ctr) = DEF_MINSNRATIO
+	AP_CMAXITER(ctr) = DEF_CMAXITER
+	AP_MAXSHIFT(ctr) = DEF_MAXSHIFT
 	AP_CLEAN(ctr) = DEF_CLEAN
 	AP_RCLEAN(ctr) = DEF_RCLEAN
 	AP_RCLIP(ctr) = DEF_RCLIP
 	AP_SIGMACLEAN(ctr) = DEF_CLEANSIGMA
-	AP_CMAXITER(ctr) = DEF_CMAXITER
 
 	AP_NCTRPIX(ctr) = 0
 	AP_CTRPIX(ctr) = NULL

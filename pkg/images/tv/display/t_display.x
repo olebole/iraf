@@ -202,13 +202,13 @@ begin
 	    # Compute scale in units of window coords per data pixel required
 	    # to scale image to fit window.
 
-	    xscale = xsize / max (1, (ncols  - 1))
-	    yscale = ysize / max (1, (nlines - 1))
+	    xmag = ((IM_LEN(ds,1) - 1) * xsize) / max (1, (ncols  - 1))
+	    ymag = ((IM_LEN(ds,2) - 1) * ysize) / max (1, (nlines - 1))
 
-	    if (xscale < yscale)
-		yscale = xscale
+	    if (xmag > ymag)
+		xmag = ymag
 	    else
-		xscale = yscale
+		ymag = xmag
 
 	} else {
 	    # Compute scale required to provide image magnification ratios
@@ -218,9 +218,10 @@ begin
 
 	    xmag = clgetr ("xmag")
 	    ymag = clgetr ("ymag")
-	    xscale = 1.0 / ((IM_LEN(ds,1) - 1) / xmag)
-	    yscale = 1.0 / ((IM_LEN(ds,2) - 1) / ymag)
 	}
+
+	xscale = 1.0 / ((IM_LEN(ds,1) - 1) / xmag)
+	yscale = 1.0 / ((IM_LEN(ds,2) - 1) / ymag)
 
 	# Set device window limits in normalized device coordinates.
 	# World coord system 0 is used for the device window.
@@ -276,7 +277,7 @@ begin
 	W_ZS(w) = z1
 	W_ZE(w) = z2
 
-	call printf ("z1 = %g, z2 = %g\n")
+	call printf ("z1=%g z2=%g\n")
 	    call pargr (z1)
 	    call pargr (z2)
 	call flush (STDOUT)
@@ -310,7 +311,7 @@ int	chan
 
 real	a, b, c, d, tx, ty
 int	wcsfile, ip, i, j, axis[2]
-pointer	w0, w1, sp, title, dir, fname, ftemp, device, textbuf
+pointer	w0, w1, sp, title, dir, fname, ftemp, device, textbuf, imname
 long	lv[IM_MAXDIM], pv1[IM_MAXDIM], pv2[IM_MAXDIM]
 int	envfind(), open(), strncmp()
 include	"iis.com"
@@ -319,6 +320,7 @@ begin
 	call smark (sp)
 	call salloc (title, SZ_LINE, TY_CHAR)
 	call salloc (dir, SZ_PATHNAME, TY_CHAR)
+	call salloc (imname, SZ_FNAME, TY_CHAR)
 	call salloc (fname, SZ_PATHNAME, TY_CHAR)
 	call salloc (ftemp, SZ_PATHNAME, TY_CHAR)
 	call salloc (device, SZ_FNAME, TY_CHAR)
@@ -408,10 +410,13 @@ begin
 	    ;
 	Memc[ip] = EOS
 
+	# Get the image name minus any image section.
+	call imgimage (image, Memc[imname], SZ_FNAME)
+
 	# Format the WCS text.
 	call sprintf (Memc[textbuf], SZ_WCSTEXT,
 	    "%s - %s\n%g %g %g %g %g %g %g %g %d\n")
-	    call pargstr (image)
+	    call pargstr (Memc[imname])
 	    call pargstr (Memc[title])
 	    call pargr (a)
 	    call pargr (b)

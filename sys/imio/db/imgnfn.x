@@ -18,8 +18,8 @@ IMOFNLS opens the list sorted, whereas IMOFNLU opens it unsorted.  Both std.
 and user header keywords are included in the list.
 .endhelp ---------------------------------------------------------------------
 
-define	MAX_FIELDS	128
-define	SZ_SBUF		1024
+define	MAX_FIELDS	1024
+define	SZ_SBUF		8192
 define	LEN_FNSTRUCT	(10+MAX_FIELDS)
 
 define	FN_NENTRIES	Memi[$1]	# number of field names in list
@@ -102,13 +102,14 @@ char	template[ARB]		# field name template
 int	sort			# sort flag
 
 bool	escape
-int	tp, nstr, ch, junk, first_string, nstrings
-pointer	sp, ip, op, fn, sbuf, pattern, patcode, nextch
-int	patmake(), patmatch(), strncmp()
+int	tp, nstr, ch, junk, first_string, nstrings, nmatch, i
+pointer	sp, ip, op, fn, kwname, sbuf, pattern, patcode, nextch
+int	patmake(), patmatch(), strlen()
 errchk	syserr
 
 begin
 	call smark (sp)
+	call salloc (kwname, SZ_FNAME, TY_CHAR)
 	call salloc (pattern, SZ_FNAME, TY_CHAR)
 	call salloc (patcode, SZ_LINE,  TY_CHAR)
 
@@ -188,12 +189,25 @@ begin
 
 		# Now scan the user area.
 		for (ip=IM_USERAREA(im);  Memc[ip] != EOS;  ip=ip+1) {
-		    # Skip blank lines......12345678
-		    if (strncmp (Memc[ip], "        ", 8) != 0)
+		    # Extract keyword.
+		    Memc[kwname+8] = EOS
+		    do i = 1, 8 {
+			ch = Memc[ip+i-1]
+			if (ch == ' ') {
+			    Memc[kwname+i-1] = EOS
+			    break
+			} else
+			    Memc[kwname+i-1] = ch
+		    }
+
+		    # Check for a match.
+		    if (Memc[kwname] != EOS) {
 			# Put key in list if it matches.
-			if (patmatch (Memc[ip], Memc[patcode]) > 0)
-			    call imfn_putkey (Memc[ip], FN_STRP(fn,1), nstr,
-				nextch, sbuf)
+			nmatch = patmatch (Memc[kwname], Memc[patcode]) - 1
+			if (nmatch > 0 && nmatch == strlen(Memc[kwname]))
+			    call imfn_putkey (Memc[ip],
+				FN_STRP(fn,1), nstr, nextch, sbuf)
+		    }
 
 		    # Advance to the next record.
 		    if (IM_UABLOCKED(im) == YES)
@@ -235,12 +249,13 @@ int	nstr			# current number of strings
 pointer	nextch			# next available char in string buffer
 pointer	sbuf			# string buffer
 
-bool	validfield
-int	ip, index
 pointer	sp, op, key
-int	patmatch()
+bool	validfield, match
+int	ip, index, nmatch
+int	patmatch(), strlen()
+
 string	keywords "|ctime|history|limtime|maxpixval|minpixval|mtime|naxis\
-|naxis1|naxis2|naxis3|pixfile|pixtype|title|"
+|naxis1|naxis2|naxis3|naxis4|naxis5|naxis6|naxis7|pixfile|pixtype|title|"
 errchk	imfn_putkey
 
 begin
@@ -255,7 +270,7 @@ begin
 	    # actual image dimension into the matched list.
 
 	    validfield = true
-	    if (index >= 8 && index <= 10)
+	    if (index >= 8 && index <= 14)
 		validfield = (index - 7 <= IM_NDIM(im))
 
 	    # Extract keyword into buffer, after the "i_".
@@ -265,12 +280,16 @@ begin
 	    }
 	    Memc[op] = EOS
 
-	    if (validfield)
-		if (patmatch (Memc[key],   patcode) > 0 ||
-		    patmatch (Memc[key+2], patcode) > 0) {
-
-		    call imfn_putkey (Memc[key], strp, nstr, nextch, sbuf)
+	    if (validfield) {
+		nmatch = patmatch (Memc[key], patcode) - 1
+		match = (nmatch > 0 && nmatch == strlen(Memc[key]))
+		if (!match) {
+		    nmatch = patmatch (Memc[key+2], patcode) - 1
+		    match = (nmatch > 0 && nmatch == strlen(Memc[key+2]))
 		}
+		if (match)
+		    call imfn_putkey (Memc[key], strp, nstr, nextch, sbuf)
+	    }
 
 	    index = index + 1
 	}

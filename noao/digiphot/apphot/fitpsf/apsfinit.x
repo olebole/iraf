@@ -15,18 +15,9 @@ int	noise		# noise model
 begin
 	# Initialize the image parameters.
 	call malloc (ap, LEN_APSTRUCT, TY_STRUCT)
-	AP_IMNAME(ap) = EOS
-	AP_CWX(ap) = INDEFR
-	AP_CWY(ap) = INDEFR
-	AP_WX(ap) = INDEFR
-	AP_WY(ap) = INDEFR
-	AP_SCALE(ap) = DEF_SCALE
-	AP_FWHMPSF(ap) = fwhmpsf
-	AP_POSITIVE(ap) = DEF_POSITIVE
-	AP_DATAMIN(ap) = DEF_DATAMIN
-	AP_DATAMAX(ap) = DEF_DATAMAX
-	AP_EXPOSURE(ap) = EOS
-	AP_ITIME(ap) = DEF_ITIME
+
+	# Set up the global apphot package parameters.
+	call ap_defsetup (ap, fwhmpsf)
 
 	# Setup noise model.
 	call ap_noisesetup (ap, noise)
@@ -98,6 +89,6 @@ begin
 	AP_PSFYPIX(psf) = NULL
 
 	# Allocate space for computed parameters.
-	call malloc (AP_PPARS(psf), AP_MAXNPARS(psf), TY_REAL)
-	call malloc (AP_PPERRS(psf), AP_MAXNPARS(psf), TY_REAL)
+	call calloc (AP_PPARS(psf), AP_MAXNPARS(psf), TY_REAL)
+	call calloc (AP_PPERRS(psf), AP_MAXNPARS(psf), TY_REAL)
 end

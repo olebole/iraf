@@ -3,14 +3,18 @@
 package astutil
 
 task	airmass,
+	asthedit,
 	precess,
 	galactic,
+	gratings,
 	pdm,
 	asttimes,
 	rvcorrect,
 	setairmass,
+	setjd,
 	ccdtime		= "astutil$x_astutil.e"
 
-task	observatory	= imred$observatory.cl
+# PSET Tasks
+task    keywpars        = "astutil$keywpars.par"
 
-clbye()
+clbye

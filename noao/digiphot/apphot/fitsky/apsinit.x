@@ -16,18 +16,9 @@ int	noise		# noise function
 begin
 	# Set up the object parameters.
 	call malloc (ap, LEN_APSTRUCT, TY_STRUCT)
-	AP_IMNAME(ap) = EOS
-	AP_CWX(ap) = INDEFR
-	AP_CWY(ap) = INDEFR
-	AP_WX(ap) = INDEFR
-	AP_WY(ap) = INDEFR
-	AP_FWHMPSF(ap) = fwhmpsf
-	AP_SCALE(ap) = DEF_SCALE
-	AP_POSITIVE(ap) = DEF_POSITIVE
-	AP_EXPOSURE(ap) = EOS
-	AP_DATAMIN(ap) = INDEFR
-	AP_DATAMAX(ap) = INDEFR
-	AP_ITIME(ap) = DEF_ITIME
+
+	# Set up the global apphot package parameters.
+	call ap_defsetup (ap, fwhmpsf)
 
 	# Set up the noise model parameters.
 	call ap_noisesetup (ap, noise)
@@ -94,16 +85,19 @@ begin
 	    call strcpy ("mode", AP_SSTRING(sky), SZ_FNAME)
 	}
 
+	AP_SKYBACKGROUND(sky) = DEF_SKYVALUE
 	AP_ANNULUS(sky) = annulus
 	AP_DANNULUS(sky) = dannulus
 	AP_K1(sky) = DEF_K1
-	AP_K2(sky) = DEF_K2
-	AP_SMAXITER(sky) = DEF_SMAXITER
 	AP_BINSIZE(sky) = DEF_BINSIZE
 	AP_SMOOTH(sky) = DEF_SMOOTH
+	AP_SLOCLIP(sky) = DEF_SLOCLIP
+	AP_SHICLIP(sky) = DEF_SHICLIP
+	AP_SMAXITER(sky) = DEF_SMAXITER
 	AP_RGROW(sky) = DEF_RGROW
-	AP_SKYBACKGROUND(sky) = DEF_SKYVALUE
 	AP_SNREJECT(sky) = DEF_SNREJECT
+	AP_SLOREJECT(sky) = DEF_SLOREJECT
+	AP_SHIREJECT(sky) = DEF_SHIREJECT
 
 	# Initialize the sky pixel buffers.
 	AP_LENSKYBUF(sky) = 0
@@ -111,6 +105,7 @@ begin
 	AP_SKYPIX(sky) = NULL
 	AP_INDEX(sky) = NULL
 	AP_COORDS(sky) = NULL
+	AP_SWGT(sky) = NULL
 
 	# Initialize results parameters.
 	AP_SKY_MODE(sky) = INDEFR

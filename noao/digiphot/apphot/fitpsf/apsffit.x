@@ -14,7 +14,7 @@ real	wx, wy		# object coordinates
 
 int	ier, fier
 pointer	psf, nse
-real	datamin, datamax, dmin, dmax
+real	datamin, datamax, dmin, dmax, threshold
 int	apfbuf(), apsfradgauss(), apsfelgauss(), apsfmoments()
 
 begin
@@ -23,6 +23,8 @@ begin
 	nse = AP_NOISE(ap)
 	AP_PFXCUR(psf) = wx
 	AP_PFYCUR(psf) = wy
+	call amovkr (INDEFR, Memr[AP_PPARS(psf)], AP_MAXNPARS(psf))
+	call amovkr (INDEFR, Memr[AP_PPERRS(psf)], AP_MAXNPARS(psf))
 
 	# Fetch the buffer of pixels.
 	ier = apfbuf (ap, im, wx, wy)
@@ -44,27 +46,26 @@ begin
 	case AP_RADGAUSS:
 
 	    fier = apsfradgauss (Memr[AP_PSFPIX(psf)], AP_PNX(psf), AP_PNY(psf),
-	        AP_FWHMPSF(ap) * AP_SCALE(ap), datamin, datamax,
-		AP_NOISEFUNCTION(nse), AP_EPADU(nse), AP_READNOISE(nse) /
-		AP_EPADU(nse), AP_PMAXITER(psf), AP_PK2(psf), AP_PNREJECT(psf),
-		Memr[AP_PPARS(psf)], Memr[AP_PPERRS(psf)], AP_PSFNPARS(psf))
+	        AP_POSITIVE(ap), AP_FWHMPSF(ap) * AP_SCALE(ap), datamin,
+		datamax, AP_NOISEFUNCTION(nse), AP_EPADU(nse),
+		AP_READNOISE(nse) / AP_EPADU(nse), AP_PMAXITER(psf),
+		AP_PK2(psf), AP_PNREJECT(psf), Memr[AP_PPARS(psf)],
+		Memr[AP_PPERRS(psf)], AP_PSFNPARS(psf))
 
 	    Memr[AP_PPARS(psf)+1] = Memr[AP_PPARS(psf)+1] + wx - AP_PXC(psf)
 	    Memr[AP_PPARS(psf)+2] = Memr[AP_PPARS(psf)+2] + wy - AP_PYC(psf) 
-	    Memr[AP_PPARS(psf)+3] = sqrt (abs (Memr[AP_PPARS(psf)+3]))
 
 	case AP_ELLGAUSS:
 
 	    fier = apsfelgauss (Memr[AP_PSFPIX(psf)], AP_PNX(psf), AP_PNY(psf),
-	        AP_FWHMPSF(ap) * AP_SCALE(ap), datamin, datamax,
-		AP_NOISEFUNCTION(nse), AP_EPADU(nse), AP_READNOISE(nse) /
-		AP_EPADU(nse), AP_PMAXITER(psf), AP_PK2(psf), AP_PNREJECT(psf),
-		Memr[AP_PPARS(psf)], Memr[AP_PPERRS(psf)], AP_PSFNPARS(psf))
+	        AP_POSITIVE(ap), AP_FWHMPSF(ap) * AP_SCALE(ap), datamin,
+		datamax, AP_NOISEFUNCTION(nse), AP_EPADU(nse),
+		AP_READNOISE(nse) / AP_EPADU(nse), AP_PMAXITER(psf),
+		AP_PK2(psf), AP_PNREJECT(psf), Memr[AP_PPARS(psf)],
+		Memr[AP_PPERRS(psf)], AP_PSFNPARS(psf))
 
 	    Memr[AP_PPARS(psf)+1] = Memr[AP_PPARS(psf)+1] + wx - AP_PXC(psf)
 	    Memr[AP_PPARS(psf)+2] = Memr[AP_PPARS(psf)+2] + wy - AP_PYC(psf) 
-	    Memr[AP_PPARS(psf)+3] = sqrt (abs (Memr[AP_PPARS(psf)+3]))
-	    Memr[AP_PPARS(psf)+4] = sqrt (abs (Memr[AP_PPARS(psf)+4]))
 
 	case AP_MOMENTS:
 
@@ -72,15 +73,16 @@ begin
 	        dmin, dmax)
 	    dmin = max (dmin, datamin)
 	    dmax = min (dmax, datamax)
+	    threshold = 0.0
 
 	    if (AP_POSITIVE(ap) == YES)
 	        fier = apsfmoments (Memr[AP_PSFPIX(psf)], AP_PNX(psf),
-		    AP_PNY(psf), dmin + AP_THRESHOLD(nse), dmax,
+		    AP_PNY(psf), dmin + threshold, dmax,
 		    AP_POSITIVE(ap), Memr[AP_PPARS(psf)], Memr[AP_PPERRS(psf)],
 		    AP_PSFNPARS(psf))
 	    else
 	        fier = apsfmoments (Memr[AP_PSFPIX(psf)], AP_PNX(psf),
-		    AP_PNY(psf), dmax - AP_THRESHOLD(nse), dmin,
+		    AP_PNY(psf), dmax - threshold, dmin,
 		    AP_POSITIVE(ap), Memr[AP_PPARS(psf)],
 		    Memr[AP_PPERRS(psf)], AP_PSFNPARS(psf))
 

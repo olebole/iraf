@@ -6,12 +6,12 @@
 #define import_stdio
 #include <iraf.h>
 
+#include "config.h"
 #include "clmodes.h"
 #include "operand.h"
 #include "mem.h"
 #include "grammar.h"
 #include "opcodes.h"
-#include "config.h"
 #include "param.h"
 #include "task.h"
 #include "errs.h"
@@ -147,14 +147,16 @@ char *s;
 	     * the grammar.  Most intrinsics handled by intrinsic().
 	     */
 	    "scan", Y_SCAN, 0,
+	    "scanf", Y_SCANF, 0,
 	    "fscan", Y_FSCAN, 0,
+	    "fscanf", Y_FSCANF, 0,
 
 	    /* sentinel; leave it here... */
 	    "", 0, 0 
 	};
 
 	register struct keywords *kp;
-	unsigned oldtopd;
+	int	oldtopd;
 	static	char sch, kch;		/* static storage is faster here   */
 	char	*scopy;			/* non-makelower'd copy		   */
 
@@ -810,8 +812,8 @@ char	*s;
 
 	minutes = 0;
 	sec = 0.;
-	n = sscanf (s, "%d:%d:%f", &hr, &minutes, &sec);
-	if (n < 1 || (minutes < 0 || minutes > 59) || (sec < 0 || sec >= 60.))
+	n = sscanf (s, "%d:%d:%hf", &hr, &minutes, &sec);
+	if (n < 1 || minutes < 0 || sec < 0)
 	    setopundef (&o);
 	else
 	    o.o_val.v_r = sign*(hr + ((float)minutes)/60. + sec/3600.);
