@@ -177,9 +177,9 @@ begin
 			call fprintf (fd, "\n")
 		    }
 		} else {
-		    for (; j<ncols && FP_COL(fp,j)!=i; j=j+1)
+		    for (; j<=ncols && FP_COL(fp,j)!=i; j=j+1)
 			;
-		    for (; j<ncols && FP_COL(fp,j)==i; j=j+1) {
+		    for (; j<=ncols && FP_COL(fp,j)==i; j=j+1) {
 			l1 = FP_L1(fp,j)
 			l2 = FP_L2(fp,j)
 			if (l1 < line1 && l2 > line2)
@@ -209,12 +209,12 @@ begin
 			    call parg$t (val)
 			    $endif
 			if (l1 >= line1) {
-			    call fprintf (fd, "%4d %4d")
+			    call fprintf (fd, " %4d %4d")
 			    call pargi (i)
 			    call pargi (l3)
 			}
 			if (l2 <= line2) {
-			    call fprintf (fd, "%4d %4d")
+			    call fprintf (fd, " %4d %4d")
 			    call pargi (i)
 			    call pargi (l4)
 			}

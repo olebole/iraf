@@ -169,9 +169,9 @@ begin
 			call fprintf (fd, "\n")
 		    }
 		} else {
-		    for (; j<ncols && FP_COL(fp,j)!=i; j=j+1)
+		    for (; j<=ncols && FP_COL(fp,j)!=i; j=j+1)
 			;
-		    for (; j<ncols && FP_COL(fp,j)==i; j=j+1) {
+		    for (; j<=ncols && FP_COL(fp,j)==i; j=j+1) {
 			l1 = FP_L1(fp,j)
 			l2 = FP_L2(fp,j)
 			if (l1 < line1 && l2 > line2)
@@ -197,12 +197,12 @@ begin
 			    call pargs (Mems[data+i-1])
 			    call pargr (val)
 			if (l1 >= line1) {
-			    call fprintf (fd, "%4d %4d")
+			    call fprintf (fd, " %4d %4d")
 			    call pargi (i)
 			    call pargi (l3)
 			}
 			if (l2 <= line2) {
-			    call fprintf (fd, "%4d %4d")
+			    call fprintf (fd, " %4d %4d")
 			    call pargi (i)
 			    call pargi (l4)
 			}
@@ -422,9 +422,9 @@ begin
 			call fprintf (fd, "\n")
 		    }
 		} else {
-		    for (; j<ncols && FP_COL(fp,j)!=i; j=j+1)
+		    for (; j<=ncols && FP_COL(fp,j)!=i; j=j+1)
 			;
-		    for (; j<ncols && FP_COL(fp,j)==i; j=j+1) {
+		    for (; j<=ncols && FP_COL(fp,j)==i; j=j+1) {
 			l1 = FP_L1(fp,j)
 			l2 = FP_L2(fp,j)
 			if (l1 < line1 && l2 > line2)
@@ -450,12 +450,12 @@ begin
 			    call pargi (Memi[data+i-1])
 			    call pargr (val)
 			if (l1 >= line1) {
-			    call fprintf (fd, "%4d %4d")
+			    call fprintf (fd, " %4d %4d")
 			    call pargi (i)
 			    call pargi (l3)
 			}
 			if (l2 <= line2) {
-			    call fprintf (fd, "%4d %4d")
+			    call fprintf (fd, " %4d %4d")
 			    call pargi (i)
 			    call pargi (l4)
 			}
@@ -675,9 +675,9 @@ begin
 			call fprintf (fd, "\n")
 		    }
 		} else {
-		    for (; j<ncols && FP_COL(fp,j)!=i; j=j+1)
+		    for (; j<=ncols && FP_COL(fp,j)!=i; j=j+1)
 			;
-		    for (; j<ncols && FP_COL(fp,j)==i; j=j+1) {
+		    for (; j<=ncols && FP_COL(fp,j)==i; j=j+1) {
 			l1 = FP_L1(fp,j)
 			l2 = FP_L2(fp,j)
 			if (l1 < line1 && l2 > line2)
@@ -703,12 +703,12 @@ begin
 			    call pargl (Meml[data+i-1])
 			    call pargr (val)
 			if (l1 >= line1) {
-			    call fprintf (fd, "%4d %4d")
+			    call fprintf (fd, " %4d %4d")
 			    call pargi (i)
 			    call pargi (l3)
 			}
 			if (l2 <= line2) {
-			    call fprintf (fd, "%4d %4d")
+			    call fprintf (fd, " %4d %4d")
 			    call pargi (i)
 			    call pargi (l4)
 			}
@@ -928,9 +928,9 @@ begin
 			call fprintf (fd, "\n")
 		    }
 		} else {
-		    for (; j<ncols && FP_COL(fp,j)!=i; j=j+1)
+		    for (; j<=ncols && FP_COL(fp,j)!=i; j=j+1)
 			;
-		    for (; j<ncols && FP_COL(fp,j)==i; j=j+1) {
+		    for (; j<=ncols && FP_COL(fp,j)==i; j=j+1) {
 			l1 = FP_L1(fp,j)
 			l2 = FP_L2(fp,j)
 			if (l1 < line1 && l2 > line2)
@@ -956,12 +956,12 @@ begin
 			    call pargr (Memr[data+i-1])
 			    call pargr (val)
 			if (l1 >= line1) {
-			    call fprintf (fd, "%4d %4d")
+			    call fprintf (fd, " %4d %4d")
 			    call pargi (i)
 			    call pargi (l3)
 			}
 			if (l2 <= line2) {
-			    call fprintf (fd, "%4d %4d")
+			    call fprintf (fd, " %4d %4d")
 			    call pargi (i)
 			    call pargi (l4)
 			}
@@ -1181,9 +1181,9 @@ begin
 			call fprintf (fd, "\n")
 		    }
 		} else {
-		    for (; j<ncols && FP_COL(fp,j)!=i; j=j+1)
+		    for (; j<=ncols && FP_COL(fp,j)!=i; j=j+1)
 			;
-		    for (; j<ncols && FP_COL(fp,j)==i; j=j+1) {
+		    for (; j<=ncols && FP_COL(fp,j)==i; j=j+1) {
 			l1 = FP_L1(fp,j)
 			l2 = FP_L2(fp,j)
 			if (l1 < line1 && l2 > line2)
@@ -1209,12 +1209,12 @@ begin
 			    call pargd (Memd[data+i-1])
 			    call pargd (val)
 			if (l1 >= line1) {
-			    call fprintf (fd, "%4d %4d")
+			    call fprintf (fd, " %4d %4d")
 			    call pargi (i)
 			    call pargi (l3)
 			}
 			if (l2 <= line2) {
-			    call fprintf (fd, "%4d %4d")
+			    call fprintf (fd, " %4d %4d")
 			    call pargi (i)
 			    call pargi (l4)
 			}

@@ -213,20 +213,38 @@ int	opcode;
 	    case OP_CONCAT:
 		/* Convert operands to type string if necessary.
 		 */
-		if (typ1 != OT_STRING) {
-		    pushop (&o1);
-		    opcast (OT_STRING);
-		    o1 = popop();
-		}
-		strcpy (res, o1.o_val.v_s);
+                {
+		    char s2[SZ_LINE];
 
-		if (typ2 != OT_STRING) {
-		    pushop (&o2);
-		    opcast (OT_STRING);
-		    o2 = popop();
+		    if (typ1 != OT_STRING) {
+			/* Save the o2 string since the operand cast here
+			 * will overwrite it.
+			 */
+			if (typ2 == OT_STRING) 
+		            strcpy (s2, o2.o_val.v_s);
+			pushop (&o1);
+			opcast (OT_STRING);
+			o1 = popop();
+		    }
+		    strcpy (res, o1.o_val.v_s);
+
+		    if (typ2 != OT_STRING) {
+			pushop (&o2);
+			opcast (OT_STRING);
+			o2 = popop();
+		    } 
+
+		    /* If we had to convert the first operand, use the saved
+		     * string.
+		     */
+		    if (typ1 != OT_STRING && typ2 == OT_STRING)
+			strcat (res, s2);
+		    else
+			strcat (res, o2.o_val.v_s);
+
+		    break;
 		}
-		strcat (res, o2.o_val.v_s);
-		break;
+
 
 	    case OP_RADIX:
 		if (typ1 == OT_STRING) {
@@ -271,7 +289,8 @@ int	opcode;
 		 * in "string", or ZERO if none found.
 		 */
 		{
-		    char    *ip, *cp, ch, len;
+		    char    *ip, *cp, ch;
+		    int	    len;
 
 		    iresult = 0;
 		    len = strlen (o2.o_val.v_s);
@@ -317,8 +336,9 @@ int	opcode;
 			if (ch == first_char) {
 			    fp = ip;
 			    cp = o1.o_val.v_s;  
-			    while (*cp != EOS && *cp++ == *ip++)
-				;
+			    while (*cp != EOS && *cp == *ip) {
+				cp++; ip++;
+			    }
 			    if (*cp == EOS) {
 				iresult = (fp - o2.o_val.v_s + 1);
 				break;
@@ -337,7 +357,8 @@ int	opcode;
 		 * or ZERO if none found.
 		 */
 		{
-		    char    *ip, *cp, *fp, first_char, ch, len;
+		    char    *ip, *cp, *fp, first_char, ch;
+		    int	    len;
 
 		    first_char = o1.o_val.v_s[0];
 		    
@@ -359,12 +380,14 @@ int	opcode;
 			    if (ch == first_char) {
 			        fp = ip;
 			        cp = o1.o_val.v_s;  
-			        while (*cp != EOS && *cp++ == *ip++)
-				    ;
+			        while (*cp != EOS && *cp == *ip) {
+				    cp++; ip++;
+				}
 			        if (*cp == EOS) {
 				    iresult = (fp - o2.o_val.v_s + 1);
 				    break;
-			        }
+			        } else
+				    ip = fp;
 		            }
 		    }
 		}
