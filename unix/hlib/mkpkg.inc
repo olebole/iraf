@@ -6,8 +6,8 @@ $set	MACH		= $(IRAFARCH)	# machine/fpu type
 $set	HOSTID		= unix		# host system name
 $set	SITEID		= noao		# site name
 
-$set	XFLAGS		= "-c -w"	# default XC compile flags
-$set	XVFLAGS		= "-c -w"	# VOPS XC compile flags
+$set	XFLAGS		= "-x -c -w"	# default XC compile flags
+$set	XVFLAGS		= "-x -c -w"	# VOPS XC compile flags
 $set	LFLAGS		= ""	        # default XC link flags
 
 $set	USE_LIBMAIN	= yes		# update lib$libmain.o (root object)

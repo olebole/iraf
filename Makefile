@@ -27,7 +27,7 @@ export tmp = /tmp/
 
 # Compiler and other build tools. While the C compiler can be chosen,
 # the F77 compiler is fixed to the F2C one provided by IRAF.
-export CC ?= cc
+export CC ?= gcc
 export F77 = $(hlib)f77.sh
 export FC = $(F77)
 export F2C = $(hbin)f2c.e
@@ -37,7 +37,8 @@ export RANLIB = ranlib
 
 # General compiler flags. Compiler flags specific to the build of the
 # host tools and software are in unix/Makefile.
-export CFLAGS ?= -g -O2
+export CFLAGS ?= -g -O0 -fsanitize=address
+export LDFLAGS ?= -g -fsanitize=address
 export XC_CFLAGS = $(CPPFLAGS) $(CFLAGS)
 export XC_LFLAGS = $(LDFLAGS)
 
