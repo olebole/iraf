@@ -2,8 +2,8 @@
 
 .SUFFIXES: .c .o
 CC = cc
-CFLAGS = -O -w $(HSI_CF)
-LDFLAGS = $(HSI_LF)
+CFLAGS = -w -I${iraf}include -g
+LDFLAGS = 
 SHELL = /bin/sh
 YACC = yacc
 YFLAGS =

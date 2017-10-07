@@ -21,13 +21,15 @@ export	F77=$hlib/f77.sh
 export	F2C=$hbin/f2c.e
 export	RANLIB=ranlib
 
-export XC_CFLAGS="${CPPFLAGS} ${CFLAGS} -I${iraf}include"
+export ASAN_OPTIONS=detect_leaks=0
+
+export XC_CFLAGS="${CPPFLAGS} ${CFLAGS} -I${iraf}include -g -fsanitize=address"
 export HSI_CF="${XC_CFLAGS}"
-export HSI_XF="-x -Inolibc -/Wall -/O2"
+export HSI_XF="-x -Inolibc -/Wall -/O2 -/fsanitize=address"
 export HSI_FF="-g -DBLD_KERNEL -O2"
-export HSI_LF="${LDFLAGS}"
-export HSI_F77LIBS=""
-export HSI_LFLAGS=""
+export HSI_LF="${LDFLAGS} -fsanitize=address"
+export HSI_F77LIBS="-fsanitize=address"
+export HSI_LFLAGS="-fsanitize=address"
 export HSI_OSLIBS=""
 
 if [ "$MACH" = "macosx" ] ; then
