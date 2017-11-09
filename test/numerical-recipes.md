@@ -54,7 +54,7 @@ Test options: `decimals=2`
 cl> copy noao$artdata/numrecipes.x .
 cl> copy noao$artdata/gammln.c .
 cl> softools
-cl> xc -I$iraf/include test-gasdev.x numrecipes.x gammln.c
+cl> xc -I$iraf/include test-gasdev.x numrecipes.x gammln.c -/coverage
 cl> task $test_gasdev = test-gasdev.e
 cl> test_gasdev
 Mean     = 0.0004794365668388
@@ -111,7 +111,7 @@ the result of the original NR code.
 Test options: `decimals=1`
 ```
 cl> softools
-cl> xc -x -I$iraf/include test-poidev.x numrecipes.x gammln.c
+cl> xc -x -I$iraf/include test-poidev.x numrecipes.x gammln.c -/coverage
 cl> task $test_poidev = test-poidev.e
 cl> for ( x = 0.7; x < 60; x*=1.55)  test_poidev(x)
      xm |       mean |   variance |       skew |   kurtosis
@@ -153,7 +153,7 @@ the result of the original NR code.
 Test options: `decimals=4`
 ```
 cl> softools
-cl> xc -x -I$iraf/include test-gammln.x gammln.c
+cl> xc -x -I$iraf/include test-gammln.x gammln.c -/coverage
 cl> task $test_gammln = test-gammln.e
 cl> for ( x = 0.23; x < 10; x += 0.667)  test_gammln(x)
 gammln(0.23) = 1.376194
@@ -227,7 +227,7 @@ the result of the original NR code.
 Test options: `decimals=4`
 ```
 cl> softools
-cl> xc test-ran2.x
+cl> xc test-ran2.x -/coverage
 cl> task $test_ran2 = test-ran2.e
 cl> test_ran2
 Mean     = 0.0000018238614310
@@ -264,7 +264,7 @@ the result of the original NR code.
 ```
 cl> copy noao$astutil/asttools/asttimes.x .
 cl> softools
-cl> xc -/Wno-shift-op-parentheses test-jd.x asttimes.x
+cl> xc -/Wno-shift-op-parentheses test-jd.x asttimes.x -/coverage
 cl> task $test_jd = test-jd.e
 cl> for (x = 2450123.7; x < 2450123.7 + 35; x += 2.13)  test_jd(jd=x)
 JD (2450123.70) = 1996/02/10 +  4.80
@@ -447,7 +447,7 @@ end
 ```
 cl> copy pkg$utilities/nttools/stxtools/lu* .
 cl> softools
-cl> xc -x test_ludecompose.x lubksb.f  lubksd.f  ludcmd.x  ludcmp.x
+cl> xc -x test_ludecompose.x lubksb.f  lubksd.f  ludcmd.x  ludcmp.x -/coverage
 cl> task $test_ludecompose = test_ludecompose.e
 cl> test_ludecompose
 Original matrix:
@@ -546,7 +546,7 @@ end
 ```
 cl> copy noao$rv/numrep.x .
 cl> softools
-cl> xc -x test_realfft.x numrep.x -lfftpack
+cl> xc -x test_realfft.x numrep.x -lfftpack -/coverage
 cl> task $test_realfft = test_realfft.e
 cl> test_realfft
 FFT input    1.000  2.000  1.000 -1.000  1.500  1.000  0.500  1.000
@@ -617,7 +617,7 @@ end
 Test options: `decimals=3`
 ```
 cl> softools
-cl> xc -x test_twofft.x numrep.x -lfftpack
+cl> xc -x test_twofft.x numrep.x -lfftpack -/coverage
 cl> task $test_twofft = test_twofft.e
 cl> test_twofft
 in 1   1.000  2.000  1.000 -1.000  1.500  1.000  0.500  1.000

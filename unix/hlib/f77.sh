@@ -179,6 +179,10 @@ do
 		shift
 		;;
 
+	-coverage)	CFLAGS="$CFLAGS -coverage"
+		shift
+		;;
+
 	-*)
 		echo "invalid parameter $1" 1>&2
 		shift

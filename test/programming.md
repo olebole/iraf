@@ -97,7 +97,7 @@ Compile it, declare and run as an IRAF task
 
 ```
 cl> softools
-cl> xc hello.x
+cl> xc hello.x -/coverage
 cl> task $hello = hello.e
 cl> hello
 Hello, world!
@@ -175,7 +175,7 @@ Running this should give:
 
 ```
 cl> softools
-cl> xc machtest.x
+cl> xc machtest.x -/coverage
 cl> task $machtest = machtest.e
 cl> machtest
 
@@ -212,7 +212,7 @@ defined variable `gval` and vice versa:
 
 ```
 cl> softools
-cl> xc test_equiv.x
+cl> xc test_equiv.x -/coverage
 cl> task $test_equiv = test_equiv.e
 cl> test_equiv
 Should be zero: 0
@@ -250,7 +250,7 @@ integers. Compile it, declare the task in (e)cl and run it:
 
 ```
 cl> softools
-cl> xc otest.x
+cl> xc otest.x -/coverage
 cl> task $otest = otest.e
 cl> otest
 1 == 1.

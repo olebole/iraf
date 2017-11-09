@@ -21,13 +21,13 @@ export	F77=$hlib/f77.sh
 export	F2C=$hbin/f2c.e
 export	RANLIB=ranlib
 
-export XC_CFLAGS="-I${iraf}include ${CFLAGS} -g -Wall -O2"
+export XC_CFLAGS="-I${iraf}include ${CFLAGS} -g -Wall -coverage"
 export HSI_CF="${XC_CFLAGS}"
-export HSI_XF="-x -Inolibc -/Wall -/O2"
-export HSI_FF="-g -DBLD_KERNEL -O2"
-export HSI_LF=""
-export HSI_F77LIBS=""
-export HSI_LFLAGS=""
+export HSI_XF="-x -Inolibc -/Wall -/coverage"
+export HSI_FF="-g -DBLD_KERNEL -O0 -coverage"
+export HSI_LF="-coverage"
+export HSI_F77LIBS="-coverage"
+export HSI_LFLAGS="-coverage"
 export HSI_OSLIBS=""
 
 if [ "$MACH" = "macosx" -o "$MACH" = "linux" ] ; then

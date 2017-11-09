@@ -6,9 +6,9 @@ $set	MACH		= $(IRAFARCH)	# machine/fpu type
 $set	HOSTID		= unix		# host system name
 $set	SITEID		= noao		# site name
 
-$set	XFLAGS		= "-c -w"	# default XC compile flags
-$set	XVFLAGS		= "-c -w"	# VOPS XC compile flags
-$set	LFLAGS		= "-Nz"	        # default XC link flags
+$set	XFLAGS		= "-x -c -w -/coverage"	# default XC compile flags
+$set	XVFLAGS		= "-x -c -w -/coverage"	# VOPS XC compile flags
+$set	LFLAGS		= "-Nz -/coverage"	        # default XC link flags
 
 $set	USE_LIBMAIN	= yes		# update lib$libmain.o (root object)
 $set	USE_KNET	= yes		# use the KI (network interface)
