@@ -22,4 +22,6 @@ script:
   - ./test/run_tests
 
 after_success:
-  - bash <(curl -s https://codecov.io/bash)
+  - curl -s https://codecov.io/bash -o codecov.io.sh
+  - patch -p1 < codecov.io.patch
+  - bash < codecov.io.sh
