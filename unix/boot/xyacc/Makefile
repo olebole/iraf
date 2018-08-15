@@ -1,21 +1,12 @@
-HLIB	= ../../hlib/
-IRAFLIB	= ../../../lib/
-VGRIND	= csh /usr/ucb/vgrind -W
 
-head:	xyacc 
-xyacc:	y1.o y2.o y3.o y4.o
-	cc -o xyacc.e y?.o 
+.c.o:	; $(CC) $(HSI_CF) -c $*.c
 
-y1.o y2.o y3.o y4.o: dextern files
+all:	xyacc.e
 
-install:
-	mv -f xyacc.e $(HLIB)
-	cp    yaccpar.x $(IRAFLIB)
+xyacc.e:	y1.o y2.o y3.o y4.o
+	$(CC) $(HSI_LF) -o $@ y1.o y2.o y3.o y4.o
+	cp -p $@ ../../bin/.
 
-clean :
-	rm -f *.o 
+clean::
+	rm -f *.o xyacc.e ../../bin/xyacc.e
 
-vgrind:
-	cp /dev/null index
-	$(VGRIND) -h 'Yacc' dextern files y1.c y2.c y3.c y4.c
-	$(VGRIND) -h 'Yacc' -x index
