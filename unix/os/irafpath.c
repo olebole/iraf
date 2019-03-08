@@ -88,6 +88,8 @@ irafpath (char *fname)
 	strcat (pathname, ".freebsd");
 #elif defined( __hurd__)
 	strcat (pathname, ".hurd");
+#elif defined( __CYGWIN__)
+	strcat (pathname, ".cygwin");
 #else
 	strcat (pathname, ".unknown");
 #endif

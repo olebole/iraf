@@ -111,6 +111,8 @@ freebsd::
 	(util/mkarch freebsd)
 cygwin::
 	(util/mkarch cygwin)
+cygwin64::
+	(util/mkarch cygwin64)
 sunos::
 	(util/mkarch sunos)
 sparc::

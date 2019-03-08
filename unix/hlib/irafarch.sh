@@ -108,6 +108,13 @@ else
              mach="freebsd"
          fi
          ;;
+     cygwin*)
+	 if [ "$nbits" = 64 ] ; then
+             mach="cygwin64"
+         else
+             mach="cygwin"
+         fi
+         ;;
      "gnu"|"hurd") # GNU HURD
          mach="hurd"
          ;;
