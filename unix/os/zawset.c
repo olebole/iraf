@@ -25,6 +25,11 @@ unsigned int defworkset = SZ_DEFWORKSET;
 unsigned int maxworkset = SZ_MAXWORKSET;
 static unsigned int max_wss = 0;
 
+/* Compatibility hack for cygwin which does not have RLIMIT_RSS */
+#ifndef RLIMIT_RSS
+#define RLIMIT_RSS	RLIMIT_AS
+#endif
+
 
 /* ZAWSET -- Adjust or query the "working set", i.e., the maximum amount of
  * physical memory allocated to the process.
