@@ -32,6 +32,12 @@ haven't, you can install them with:
 
 Click "Install" to download and install Xcode Command Line Tools.
 
+For Windows (cygwin), you need to additionally install the following
+packages via its `setup.exe` program:
+
+    $ setup-x86_64.exe --packages make,gcc,flex,m4
+    $ setup-x86_64.exe --packages libcurl-devel,libexpat-devel,libreadline-devel
+
 
 ## Unpack the IRAF Distribution
 
@@ -68,9 +74,11 @@ For `<arch>`, use the proper IRAF architecture name:
 `freebsd64`| FreeBSD 64 bit   | x86_64
 `freebsd`  | FreeBSD 32 bit   | i386, arm
 `hurd`     | GNU HURD 32 bit  | i386
+`cygwin64` | MS Windows 64bit | x86_64
+`cygwin`   | MS Windows 32bit | i386
 
-Note that Cygwin and big endian architectures like macosx/ppc are not
-supported anymore.
+Note that big endian architectures like macosx/ppc are not supported
+anymore.
 
 
 ## Test the Build
