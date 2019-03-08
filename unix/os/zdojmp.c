@@ -17,7 +17,7 @@ ZDOJMP (XINT *jmpbuf, XINT *status)
 {
 	register int stat = *status ? *status : 1;
         register XINT *status_ptr = ((XINT **)jmpbuf)[0];
-        register void *jb = (XINT **)jmpbuf+1;
+        void *jb = (XINT **)jmpbuf+1;
 
         *status_ptr = stat;
         siglongjmp (jb, stat);
