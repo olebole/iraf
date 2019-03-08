@@ -1,10 +1,10 @@
 #include <stdio.h>
+#include <unistd.h>
 #define	import_kernel
 #define	import_knames
 #define import_spp
 #include <iraf.h>
 
-extern	char *environ[];
 #ifdef	__APPLE__
 extern  char ***_NSGetArgv();
 extern  int *_NSGetArgc();
