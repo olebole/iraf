@@ -1,0 +1,39 @@
+# extracted from https://github.com/mobile-shell/mosh/blob/master/appveyor.yml
+
+#
+# Custom environment variables
+#
+environment:
+  global:
+    CYG_ROOT: C:\cygwin64
+    CYG_MIRROR: http://cygwin.mirror.constant.com
+    CYG_CACHE: C:\cygwin64\var\cache\setup
+    CYG_BASH: C:\cygwin64\bin\bash
+    CYG_PACKAGES: make,gcc,flex,libcurl-devel,libexpat-devel,m4
+
+cache:
+  - '%CYG_CACHE%'
+
+clone_depth: 1
+
+# Attempt to ensure we don't try to convert line endings to Win32 CRLF as this will cause build to fail
+# init:
+#    - git config --global core.autocrlf input
+
+
+install:
+  - '%CYG_ROOT%\setup-x86_64.exe --quiet-mode --no-shortcuts --upgrade-also --packages "%CYG_PACKAGES%"'
+
+build_script:
+  - cmd: git config core.symlinks true
+  - cmd: git reset --hard
+  - '%CYG_BASH% -lc "ls -l c:/projects/iraf"'
+  - '%CYG_BASH% -lc "mkdir -p /tmp/iraf/bin /tmp/iraf/cache /tmp/iraf/imdir"'
+  - '%CYG_BASH% -lc "cd c:/projects/iraf; ./install --term xterm --bindir /tmp/iraf/bin --cache /tmp/iraf/cache --imdir /tmp/iraf/imdir --root $(pwd) < /dev/null"'
+  - '%CYG_BASH% -lc "cd c:/projects/iraf; make cygwin64"'
+  - '%CYG_BASH% -lc "ls -l c:/projects/iraf"'
+  - '%CYG_BASH% -lc "cd c:/projects/iraf; PATH=/tmp/iraf/bin:$PATH make sysgen"'
+
+# Disable tests for now
+#test: off
+
