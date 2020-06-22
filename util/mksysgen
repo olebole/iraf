@@ -35,6 +35,12 @@ fi
 
 c_start=$(date)
 
+# Ensure bindirs are there (either dirs or links); create them if needed
+for bin in bin unix/bin noao/bin; do
+    if [ ! -e "$bin" ] ; then
+	mkdir "$bin"
+    fi
+done
 
 "$iraf/util/mkclean"				# clean old binaries
 

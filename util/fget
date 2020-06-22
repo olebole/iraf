@@ -137,9 +137,9 @@ if [ "$exec" = "yes" ]; then
 
    args="url='$url' fname='${ddir}${fname}' cache='/tmp' verbose=no extn='' use_cache=no"
    if [ "$verb" = "no" ]; then
-      "${iraf}bin.$arch/x_system.e" urlget ${args} \$nargs=2  >> /dev/null 2>&1
+      "${iraf}bin/x_system.e" urlget ${args} \$nargs=2  >> /dev/null 2>&1
    else
-      "${iraf}bin.$arch/x_system.e" urlget ${args} \$nargs=2
+      "${iraf}bin/x_system.e" urlget ${args} \$nargs=2
    fi
 
    if [ "$verb" = "yes" ]; then

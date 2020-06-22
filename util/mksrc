@@ -58,9 +58,9 @@ done
 
 echo "Clean host directories ...."
   if [ $exec = "yes" ]; then
-    rm -f unix/bin.*/*.e unix/bin.*/lib*.a
+    rm -f unix/bin*/*.e unix/bin*/lib*.a
   else
-    ls -l unix/bin.*/*.e unix/bin.*/lib*.a
+    ls -l unix/bin*/*.e unix/bin*/lib*.a
   fi
 
 
@@ -83,9 +83,9 @@ done
 
 echo "Clean bin directories ...."
 if [ $exec = "yes" ]; then
-    rm -rf bin.*/*.[aeoZ] noao/bin.*/*.[aeoZ] OBJS*
+    rm -rf bin*/*.[aeoZ] noao/bin*/*.[aeoZ] OBJS*
 else
-    ls -l  bin.*/*.[aeoZ] noao/bin.*/*.[aeoZ] OBJS*
+    ls -l  bin*/*.[aeoZ] noao/bin*/*.[aeoZ] OBJS*
 fi
 
 

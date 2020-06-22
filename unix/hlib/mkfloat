@@ -36,13 +36,9 @@ fi
 
 # Check for an error in the package structure, i.e. the 'bin' is a directory
 # and not a symlink we can change.  It's valid for an external package to
-# have only a 'bin' directory, but then it's toplevel mkpkg shouldn't be
-# calling us.
+# have only a 'bin' directory. In this case, use "generic" as arch.
 if [ "$(ls -l bin | grep 'l.........')" = "" ]; then
-    echo "'bin' is a directory, should be symbolic link pointing to valid"
-    echo "architecture.  Possible error in copying package structure??"
-    echo "Use tar to copy and move directories to preserve links."
-    exit 1
+    float="generic"
 else
     float=$(ls -l bin | sed -e 's+^.*bin\.++')
 fi
@@ -52,9 +48,6 @@ if [ "$ARCH" = "" ]; then
 elif [ "$float" = "$ARCH" ]; then
     echo "system is already configured for $ARCH"
     exit 0
-elif [ ! -e "bin.$ARCH" ]; then
-    echo "must up a bin.$ARCH subdirectory first"
-    exit 1
 fi
 
 # Get the list of directories to be changed.
@@ -75,27 +68,29 @@ rmbin -n -o .a .o .e .E $DIRS > $TFL;  grep '\.[eE]$' $TFL | tee _.e_files
 rm -f $(cat _.e_files) _.e_files; grep -v '\.[eE]$' $TFL > $DFL; rm $TFL
 echo "done"
 
-printf "archiving and deleting %s objects... " "$float"
-if [ -e "bin.$float" ]; then
-    if [ -s "$DFL" ]; then
-	tar -cf "bin.$float/OBJS.arc" $(cat "$DFL")
-	tar -tf "bin.$float/OBJS.arc" | grep -v '/$' | cut -d " " -f 1 > $TFL
-	if cmp -s $DFL $TFL; then
-	    echo "Error: cannot archive $float objects"
-	    diff "$DFL" "$TFL"
-	    rm "$DFL" "$TFL" "bin.$float/OBJS.arc"
-	    exit 1
-	elif [ "$do_compress" -gt 0 ]; then
-	    echo "done"
-	    printf "compressing %s" "bin.$float/OBJS.arc"
-	    nice "$COMPRESS" -f "bin.$float/OBJS.arc" &
-	    rm -f "$TFL"
+if [ "$float" != "generic" ] ; then
+    printf "archiving and deleting %s objects... " "$float"
+    if [ -e "bin.$float" ]; then
+	if [ -s "$DFL" ]; then
+	    tar -cf "bin.$float/OBJS.arc" $(cat "$DFL")
+	    tar -tf "bin.$float/OBJS.arc" | grep -v '/$' | cut -d " " -f 1 > $TFL
+	    if cmp -s $DFL $TFL; then
+		echo "Error: cannot archive $float objects"
+		diff "$DFL" "$TFL"
+		rm "$DFL" "$TFL" "bin.$float/OBJS.arc"
+		exit 1
+	    elif [ "$do_compress" -gt 0 ]; then
+		echo "done"
+		printf "compressing %s" "bin.$float/OBJS.arc"
+		nice "$COMPRESS" -f "bin.$float/OBJS.arc" &
+		rm -f "$TFL"
+	    fi
 	fi
+    else
+	echo "old objects will not be archived as no bin.$float dir found"
     fi
-else
-    echo "old objects will not be archived as no bin.$float dir found"
+    echo "done."
 fi
-echo "done."
 rm -f $(cat "$DFL") "$DFL"
 
 if [ "$ARCH" != "generic" ]; then
@@ -122,7 +117,15 @@ if [ "$ARCH" != "generic" ]; then
 fi
 
 # Set BIN to point to new directory.
-rm -f bin; ln -s "bin.$ARCH" bin
+rm -rf bin
+if [ "$ARCH" != "generic" ]; then
+    if [ ! -d "bin.$ARCH" ] ; then
+	mkdir "bin.$ARCH"
+    fi
+    ln -s "bin.$ARCH" bin
+else
+    mkdir bin
+fi
 
 
 # Warn the user if the new ARCH does not match their current IRAFARCH.

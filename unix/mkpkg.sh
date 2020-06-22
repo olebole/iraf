@@ -8,9 +8,6 @@
 # Exit on error
 set -e
 
-# Set the HSI architecture.
-sh -x setarch.sh
-
 echo "----------------------- OS -----------------------------"
 echo "+"; echo "+"
 (cd os;   sh -x mkpkg.sh)
@@ -27,5 +24,5 @@ echo "----------------------- GDEV ---------------------------"
 (cd gdev; sh -x mkpkg.sh)
 
 # Install the newly created executables.
-echo "install HSI executables in $host/bin.$MACH"
-mv -f hlib/*.e bin.$MACH
+echo "install HSI executables in $hbin"
+mv -f hlib/*.e $hbin

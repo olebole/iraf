@@ -57,9 +57,9 @@ done
 
 echo "Clean '$arch' host directories ...."
 if [ $exec = "yes" ]; then
-    rm -f "unix/bin.$arch/"[agm-z]*.e "unix/bin.$arch/"lib[bco]*.a
+    rm -f "unix/bin/"[agm-z]*.e "unix/bin/"lib[bco]*.a
 else
-    ls -l "unix/bin.$arch/"[agm-z]*.e "unix/bin.$arch/"lib[bco]*.a
+    ls -l "unix/bin/"[agm-z]*.e "unix/bin/"lib[bco]*.a
 fi
 
 echo "Clean src directories ...."
@@ -78,13 +78,13 @@ done
 
 echo "Clean '$arch' bin directories ...."
 if [ $exec = "yes" ]; then
-    rm -rf "bin.$arch/"lib[a-z]*.a
-    rm -rf "bin.$arch/"*.[eoZ]
-    rm -rf "noao/bin.$arch/"*.[aeoZ]
+    rm -rf "bin/"lib[a-z]*.a
+    rm -rf "bin/"*.[eoZ]
+    rm -rf "noao/bin/"*.[aeoZ]
 else
-    ls -l  "bin.$arch/"lib[a-z]*.a
-    ls -l  "bin.$arch/"*.[aeoZ]
-    ls -l  "noao/bin.$arch/"*.[aeoZ]
+    ls -l  "bin/"lib[a-z]*.a
+    ls -l  "bin/"*.[aeoZ]
+    ls -l  "noao/bin/"*.[aeoZ]
 fi
 
 echo "Cleaning spool files ...."

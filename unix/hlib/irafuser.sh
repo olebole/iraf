@@ -3,16 +3,10 @@
 # IRAF definitions for the UNIX/sh user.  The additional variables iraf$ and
 # home$ should be defined in the user's .login file.
 
-
-export MACH=$("$iraf/unix/hlib/irafarch.sh")
-export IRAFARCH=$("$iraf/unix/hlib/irafarch.sh")
-            
-
-
 export	hostid=unix
 export	host=${iraf}unix/
 export	hlib=${iraf}unix/hlib/
-export	hbin=${iraf}unix/bin.$MACH/
+export	hbin=${iraf}unix/bin/
 export	tmp=/tmp/
 
 # Default to GCC for compilation.
@@ -30,7 +24,7 @@ export HSI_F77LIBS=""
 export HSI_LFLAGS=""
 export HSI_OSLIBS=""
 
-if [ "$MACH" = "macosx" ] ; then
+if [ "$IRAFARCH" = "macosx" ] ; then
     export MACOSX_DEPLOYMENT_TARGET=10.5
 fi
 

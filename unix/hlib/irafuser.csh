@@ -12,7 +12,7 @@ setenv IRAFARCH  `${iraf}unix/hlib/irafarch.sh`
 setenv	hostid	unix
 setenv	host	${iraf}unix/
 setenv	hlib	${iraf}unix/hlib/
-setenv	hbin	${iraf}unix/bin.$MACH/
+setenv	hbin	${iraf}unix/bin/
 setenv	tmp	/tmp/
 
 # Default to GCC for compilation.
