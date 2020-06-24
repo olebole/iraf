@@ -16,6 +16,20 @@ matrix:
             - ratfor
     - os: linux
       dist: bionic
+      arch: amd64
+      env: OS_VERS=bionic RATFOR=ratfor
+      addons:
+        apt:
+          update: true
+          sources:
+            - sourceline: 'ppa:olebole/astro-bionic'
+          packages:
+            - libcurl4-openssl-dev
+            - libexpat1-dev
+            - libreadline-dev
+            - ratfor
+    - os: linux
+      dist: bionic
       env: IRAFARCH=linux OS_VERS=bionic CARCH="-m32"
       addons:
         apt:
@@ -49,7 +63,7 @@ before_script:
   - mkdir -p ${build_tmp}/bin
   - PATH=${build_tmp}/bin:$PATH
   - ./install --term xterm --bindir $build_tmp/bin --cache $build_tmp/cache --imdir $build_tmp/imdir < /dev/null || true
-  - make ${IRAFARCH}
+  - if [ "${IRAFARCH}" ] ; then make ${IRAFARCH} ; fi
   - make sysgen
 
 script:
