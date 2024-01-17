@@ -198,6 +198,14 @@ typedef VOID H_f;	/* character function */
 typedef VOID Z_f;	/* double complex function */
 typedef doublereal E_f;	/* real function with -R not specified */
 
+static inline int zsvjmp_ (int *buf, int *status) {
+  void setjmp(int *);
+  *status = 0;
+  buf[0] = *status;
+  setjmp (&buf[1]);
+  return 0;
+}
+
 /* undef any lower-case symbols that your C compiler predefines, e.g.: */
 
 #ifndef Skip_f2c_Undefs
