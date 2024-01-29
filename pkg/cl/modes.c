@@ -111,9 +111,9 @@ effmode (struct param *pp)
 	     * parameter, task, package, cl.  The mode is taken from the first
 	     * of these which is not automatic.
 	     */
-	    if ( (mode = (pp->p_mode & modebits)) )
+	    if ((mode = (pp->p_mode & modebits)))
 		;
-	    else if ( (mode = (ltmode & modebits)) )
+	    else if ((mode = (ltmode & modebits)))
 		;
 	    else {
 		/* Check the mode of the package to which the ltask belongs,
@@ -121,7 +121,7 @@ effmode (struct param *pp)
 		 */
 		struct pfile *pfp;
 
-		if ( (pfp = currentask->t_ltp->lt_pkp->pk_pfp) ) {
+		if ((pfp = currentask->t_ltp->lt_pkp->pk_pfp)) {
 	 	    struct param   *ppx;
 	 	    ppx = paramfind (pfp, "mode", 0, YES);
 	 	    if ((ppx != NULL)  &&  (ppx != (struct param *)ERR))
@@ -130,7 +130,7 @@ effmode (struct param *pp)
 
 		if (pkmode > 0 && (mode = (pkmode & modebits)))
 		    ;
-		else if ( (mode = (clmode & modebits)) )
+		else if ((mode = (clmode & modebits)))
 		    ;
 		else
 		    mode = M_AUTO;
@@ -216,14 +216,14 @@ taskmode (register struct task *tp)
 
 	/* If the mode of the task is anything but AUTO we are done.
 	 */
-	if ( (mode = (ltmode & modebits)) )
+	if ((mode = (ltmode & modebits)))
 	    if (interactive || !(mode & M_MENU))
 		return (mode|learn);
 
 	/* If the package to which the task belongs has a pfile and the mode
 	 * of the package is anything but AUTO, we are done.
 	 */
-	if ( (pfp = tp->t_ltp->lt_pkp->pk_pfp) ) {
+	if ((pfp = tp->t_ltp->lt_pkp->pk_pfp)) {
 	    struct param   *ppx;
 
 	    pkmode = ERR;
@@ -342,13 +342,13 @@ query (struct param *pp)
 			    sprintf (keystr, "\\%03o", key);
 			sprintf (buf, "%.3f %.3f %d %s %s\n",
 			    x, y, wcs, keystr, str);
-		        query_status = (char *) ((XINT) strlen(buf));
+			query_status = (char *) ((XINT)strlen(buf));
 		    }
 
 		} else if (c_rcursor (cursor, buf, SZ_PROMPTBUF) == EOF) {
 		    query_status = NULL;
 		} else
-		    query_status = (char *) ((XINT) strlen(buf));
+		    query_status = (char *) ((XINT)strlen(buf));
 
 	    } else if (pp->p_type & PT_UKEY) {
 		/* Read a user keystroke command from the terminal.
@@ -357,7 +357,7 @@ query (struct param *pp)
 		if (c_rdukey (buf, SZ_PROMPTBUF) == EOF)
 		    query_status = NULL;
 		else
-		    query_status = (char *) ((XINT) strlen(buf));
+		    query_status = (char *) ((XINT)strlen(buf));
 
 	    } else {
 text_query:	fd = spf_open (buf, SZ_PROMPTBUF);
@@ -744,9 +744,9 @@ pquery (register struct param *pp, FILE *fp)
  */
 char *
 bkg_query (
-    char *obuf,			/* same calling sequence as 'fgets' */
-    int maxch,
-    register struct param *pp
+  char	*obuf,			/* same calling sequence as 'fgets' */
+  int	maxch,
+  register struct param *pp
 )
 {
 	char	bqfile[SZ_PATHNAME], qrfile[SZ_PATHNAME];
@@ -809,7 +809,7 @@ bkg_query (
  */
 void
 service_bkgquery (
-    int bkgno			/* ordinal of job requiring service	*/
+  int	bkgno			/* ordinal of job requiring service	*/
 )
 {
 	register int ch;

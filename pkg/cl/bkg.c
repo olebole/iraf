@@ -107,7 +107,7 @@ static void bkg_close (int job, int pmsg);
  */
 void
 bkg_init (
-    char *bcs		/* background control string	*/
+  char	*bcs		/* background control string	*/
 )
 {
 	strncpy (bkgmsg, bcs, SZ_BKGMSG);
@@ -120,7 +120,7 @@ bkg_init (
  */
 void
 bkg_spawn (
-    char *cmd		/* command entered by user to spawn job	*/
+  char	*cmd		/* command entered by user to spawn job	*/
 )
 {
 	register struct _bkgjob *bk;
@@ -249,8 +249,8 @@ bkg_kill (int job)
  */
 void
 bkg_jobstatus (
-    FILE *fp,			/* output file		*/
-    int job			/* job(s)		*/
+  FILE	*fp,			/* output file		*/
+  int	job			/* job(s)		*/
 )
 {
 	register struct _bkgjob *bk;
@@ -324,7 +324,7 @@ bkg_jobactive (int job)
  */
 void
 bkg_update (
-    int pmsg			/* print event messages		*/
+  int	pmsg			/* print event messages		*/
 )
 {
 	register struct	_bkgjob *bk;
@@ -351,8 +351,8 @@ bkg_update (
  */
 static void
 bkg_close (
-    int job,			/* job ordinal			*/
-    int pmsg			/* print termination message	*/
+  int	job,			/* job ordinal			*/
+  int	pmsg			/* print termination message	*/
 )
 {
 	register struct	_bkgjob *bk = &jobtable[job-1];

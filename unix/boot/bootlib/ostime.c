@@ -7,7 +7,7 @@
 #include "bootlib.h"
 
 #define	SECONDS_1970_TO_1980	315532800L
-static	long os_timezone(void);
+static	long os_timezone (void);
 
 
 /* OS_UTIME -- Convert IRAF time (local standard, epoch 1980) to UNIX time
@@ -62,7 +62,7 @@ os_itime (long unix_time)
  * from Greenwich, ignoring daylight savings time if in effect.
  */
 static long
-os_timezone(void)
+os_timezone (void)
 {
 	struct tm *tm;
 	time_t clock;

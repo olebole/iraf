@@ -83,7 +83,7 @@ int	ninterrupts;		/* number of onint() calls per task	*/
 int	currentline;		/* current line being executed		*/
 int	errorline;		/* error line being recovered		*/
 long	cpustart, clkstart;	/* starting cpu, clock times if bkg	*/
-int	logout_status = 0;	/* optional status arg to logout()	*/
+int	logout_status = 0;	/* optional status arg to logout() 	*/
 
 
 static void execute();
@@ -93,7 +93,7 @@ static  char *file_concat (char  *in1, char  *in2);
 
 static void onint (int *vex, int (**next_handler)(void));
 extern int yyparse();
-
+	
 static  char *tmpfile = NULL;
 extern	char epar_cmdbuf[];
 
@@ -105,7 +105,7 @@ extern	char epar_cmdbuf[];
  */
 int
 c_main (
-  PKCHAR *cmd 			/* host command line			*/
+    PKCHAR  *cmd 		/* host command line			*/
 )
 {
 	XINT	bp;
@@ -156,7 +156,7 @@ exit_:
 /* CLEXIT -- Called on fatal error from error() when get an error so bad that we
  * should commit suicide.
  */
-void
+void 
 clexit (void)
 {
 	longjmp (jmp_clexit, 1);
@@ -165,7 +165,7 @@ clexit (void)
 
 /* CLSHUTDOWN -- Public entry for shutdown.
  */
-void
+void 
 clshutdown (void)
 {
 	shutdown();
@@ -185,7 +185,7 @@ clshutdown (void)
  *   of memory in the bkg CL will leave the pointers pointing into limbo.
  *
  */
-static void
+static void 
 startup (void)
 {
 	void	onipc(int *vex, funcptr_t *next_handler);
@@ -221,7 +221,7 @@ startup (void)
  * Don't bother with restor'ing if BATCH since we don't want to write out
  *   anything then anyway.
  */
-static void
+static void 
 shutdown (void)
 {
 	float	cpu, clk;
@@ -258,7 +258,7 @@ shutdown (void)
  * mode, we skip the preliminaries and jump right in and interpret the
  * compiled code.
  */
-static void
+static void 
 execute (int mode)
 {
 	int	parsestat;
@@ -365,7 +365,7 @@ bkg:
  * Add the builtin function ltasks.  Run the startup file as the stdin of cl.
  * If any of this fails, we die.
  */
-static void
+static void 
 login (char *cmd)
 { 
 	register struct task *tp;
@@ -528,15 +528,15 @@ login (char *cmd)
 	    compile (REDIRIN);
 	    compile (EXEC);
 
-        } else {
+	} else {
 	    for (i = 0; loginfiles[i] != NULL; i++) {
 		c_fmapfn (loginfiles[i], loginfile, SZ_PATHNAME);
 		if (c_access (loginfile,0,0) == YES) {
-		    o.o_val.v_s = loginfile;
-		    compile (CALL, "cl");
-		    compile (PUSHCONST, &o);
-		    compile (REDIRIN);
-		    compile (EXEC);
+	    o.o_val.v_s = loginfile;
+	    compile (CALL, "cl");
+	    compile (PUSHCONST, &o);
+	    compile (REDIRIN);
+	    compile (EXEC);
 		    break;
 		}
 	    }
@@ -619,7 +619,7 @@ file_concat (char  *in1, char  *in2)
  * of the CL is hooked to the system logout file and when the eof of the
  * logout file is seen the CL really does exit.
  */
-static void
+static void 
 logout (void)
 { 
 	register struct task *tp;
@@ -647,7 +647,7 @@ logout (void)
  */
 char *
 memneed (
-  int	incr 		/* amount of space desired in ints, not bytes	*/
+    int incr		/* amount of space desired in ints, not bytes	*/
 )
 {
 	memel *old;
@@ -680,8 +680,8 @@ memneed (
 /* ARGSUSED */
 static void
 onint (
-  int	*vex,			/* virtual exception code	*/
-  int	(**next_handler)(void) 	/* next handler to be called	*/
+    int *vex,			/* virtual exception code	*/
+    int (**next_handler)(void)	/* next handler to be called	*/
 )
 {
 	if (firstask->t_flags & T_BATCH) {
@@ -739,7 +739,7 @@ onint (
 /* INTR_DISABLE -- Disable interrupts, e.g., to protect a critical section
  * of code.
  */
-void
+void 
 intr_disable (void)
 {
 	funcptr_t	junk;
@@ -754,7 +754,7 @@ intr_disable (void)
 /* INTR_ENABLE -- Reenable interrupts, reposting the interrupt vector saved
  * in a prior call to INTR_DISABLE.
  */
-void
+void 
 intr_enable (void)
 {
 	funcptr_t	junk;
@@ -768,7 +768,7 @@ intr_enable (void)
 /* INTR_RESET -- Post the interrupt handler and clear the interrupt vector
  * save stack.
  */
-void
+void 
 intr_reset (void)
 {
 	funcptr_t	junk;
@@ -786,7 +786,7 @@ intr_reset (void)
  * the system and call cl_error() which eventually does a longjmp back to
  * the errenv in execute().
  */
-void
+void 
 onerr (void)
 {
 	char	errmsg[SZ_LINE];
@@ -805,7 +805,7 @@ onerr (void)
 
 /* CL_AMOVI -- Copy an integer sized block of memory.
  */
-void
+void 
 cl_amovi (
   register int	*ip,
   register int	*op,

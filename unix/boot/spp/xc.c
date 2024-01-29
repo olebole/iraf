@@ -245,8 +245,8 @@ main (int argc, char *argv[])
 	    strcpy (ccomp, s);
 	if ((s = os_getenv ("XC-F77")) || (s = os_getenv ("XC_F77")))
 	    strcpy (f77comp, s);
-	usef2c = (strncmp (f77comp, "f77", 3) == 0 ? 1 : 0);
-	useg95 = (strncmp (f77comp, "g95", 3) == 0 ? 1 : 0);
+	    usef2c = (strncmp (f77comp, "f77", 3) == 0 ? 1 : 0);
+	    useg95 = (strncmp (f77comp, "g95", 3) == 0 ? 1 : 0);
 	if ((s = os_getenv ("XC-LINKER")) || (s = os_getenv ("XC_LINKER")))
 	    strcpy (linker, s);
 
@@ -808,7 +808,7 @@ passflag:		    mkobject = YES;
 	/* Libraries to link against.
 	 */
 	if (hostprog) {
-	  arglist[nargs++] = mkfname (fortlib[0]);
+		arglist[nargs++] = mkfname (fortlib[0]);
 	} else
 	    arglist[nargs++] = mkfname (LIBMAIN);
 
@@ -833,15 +833,15 @@ passflag:		    mkobject = YES;
 	/* The remaining system libraries depend upon which version of
 	 * the SunOS compiler we are using. 
 	 */
-	addflags (fortlib[1], arglist, &nargs);
-	addflags (fortlib[2], arglist, &nargs);
-	addflags (fortlib[3], arglist, &nargs);
-	addflags (fortlib[4], arglist, &nargs);
-	addflags (fortlib[5], arglist, &nargs);
-	addflags (fortlib[6], arglist, &nargs);
-	addflags (fortlib[7], arglist, &nargs);
-	addflags (fortlib[8], arglist, &nargs);
-	addflags (fortlib[9], arglist, &nargs);
+	    addflags (fortlib[1], arglist, &nargs);
+	    addflags (fortlib[2], arglist, &nargs);
+	    addflags (fortlib[3], arglist, &nargs);
+	    addflags (fortlib[4], arglist, &nargs);
+	    addflags (fortlib[5], arglist, &nargs);
+	    addflags (fortlib[6], arglist, &nargs);
+	    addflags (fortlib[7], arglist, &nargs);
+	    addflags (fortlib[8], arglist, &nargs);
+	    addflags (fortlib[9], arglist, &nargs);
 	arglist[nargs] = NULL;
 
 	if (debug)
@@ -970,7 +970,7 @@ addflags (char *flag, char *arglist[], int *p_nargs)
 		        return (1);
 	        }
 		if (strlen(fs))
-		    arglist[nargs++] = fs;
+	        arglist[nargs++] = fs;
 	    }
 
 	    *p_nargs = nargs;

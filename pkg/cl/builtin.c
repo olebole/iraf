@@ -53,9 +53,9 @@
  */
 
 extern	int cldebug, cltrace;		/* debug/trace flags		     */
-extern	int lastjobno;			/* last background job spawned	     */
-extern	int gologout;			/* flag to execute() to cause logout */
-extern  int logout_status;      	/* optional arg to logout()          */
+extern	int lastjobno;		/* last background job spawned		*/
+extern	int gologout;		/* flag to execute() to cause logout	*/
+extern	int logout_status;	/* optional arg to logout()		*/
 
 /* Device Allocation stuff (really should be in a separate package).
  */
@@ -584,7 +584,7 @@ clhelp (void)
 			listhelp (curpack, show_invis);
 		} else if ((pkp = pacfind (o.o_val.v_s)) == NULL) {
 		    eprintf ("Warning: package '%s' not found\n", o.o_val.v_s);
-		} else if ((XINT) pkp == ERR) {
+		} else if ((XINT)pkp == ERR) {
 		    cl_error (E_UERR, e_pckambig, o.o_val.v_s);
 		} else {
 		    if (n > 1)
@@ -1355,7 +1355,7 @@ clstty (void)
 	register char	*ip, *op;
 	char	sttycmd[2048], args[1024], *argp[100];
 	int	argc, i;
-	XINT	std_in = STDIN, std_out = STDOUT;
+	XINT    std_in = STDIN, std_out = STDOUT;
 
 
 	pfp = newtask->t_pfp;
@@ -2110,44 +2110,44 @@ setbuiltins (register struct package *pkp)
 	} btbl[] = {
 	  { "d_f", d_f, LT_INVIS},	/* shows available file descr	     */
 	  { "d_l", d_l, LT_INVIS},	/* shows defined ltasks		     */
-	  { "d_m", d_d, LT_INVIS},	/* shows memory usage		     */
+	  { "d_m", d_d, LT_INVIS},	/* shows memory usage		*/
 	  { "d_off", d_off, LT_INVIS},	/* disables debugging msgs	     */
 	  { "d_on", d_on, LT_INVIS},	/* enables debugging msgs	     */
 	  { "d_trace",dotrace,LT_INVIS},/* instruction tracing toggle	     */
-	  { "d_p", d_p, LT_INVIS},	/* shows loaded param files	     */
-	  { "d_t", d_t, LT_INVIS},	/* shows running tasks		     */
-	  { "prcache", clprcache, 0},	/* show process cache		     */
-	  { "?", clhelp, LT_INVIS},	/* tasks in current package	     */
-	  { "??", clallhelp, LT_INVIS},	/* all tasks in all packs	     */
-	  { "wait", clwait, 0},		/* wait for all bkg jobs	     */
-	  { "jobs", cljobs, 0},		/* show status of bkg jobs	     */
-	  { "unlearn", clunlearn, 0},	/* unlearn params 		     */
-	  { "update", clupdate, 0},	/* write out a changed pfile	     */
-	  { "hidetask",clhidetask, 0},  /* make these tasks invisible        */
-	  { "task", clntask, 0},	/* define new ltask/ptask	     */
-	  { "set", clset, 0},		/* make environ table entry	     */
-	  { "reset", clreset, 0},	/* reset value of envvar	     */
-	  { "show", clshow, 0},		/* show value of environ var	     */
-	  { "stty", clstty, 0},		/* set terminal driver options	     */
-	  { "redefine", clrtask, 0},	/* redfine ltasl/ptask		     */
-	  { "package", clpack, 0},	/* define new package		     */
+	  { "d_p", d_p, LT_INVIS},	/* shows loaded param files	*/
+	  { "d_t", d_t, LT_INVIS},	/* shows running tasks		*/
+	  { "prcache", clprcache, 0},	/* show process cache		*/
+	  { "?", clhelp, LT_INVIS},	/* tasks in current package	*/
+	  { "??", clallhelp, LT_INVIS},	/* all tasks in all packs	*/
+	  { "wait", clwait, 0},		/* wait for all bkg jobs	*/
+	  { "jobs", cljobs, 0},		/* show status of bkg jobs	*/
+	  { "unlearn", clunlearn, 0},	/* unlearn params 		*/
+	  { "update", clupdate, 0},	/* write out a changed pfile	*/
+	  { "hidetask",clhidetask, 0},  /* make these tasks invisible   */
+	  { "task", clntask, 0},	/* define new ltask/ptask	*/
+	  { "set", clset, 0},		/* make environ table entry	*/
+	  { "reset", clreset, 0},	/* reset value of envvar	*/
+	  { "show", clshow, 0},		/* show value of environ var	*/
+	  { "stty", clstty, 0},		/* set terminal driver options	*/
+	  { "redefine", clrtask, 0},	/* redfine ltasl/ptask		*/
+	  { "package", clpack, 0},	/* define new package		*/
 	  { "_curpack", clcurpack,
-		LT_INVIS},		/* name the current package	     */
-	  { "print", clprint, 0},	/* formatted output to stdout	     */
-	  { "printf", clprintf, 0},	/* formatted output to stdout	     */
-	  { "fprint", clfprint, 0},	/* formatted output		     */
-	  { "putlog", clputlog, 0}, 	/* put a message to the logfile      */
-	  { "dparam", cldparam, 0},	/* dump params for tasks	     */
-	  { "lparam", cllparam, 0},	/* list params for tasks	     */
-	  { "eparam", cleparam, 0},	/* edit params for tasks	     */
-	  { "ehistory", clehistory, 0},	/* edit command history		     */
-	  { "history", clhistory, 0},	/* print command history	     */
-	  { "service", clservice, 0},	/* respond to bkg query		     */
-	  { "kill", clkill, 0},		/* kill a background job	     */
-	  { "keep", clkeep, 0},		/* keep new defn's after bye	     */
-	  { "error", clerror, 0},	/* error msg from child		     */
+		LT_INVIS},		/* name the current package	*/
+	  { "print", clprint, 0},	/* formatted output to stdout	*/
+	  { "printf", clprintf, 0},	/* formatted output to stdout	*/
+	  { "fprint", clfprint, 0},	/* formatted output		*/
+	  { "putlog", clputlog, 0}, 	/* put a message to the logfile */
+	  { "dparam", cldparam, 0},	/* dump params for tasks	*/
+	  { "lparam", cllparam, 0},	/* list params for tasks	*/
+	  { "eparam", cleparam, 0},	/* edit params for tasks	*/
+	  { "ehistory", clehistory, 0},	/* edit command history		*/
+	  { "history", clhistory, 0},	/* print command history	*/
+	  { "service", clservice, 0},	/* respond to bkg query		*/
+	  { "kill", clkill, 0},		/* kill a background job	*/
+	  { "keep", clkeep, 0},		/* keep new defn's after bye	*/
+	  { "error", clerror, 0},	/* error msg from child		*/
 	  { ROOTPACKAGE, lapkg,
-	    	LT_INVIS|LT_DEFPCK},	/* fake task for language.	     */
+	    	LT_INVIS|LT_DEFPCK},	/* fake task for language.	*/
 	  { CLPACKAGE, clpkg,
 		LT_INVIS|LT_DEFPCK},	/* fake task for clpackage.	*/
 	  { "chdir", clchdir, 0},	/* change directory		*/
@@ -2232,9 +2232,9 @@ newbuiltin (
  */
 int
 mkarglist (
-    register struct pfile *pfp,	/* pfile pointer		*/
-    char *args,			/* string buffer for arg chars	*/
-    char *argp[]		/* array of arg pointers	*/
+  register struct pfile *pfp,	/* pfile pointer		*/
+  char	*args,			/* string buffer for arg chars	*/
+  char	*argp[]			/* array of arg pointers	*/
 )
 {
 	register char	*ip, *op;

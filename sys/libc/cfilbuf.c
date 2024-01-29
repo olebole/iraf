@@ -19,7 +19,7 @@ c_filbuf (FILE *fp)
 {
 	register int	nchars;
 	XINT	x_fd = fileno(fp);
-	XINT	(*fillbuffer)(XINT *);
+        XINT    (*fillbuffer)(XINT *);
 
 	fillbuffer = ((fp->_fflags & _FIPC) ? PRFILBUF : FILBUF);
 

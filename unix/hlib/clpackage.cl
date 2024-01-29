@@ -45,7 +45,7 @@ images
 proto
 utilities
 if (deftask ("noao"))
-   noao
+noao
 ;
 
 # Load the SYSTEM package.  Avoid printing menu, but do not change the

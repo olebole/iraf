@@ -111,7 +111,7 @@ twrite (
  * Give name of file if list, don't do anything if undefinded. 
  * Do not include a trailing \n.
  */
-void
+void 
 prparamval (
   struct param *pp,
   FILE	*fp
@@ -138,10 +138,10 @@ qstrcmp (
 
 /* STRSORT -- Sort a list of pointers to strings.
  */
-void
+void 
 strsort (
-  char	*list[],		/* array of string pointers */
-  int	nstr			/* number of strings */
+    char *list[],		/* array of string pointers */
+    int nstr			/* number of strings */
 )
 {
 	qsort ((char *)list, nstr, sizeof(char *), qstrcmp);
@@ -154,15 +154,15 @@ strsort (
  * with at least two spaces between strings.  Excessively long strings
  * are truncated (adapted from "fmtio/strtbl.x").
  */
-void
+void 
 strtable (
-  FILE	*fp,			/* output file */
-  char	*list[],		/* array of string pointers */
-  int	nstr,			/* number of strings */
+    FILE *fp,			/* output file */
+    char *list[],		/* array of string pointers */
+    int nstr,			/* number of strings */
   int	first_col,		/* where to place table on a line */ 
   int   last_col,
-  int	maxch,			/* maximum chars to print from a string */
-  int	ncol 			/* desired # of columns (0 to autoscale) */
+    int maxch,			/* maximum chars to print from a string */
+    int ncol			/* desired # of columns (0 to autoscale) */
 )
 {
 	int	row, i, j, nspaces, len, maxlen, colwidth;

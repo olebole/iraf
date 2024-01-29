@@ -82,7 +82,7 @@ static	struct d_alloc
  * of builtins does an oneof() which will perform the actions for our parent. 
  * See execnewtask() for builtins.
  */
-void
+void 
 clbye (void)
 {
 	currentask = poptask();
@@ -93,7 +93,7 @@ clbye (void)
  * are allocated devices, but if the user persists permit the logout with
  * the devices still allocated.
  */
-void
+void 
 cllogout (void)
 {
 	register int	n;
@@ -104,29 +104,29 @@ cllogout (void)
 
 
 	/* Set logout status value */
-	pfp = newtask->t_pfp;
-	if ((n = nargs (pfp)) > 0) {
-	    pushbparams (pfp->pf_pp);   /* push so first popped is 1st param */
-	    popop();                    /* discard the $n name          */
-	    o = popop();                /* pop logout status number     */
-	
-	    if ((o.o_type & OT_BASIC) == OT_STRING) {
-		eprintf ("Warning: logout status `%s' not a number\n",
-	            o.o_val.v_s);
-		nlogouts++;
-		gologout = 1;		/* LOGOUT on third attempt */
-		return;
-	    }
-	
-	    pushop (&o);
-	    opcast (OT_INT);
-	    o = popop();
-	    logout_status = o.o_val.v_i;
-	} else
-	    logout_status = 0;
+        pfp = newtask->t_pfp;
+        if ((n = nargs (pfp)) > 0) {
+            pushbparams (pfp->pf_pp);   /* push so first popped is 1st param */
+            popop();                    /* discard the $n name               */
+            o = popop();                /* pop logout status number          */
+  
+            if ((o.o_type & OT_BASIC) == OT_STRING) {
+                eprintf ("Warning: logout status `%s' not a number\n",
+                    o.o_val.v_s);
+                nlogouts++;
+                gologout = 1;           /* LOGOUT on third attempt */
+                return;
+            }
+  
+            pushop (&o);
+            opcast (OT_INT);
+            o = popop();
+            logout_status = o.o_val.v_i;
+        } else
+            logout_status = 0;
 
 
-	/* Clean up any allocated devices.
+        /* Clean up any allocated devices.
 	 */
 	if (nallocdev > 0) {
 	    /* Examine each apparently allocated device to see if it is in
@@ -164,7 +164,7 @@ cllogout (void)
  * file, to ensure that anything which reads from the stream will see EOF.
  * The reopen is performed in exec.c.
  */
-void
+void 
 clclbye (void)
 {
 }
@@ -178,7 +178,7 @@ clclbye (void)
  *   that called us bye's.
  * we check that the pfile is not already loaded and do nothing if it is.
  */
-void
+void 
 clcache (void)
 {
 	register struct pfile *pfp;
@@ -233,7 +233,7 @@ clcache (void)
 
 /* CL_LOCATE -- Locate the named task in the package list.
  */
-void
+void 
 cl_locate (char *task_spec, int first_only)
 {
 	char	buf[SZ_LINE];
@@ -279,7 +279,7 @@ cl_locate (char *task_spec, int first_only)
 
 /* CLWHICH -- Locate the named task in the package list.
  */
-void
+void 
 clwhich (void)
 {
 	register struct pfile *pfp;
@@ -304,7 +304,7 @@ clwhich (void)
 
 /* CLWHEREIS -- Locate all occurances of named task in the package list.
  */
-void
+void 
 clwhereis (void)
 {
 	register struct pfile *pfp;
@@ -330,7 +330,7 @@ clwhereis (void)
  * processes.  If arg=0, flush all processes and override locks.  If argn=N,
  * flush process N.
  */
-void
+void 
 clflprcache (void)
 {
 	register struct pfile *pfp;
@@ -399,7 +399,7 @@ flpr_task (char *task)
  * the named tasks into the cache, connecting the associated process if
  * necessary.
  */
-void
+void 
 clprcache (void)
 {
 	register struct pfile *pfp;
@@ -436,7 +436,7 @@ clprcache (void)
  * buffered to permit appending to a plot.  We are called to flush this
  * last plot to the plotter.
  */
-void
+void 
 clgflush (void)
 {
 	c_gflush (STDGRAPH);
@@ -452,7 +452,7 @@ static	char cd_emsg[] = "Cannot change directory to `%s'";
 /* CHDIR -- Change the current working directory.  If the change is successful
  * update the cwd of all child processes as well.
  */
-void
+void 
 clchdir (void)
 {
 	register struct pfile *pfp;
@@ -495,7 +495,7 @@ clchdir (void)
 
 /* BACK -- Return to the previous directory.
  */
-void
+void 
 clback (void)
 {
 	char	dirname[SZ_PATHNAME];
@@ -527,7 +527,7 @@ clback (void)
  * Print message on our stderr and pop back to a terminal cl task
  * by handling it just like any other abortive type error.
  */
-void
+void 
 clerror (void)
 {
 	register struct	param *arg1, *arg2, *pp;
@@ -667,7 +667,7 @@ clerror (void)
  * note that since these names, ? and ??, do not fall under the ident lex
  * rule, they need a special entry in the lex rule tables.
  */
-void
+void 
 clhelp (void)
 {
 	register struct pfile *pfp;
@@ -702,7 +702,7 @@ clhelp (void)
 	}
 }
 
-void
+void 
 clallhelp (void)
 {
 	int	show_invis = NO;
@@ -715,7 +715,7 @@ clallhelp (void)
  * blocks to print in static storage, starting with a default of 20.  This
  * number is "learned" if the user calls history with the max_history arg.
  */
-void
+void 
 clhistory (void)
 {
 	register struct pfile *pfp;
@@ -750,7 +750,7 @@ clhistory (void)
 
 /* CLTRACE -- Enable or disable instruction tracing (d_trace).
  */
-void
+void 
 dotrace (void)
 {
 	register struct pfile *pfp;
@@ -774,7 +774,7 @@ dotrace (void)
 
 /* CLEHISTORY -- Edit command history.  (dummy - see history.c)
  */
-void
+void 
 clehistory (void)
 {
 }
@@ -783,7 +783,7 @@ clehistory (void)
 /* CLSERVICE -- Service a query from a task in the background.  The argument
  * is the job number, default [1].
  */
-void
+void 
 clservice (void)
 {
 	register struct pfile *pfp;
@@ -817,7 +817,7 @@ clservice (void)
  * because it was the very first task, it makes no sense for the initial
  * interactive cl to do a keep.
  */
-void
+void 
 clkeep (void)
 {
 	register struct	task *tp, *root_task = (struct task *) NULL;
@@ -859,7 +859,7 @@ clkeep (void)
  * job zero is a special case that means kill all jobs.
  * see bkg.c for more discussion and bkgkill().
  */
-void
+void 
 clkill (void)
 {
 	register struct pfile *pfp;
@@ -885,7 +885,7 @@ clkill (void)
 
 /* EPARAM -- Parameter set editor.
  */
-void
+void 
 cleparam (void)
 {
 	register struct pfile *pfp;
@@ -921,7 +921,7 @@ cleparam (void)
  *   params are being inspected is likely to be used soon. if this effect is
  *   wanted, just add the topd saving line as with task, cache, etc.
  */
-void
+void 
 cllparam (void)
 {
 	register struct ltask *ltp;
@@ -954,7 +954,7 @@ cllparam (void)
  * Dump the parameters for the named tasks to the standard output in the
  * form of a series of `task.param=value' assignments.
  */
-void
+void 
 cldparam (void)
 {
 	register struct pfile *pfp;
@@ -997,7 +997,7 @@ cldparam (void)
  *   used by cmdsrch() to guard against rerunning a script that defines a pkg.
  * call error() and do not return if this would redefine the package.
  */
-void
+void 
 clpack (void)
 {
 	register struct pfile	*pfp;
@@ -1085,7 +1085,7 @@ clpack (void)
 /* _CURPACK -- Print the name of the "current" package, i.e., the name of
  * the first package in the search path for a command.
  */
-void
+void 
 clcurpack (void)
 {
 	tprintf ("%s\n", curpack->pk_name);
@@ -1099,7 +1099,7 @@ clcurpack (void)
  * of the same name. if there is, it changes to it. thus, we need a fake
  * "task" for cmdsrch() to find so we may change to clpackage.
  */
-void
+void 
 clpkg (void)
 {
 }
@@ -1107,7 +1107,7 @@ clpkg (void)
 /* language
  * Fake task for the "language" package.
  */
-void
+void 
 lapkg (void)
 {
 }
@@ -1116,7 +1116,7 @@ lapkg (void)
 /* CLPRINT -- Formatted output.  Print arguments on the standard
  * output.
  */
-void
+void 
 clprint (void)
 {
 	do_clprint ("stdout");
@@ -1126,14 +1126,14 @@ clprint (void)
 /* CLFPRINT -- Formatted output.  Print arguments 2-N on the stream or
  * in the param named by the first argument.
  */
-void
+void 
 clfprint (void)
 {
 	do_clprint ("");
 }
 
 
-void
+void 
 do_clprint (char *dest)
 {
 	/* x1 and x2 are just place holders for the call to breakout.
@@ -1221,7 +1221,7 @@ argerr:		cl_error (E_UERR, "Too few arguments to print or fprint");
 
 /* CLPRINTF -- Formatted print command (interface to VOS printf).
  */
-void
+void 
 clprintf (void)
 {
 	struct	pfile *pfp;
@@ -1271,7 +1271,7 @@ clprintf (void)
  * input, e.g. a pipe.  (Name changed to clscans to avoid a name clash
  * with fmtio.clscan).
  */
-void
+void 
 clscans (void)
 {
 	struct	pfile *pfp;
@@ -1285,7 +1285,7 @@ clscans (void)
 
 /* CLSCANF -- Formatted scan function.
  */
-void
+void 
 clscanf (void)
 {
 	struct	pfile *pfp;
@@ -1311,7 +1311,7 @@ clscanf (void)
  * Write a user message to the logfile.  The current pkg.task, bkg info, and
  * a time stamp are added by the putlog() function (in history.c).
  */
-void
+void 
 clputlog (void)
 {
 	register struct pfile *pfp;
@@ -1347,7 +1347,7 @@ clputlog (void)
  *   add an entry into the environment table name=value.
  *   update environ list in all connected child procs.
  */
-void
+void 
 clset (void)
 {
 	register struct pfile *pfp;
@@ -1387,7 +1387,7 @@ clset (void)
  *   reset (overwrite) the value of the named environment variable.
  *   update environ list in all connected child procs.
  */
-void
+void 
 clreset (void)
 {
 	register struct pfile *pfp;
@@ -1429,7 +1429,7 @@ clreset (void)
  */
 #define  SZ_VALUE  SZ_COMMAND
 
-void
+void 
 clshow (void)
 {
 	register struct pfile *pfp;
@@ -1461,7 +1461,7 @@ clshow (void)
  * the operation.  The dictionary must be "kept" after the call to sttyco since
  * new values of the terminal, ttyncols, and ttynlines variables may be set.
  */
-void
+void 
 clstty (void)
 {
 	register struct	pfile *pfp;
@@ -1506,7 +1506,7 @@ clstty (void)
  * are not shown in menus.  The LT_INVIS flag is set by "addltask" if the
  * first char in the task name is an underscore.
  */
-void
+void 
 cltask (int redef)
 {
 	register struct pfile *pfp;
@@ -1533,7 +1533,7 @@ cltask (int redef)
 
 	/* Check for a foreign (host system) task, a type of builtin.
 	 */
-	if ((foreign_task = (*physname == '$'))) {
+	if ( (foreign_task = (*physname == '$')) ) {
 	    if (strcmp (physname, "$foreign") == 0)
 		physname = "";
 	    else
@@ -1573,13 +1573,13 @@ cltask (int redef)
 /* these are hooks to cltask that just select whether redefs are to be
  * permitted. they are both used as described for cltask().
  */
-void
+void 
 clrtask (void)
 {
 	cltask (YES);
 }
 
-void
+void 
 clntask (void)
 {
 	cltask (NO);
@@ -1607,7 +1607,7 @@ clntask (void)
  * list is simply appended to the ftprefix string, in which case it really is
  * a prefix string.
  */
-void
+void 
 clforeign (void)
 {
 	register struct	pfile *pfp;
@@ -1655,7 +1655,7 @@ clforeign (void)
 		    continue;
 		}
 
-		for (n=n1; n <= n2;  n++) { 
+		for (n=n1;  n <= n2;  n++) { 
 		    char    osfn[SZ_PATHNAME+1];
 
 		    if (n >= 0 && n <= argc) {
@@ -1752,7 +1752,7 @@ clforeign (void)
  * Restore the package default parameters for each ltask, or for all of
  * the ltasks in the named package.
  */
-void
+void 
 clunlearn (void)
 {
 	static	char errfmt[] = "Warning: Cannot unlearn params for `%s'\n";
@@ -1802,7 +1802,7 @@ clunlearn (void)
  * we also force the working copy to get copied back to its original.
  * (the check that it is indeed a copy is in pfcopyback()).
  */
-void
+void 
 clupdate (void)
 {
 	/* x1 and x2 are just place holders for the call to breakout.
@@ -1839,7 +1839,7 @@ clupdate (void)
  * become an active part of the users environment.  This function does
  * not require the underscore to hide the task.
  */
-void
+void 
 clhidetask (void)
 {
 	/* x1 and x2 are just place holders for the call to breakout.
@@ -1869,7 +1869,7 @@ clhidetask (void)
 /* WAIT -- Wait for a job or jobs to terminate.  The default is to wait for
  * all jobs.
  */
-void
+void 
 clwait (void)
 {
 	register struct pfile *pfp;
@@ -1899,7 +1899,7 @@ clwait (void)
 /* JOBS -- Show status of a job or jobs.  The default is to show the status
  * of all jobs running or that have recently run.
  */
-void
+void 
 cljobs (void)
 {
 	register struct pfile *pfp;
@@ -1927,7 +1927,7 @@ cljobs (void)
 /* CLFUNC -- Called when one of the dummy intrinsic functions entered in
  * the language package (to prompt the user) is called as a task.
  */
-void
+void 
 clfunc (void)
 {
 	cl_error (E_UERR, "Function `%s' cannot be called as a task",
@@ -1937,7 +1937,7 @@ clfunc (void)
 
 /* BEEP -- Beep the terminal.
  */
-void
+void 
 clbeep (void)
 {
 	putchar ('\007');
@@ -1946,7 +1946,7 @@ clbeep (void)
 
 /* TIME -- Print the current time and date on the standard output.
  */
-void
+void 
 cltime (void)
 {
 	char	buf[SZ_LINE];
@@ -1961,7 +1961,7 @@ cltime (void)
  *  in the dev$termcap file for the terminal.  In addition to clearing the
  *  screen, we also turn standout mode and raw mode off, just in case.
  */
-void
+void 
 clclear (void)
 {
 	XINT	tty, sout = STDOUT;
@@ -1978,7 +1978,7 @@ clclear (void)
 
 /* SLEEP -- Suspend execution for the specified number of seconds.
  */
-void
+void 
 clsleep (void)
 {
 	register struct pfile *pfp;
@@ -2006,7 +2006,7 @@ clsleep (void)
  * host_editor() function will add one at the end so that the filenames are
  * concatenated to the string in the EDCAP entry.
  */
-void
+void 
 cledit (void)
 {
 	register struct pfile *pfp;
@@ -2047,7 +2047,7 @@ cledit (void)
  * exclusive i/o by any subprocesses.  (Called from the allocate.cl and
  * deallocate.cl scripts in the SYSTEM pkg.)
  */
-void
+void 
 clallocate (void)
 {
 	register struct pfile *pfp;
@@ -2111,7 +2111,7 @@ clallocate (void)
 
 /* _DEALLOCATE -- Deallocate a device.
  */
-void
+void 
 cldeallocate (void)
 {
 	register struct pfile *pfp;
@@ -2175,7 +2175,7 @@ cldeallocate (void)
 /* _DEVSTATUS -- Print the status of an allocatable device on the standard
  * output.
  */
-void
+void 
 cldevstatus (void)
 {
 	register struct pfile *pfp;
@@ -2287,7 +2287,7 @@ clonerror (void)
  * of list.  Aliases can be made easily with multiple b_names using the same
  * b_f.  Setting LT_INVIS will keep it from being seen in the menu.
  */
-void
+void 
 setbuiltins (register struct package *pkp)
 {
 	/* Debugging functions are in debug.c.
@@ -2345,37 +2345,37 @@ setbuiltins (register struct package *pkp)
 	  { ROOTPACKAGE, lapkg,
 	    	LT_INVIS|LT_DEFPCK},	/* fake task for language.	     */
 	  { CLPACKAGE, clpkg,
-		LT_INVIS|LT_DEFPCK},	/* fake task for clpackage.	*/
-	  { "chdir", clchdir, 0},	/* change directory		*/
-	  { "cd",    clchdir, 0},	/* change directory		*/
-	  { "back",  clback, 0},	/* change to previous directory	*/
-	  { "flprcache", clflprcache, 0},/* flush the process cache	*/
-	  { "gflush", clgflush, 0},	/* flush graphics output	*/
-	  { "cache", clcache, 0},	/* pre-load a tasks pfile	*/
-	  { "which", clwhich, 0},	/* locate named task		*/
-	  { "whereis", clwhereis, 0},	/* locate all instances of task	*/
+		LT_INVIS|LT_DEFPCK},	/* fake task for clpackage.	     */
+	  { "chdir", clchdir, 0},	/* change directory		     */
+	  { "cd",    clchdir, 0},	/* change directory		     */
+	  { "back",  clback, 0},	/* change to previous directory	     */
+	  { "flprcache", clflprcache, 0},/* flush the process cache	     */
+	  { "gflush", clgflush, 0},	/* flush graphics output	     */
+	  { "cache", clcache, 0},	/* pre-load a tasks pfile	     */
+	  { "which", clwhich, 0},	/* locate named task		     */
+	  { "whereis", clwhereis, 0},	/* locate all instances of task	     */
 	  { "clbye", clclbye, LT_CL|LT_CLEOF},	/* cl() with EOF	*/
-	  { "bye", clbye, 0},		/* restore previous state	*/
-	  { "logout", cllogout, 0},	/* log out of the CL		*/
+	  { "bye", clbye, 0},		/* restore previous state	     */
+	  { "logout", cllogout, 0},	/* log out of the CL		     */
 
-	  { "scan", clscans, 0},	/* scan from a pipe		*/
-	  { "scanf", clscanf, 0},	/* formatted scan 		*/
-	  { "fscan", clfunc, 0},	/* intrinsic function entries	*/
-	  { "defpac", clfunc, 0},	/* 		"		*/
-	  { "defpar", clfunc, 0},	/* 		"		*/
-	  { "defvar", clfunc, 0},	/* 		"		*/
-	  { "deftask", clfunc, 0},	/* 		"		*/
-	  { "access", clfunc, 0},	/* 		"		*/
-	  { "imaccess", clfunc, 0},	/* 		"		*/
-	  { "mktemp", clfunc, 0},	/* 		"		*/
-	  { "envget", clfunc, 0},	/* 		"		*/
-	  { "radix",  clfunc, 0},	/* 		"		*/
-	  { "osfn",   clfunc, 0},	/* 		"		*/
-	  { "beep", clbeep, 0},		/* beep the terminal		*/
-	  { "time", cltime, 0},		/* show the current time	*/
-	  { "clear", clclear, 0},	/* clear the terminal screen	*/
-	  { "edit", cledit, 0},		/* edit a file or files	        */
-	  { "sleep", clsleep, 0},	/* suspend process execution	*/
+	  { "scan", clscans, 0},	/* scan from a pipe		     */
+	  { "scanf", clscanf, 0},	/* formatted scan 		     */
+	  { "fscan", clfunc, 0},	/* intrinsic function entries	     */
+	  { "defpac", clfunc, 0},	/* 		"		     */
+	  { "defpar", clfunc, 0},	/* 		"		     */
+	  { "defvar", clfunc, 0},	/* 		"		     */
+	  { "deftask", clfunc, 0},	/* 		"		     */
+	  { "access", clfunc, 0},	/* 		"		     */
+	  { "imaccess", clfunc, 0},	/* 		"		     */
+	  { "mktemp", clfunc, 0},	/* 		"		     */
+	  { "envget", clfunc, 0},	/* 		"		     */
+	  { "radix",  clfunc, 0},	/* 		"		     */
+	  { "osfn",   clfunc, 0},	/* 		"		     */
+	  { "beep", clbeep, 0},		/* beep the terminal		     */
+	  { "time", cltime, 0},		/* show the current time	     */
+	  { "clear", clclear, 0},	/* clear the terminal screen	     */
+	  { "edit", cledit, 0},		/* edit a file or files	             */
+	  { "sleep", clsleep, 0},	/* suspend process execution	     */
 	  { "_allocate", clallocate, LT_INVIS},
 	  { "_deallocate", cldeallocate, LT_INVIS},
 	  { "_devstatus", cldevstatus, LT_INVIS},
@@ -2397,14 +2397,14 @@ setbuiltins (register struct package *pkp)
  * that will perform the directive.  Flags is to be or'd in with lt_flags in
  * the new ltask.  Call error if no more core.
  */
-void
+void 
 newbuiltin (
-  struct package *pkp,		/* package which owns task	*/
-  char	*lname,			/* ltask name			*/
-  void	(*fp)(void),		/* pointer to builtin fcn	*/
-  int	flags,			/* task flags			*/
-  char	*ftprefix,		/* OSCMD prefix if foreign	*/
-  int	redef			/* permit redefinitions		*/
+    struct package *pkp,	/* package which owns task	*/
+    char *lname,		/* ltask name			*/
+    void (*fp)(void),		/* pointer to builtin fcn	*/
+    int flags,			/* task flags			*/
+    char *ftprefix,		/* OSCMD prefix if foreign	*/
+    int redef			/* permit redefinitions		*/
 )
 {
 	register struct ltask *newltp;
@@ -2429,7 +2429,7 @@ newbuiltin (
  * output, argp[0] contains the task name and the function value is the
  * number of arguments, excluding argp[0].
  */
-int
+int 
 mkarglist (
     register struct pfile *pfp,	/* pfile pointer		*/
     char *args,			/* string buffer for arg chars	*/
@@ -2460,7 +2460,7 @@ mkarglist (
 		o_n = popop();
 		ip = o_n.o_val.v_s;
 		if (*ip != '$') {
-		    while ((*op = *ip++))
+		    while ( (*op = *ip++) )
 			op++;
 		    *op++ = '=';
 		}
@@ -2485,7 +2485,7 @@ mkarglist (
  * per parameter: first the value, then the name.  Used when the parameters for
  * a builtin will be accessed right-to-left.
  */
-void
+void 
 pushfparams (register struct param *pp)
 {
 	struct operand onam;
@@ -2504,7 +2504,7 @@ pushfparams (register struct param *pp)
  * operands per parameter: first the value, then the name.  Used when the
  * parameters for a builtin will be accessed left-to-right.
  */
-void
+void 
 pushbparams (struct param *pp)
 {
 	struct operand onam;
@@ -2525,7 +2525,7 @@ pushbparams (struct param *pp)
 
 /* PUSHBPVALS -- Like pushbparams, but only the parameter value is pushed.
  */
-void
+void 
 pushbpvals (struct param *pp)
 {
 	struct param *npp;
@@ -2543,7 +2543,7 @@ pushbpvals (struct param *pp)
 /* NARGS -- Count the number of parameters in a parameter list, and hence
  * the number of command line arguments to a builtin.
  */
-int
+int 
 nargs (struct pfile *pfp)
 {
 	struct	param	*pp;
@@ -2559,7 +2559,7 @@ nargs (struct pfile *pfp)
 /* KEEP -- Preserve additions to the dictionary and environment when the
  * referenced task terminates.
  */
-void
+void 
 keep (register struct task *tp)
 {
 	if (cldebug) {

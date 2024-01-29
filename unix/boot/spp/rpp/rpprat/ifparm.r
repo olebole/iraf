@@ -23,8 +23,8 @@
 	   & (type (strng (i + 1)) != DIGIT)) {
 	    ifparm = YES
 	    break
+	    }
 	 }
       }
-   }
    return
    end

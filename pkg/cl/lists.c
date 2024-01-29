@@ -33,7 +33,7 @@ extern	int	cldebug;
  *   and read from the current standard input if it is.
  * Call error() if get ferror while reading or can't open list file.
  */
-struct operand 
+struct operand
 readlist (struct param *pp)
 {
 	struct	operand result;
@@ -79,7 +79,7 @@ again:	    fgets (line, SZ_LINE, pp->p_listfp);
 		result = makeop (eofstr, OT_STRING);
 
 	    } else {
-		char *nlp, *ip;
+		char  *nlp, *ip;
 
 		nlp = strchr (line, '\n');
 		if (nlp != NULL)
@@ -112,7 +112,7 @@ again:	    fgets (line, SZ_LINE, pp->p_listfp);
  * We assume (pp->p_type & PT_LIST) but do check that the file is not
  * already closed and that we're not closing the real stdin.
  */
-void 
+void
 closelist (register struct param *pp)
 {
 	if (pp->p_listfp != NULL) {

@@ -264,7 +264,7 @@ pacfind (char *name)
 int
 defpac (char *pkname)
 {
-	switch ((XINT) pacfind (pkname)) {
+	switch ((XINT)pacfind (pkname)) {
 	case 0:
 	    return (NO);
 	case ERR:
@@ -280,9 +280,9 @@ defpac (char *pkname)
  */
 struct ltask *
 ltaskfind (
-    struct package *pkp,			/* package to be searched	*/
-    char *name,				/* ltask name			*/
-    int enable_abbreviations		/* enable abbrev. in search	*/
+  struct package *pkp,			/* package to be searched	*/
+  char	*name,				/* ltask name			*/
+  int	enable_abbreviations		/* enable abbrev. in search	*/
 )
 {
 	register struct ltask *ltp;

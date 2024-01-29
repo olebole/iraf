@@ -205,7 +205,7 @@ opcast (int newtype)
 
 	case OT_BOOL:
 	    /* Coercion of booleans is not permitted */
-	    if (o.o_type != OT_BOOL)
+	    if (o.o_type != OT_BOOL) 
 		cl_error (E_UERR,
 		    "Non-boolean operand used where boolean expected");
 	    break;
@@ -293,7 +293,7 @@ err:
  * indefstr..  Null length strings of type OT_STRING are not considered
  * undefined, however.
  */
-struct operand 
+struct operand
 makeop (char *str, int type)
 {
 	register char *s, *ip;

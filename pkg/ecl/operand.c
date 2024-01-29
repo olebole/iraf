@@ -37,7 +37,7 @@ extern char *epsilonstr;
 
 /* SPROP -- Format the value of a parameter into the output string.
  */
-void
+void 
 sprop (register char *outstr, register struct operand *op)
 {
 	register int type;
@@ -77,7 +77,7 @@ sprop (register char *outstr, register struct operand *op)
 
 /* SPPARVAL -- Print value field of a parameter into a string.
  */
-void
+void 
 spparval (char *outstr, struct param *pp)
 {
 	struct	operand o;
@@ -95,7 +95,7 @@ spparval (char *outstr, struct param *pp)
  * o_val is printed with proper format; no trailing nl.
  * handle indefinite and abort on undefined.
  */
-void
+void 
 fprop (FILE *fp, struct operand *op)
 {
 	/* Use MAXPROMPT to give greatest length we expect to print.
@@ -127,7 +127,7 @@ fprop (FILE *fp, struct operand *op)
 
 /* print operand, using fprop, to our t_stdout.
  */
-void
+void 
 oprop (struct operand *op)
 {
 	fprop (currentask->t_stdout, op);
@@ -136,7 +136,7 @@ oprop (struct operand *op)
 
 /* print operand, using fprintf, to currentask.
  */
-void
+void 
 prop (struct operand *op)
 {
 	fprop (currentask->t_out, op);
@@ -147,7 +147,7 @@ prop (struct operand *op)
  *   name of a parameter which is then found and pushed.
  * call error() if popped op is not a string; DO NOT CAST into string.
  */
-void
+void 
 opindir (void)
 {
 	struct operand nameop;
@@ -173,7 +173,7 @@ opindir (void)
  *   or undef.
  * N.B. we use intimate knowledge of the stack layout to do the simple cases.
  */
-void
+void 
 opcast (int newtype)
 {
 	struct operand o, result;

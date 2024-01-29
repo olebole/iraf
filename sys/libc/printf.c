@@ -211,9 +211,9 @@ rval:			if (!dotseen) {
 */
 static void
 u_doarg (
-  FILE		*fp,		/* output file			*/
-  XCHAR		*formspec,	/* format string                */
-  int		prec[],		/* varprec args, if any		*/
+    FILE     *fp,		/* output file			*/
+    XCHAR    *formspec,		/* format string		*/
+    int	     prec[],		/* varprec args, if any		*/
   int		varprec		/* number of varprec args	*/
 )
 {

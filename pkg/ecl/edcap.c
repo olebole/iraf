@@ -46,7 +46,7 @@ static	void map_escapes();
 
 /* EDTINIT -- Initialize the editor.
  */
-void
+void 
 edtinit (void)
 {
 	register int	i;
@@ -83,7 +83,7 @@ edtinit (void)
 /* EDTEXIT -- Terminate the editor.  Send an escape sequence to the terminal
  * if necessary.
  */
-void
+void 
 edtexit (void)
 {
 	c_fseti ((XINT)STDOUT, F_SETREDRAW, 0);
@@ -107,7 +107,7 @@ host_editor (char *editor)
  * Search for that file first in the users home directory.  If not found
  * there, look in the standard device directory.
  */
-void
+void 
 get_editor (
     char *editor		/* the name of the editor		*/
 )
@@ -238,7 +238,7 @@ get_editor (
  */
 static void
 map_escapes (
-    char *input,		/* pointer into input string	*/
+    char *input,			/* pointer into input string	*/
     char *output		/* pointer into output string	*/
 )
 {
@@ -280,7 +280,7 @@ map_escapes (
  * command (some control code).  Additional keystrokes are read from the
  * standard input until an editor command is recognized.
  */
-int
+int 
 what_cmd (
     int first_char		/* the first unprintable character */
 )
@@ -313,7 +313,7 @@ what_cmd (
  * match any editor escape sequence, else return the index of the first
  * command code matched.
  */
-int
+int 
 cmd_match (
     char *cstring,		/* command string	*/
     int nchars			/* nchars to compare	*/
@@ -332,7 +332,7 @@ cmd_match (
 /* SHOW_EDITORHELP -- Display the edit commands and their keystroke
  * equivalences.
  */
-void
+void 
 show_editorhelp (void)
 {
 	char	sbuf[MAX_COMMANDS*COLWIDTH];

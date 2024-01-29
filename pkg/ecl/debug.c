@@ -41,7 +41,7 @@ static	void dd_f();
  */
 static	int	pc_mark = 0;
 
-void
+void 
 d_asmark (void) 
 { 
 	/* Mark the PC to begin the instruction output.  If not defined,
@@ -51,14 +51,14 @@ d_asmark (void)
 }
 
 
-void
+void 
 d_assemble (void) 
 { 
 	d_stack ((pc_mark ? pc_mark : pc), 0, pc); 
 	pc_mark = 0; 
 }
 
-void
+void 
 d_stack (register XINT locpc, int ss, int endpc)
 {
 	register struct codeentry *cep;
@@ -87,7 +87,7 @@ d_stack (register XINT locpc, int ss, int endpc)
 /* D_INSTR -- Decode a single instruction on the output file.  The length of
  * the instruction in memel is returned as the function value.
  */
-int
+int 
 d_instr (FILE *fp, char *prefix, register XINT locpc)
 {
 	register struct codeentry *cep;
@@ -387,7 +387,7 @@ dd_f (char *msg, char *fname)
 /* enable debugging messages.
  * builtins.
  */
-void
+void 
 d_on (void)
 {
 	cldebug = 1;
@@ -395,7 +395,7 @@ d_on (void)
 
 /* disable debugging.
  */
-void
+void 
 d_off (void)
 {
 	cldebug = 0;
@@ -403,7 +403,7 @@ d_off (void)
 
 /* Enable/disable instruction tracing.
  */
-void
+void 
 d_trace (int value)
 {
 	cltrace = value;
@@ -412,7 +412,7 @@ d_trace (int value)
 
 /* Dump operand stack until underflow occurs.
  */
-void
+void 
 e_dumpop (void)
 {
 	struct	operand o;
@@ -426,7 +426,7 @@ e_dumpop (void)
 
 /* Format a multiline exec-task message string for debug output.
  */
-void
+void 
 d_fmtmsg (FILE *fp, char *prefix, char *message, int width)
 {
 	register char *ip, *op, *cp;

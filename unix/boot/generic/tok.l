@@ -39,7 +39,7 @@ W	[ \t]
 PIXEL				outstr (type_string);
 XPIXEL				outstr (xtype_string);
 INDEF				output_indef (type_char);
-INDEF(S|I|L|R|D|X)		outstr(yytext);
+INDEF(S|I|L|R|D|X)		outstr (yytext);
 SZ_PIXEL			output_upper ("SZ_");
 TY_PIXEL			output_upper ("TY_");
 $PIXEL				outstr ("PIXEL");
@@ -86,7 +86,7 @@ $INDEF				outstr ("INDEF");
 
 \#				copy_line();
 ^\%				copy_line();
-.|\n				outstr(yytext);
+.|\n                            outstr (yytext);
 
 %%
 
@@ -94,10 +94,10 @@ $INDEF				outstr ("INDEF");
 /* LEX_INPUT -- Make input() callable as a function from the .c code.
  */
 int
-lex_input(void)
+lex_input (void)
 {
     scan_position++;
-    return (input());
+	return (input());
 }
 
 
@@ -107,7 +107,7 @@ void
 lex_unput (int ch)
 {
     scan_position--;
-    unput (ch);
+	unput (ch);
 }
 
 long lex_tell (void) {

@@ -109,7 +109,7 @@ host_editor (char *editor)
  */
 void
 get_editor (
-    char *editor		/* the name of the editor		*/
+  char	*editor		/* the name of the editor		*/
 )
 {
 	FILE	*fp;		/* pointer to the editor.ed file	*/
@@ -238,8 +238,8 @@ get_editor (
  */
 static void
 map_escapes (
-    char *input,		/* pointer into input string	*/
-    char *output		/* pointer into output string	*/
+  char	*input,			/* pointer into input string	*/
+  char	*output			/* pointer into output string	*/
 )
 {
 	static char	*echars = "befnrt";
@@ -315,8 +315,8 @@ what_cmd (
  */
 int
 cmd_match (
-    char *cstring,		/* command string	*/
-    int nchars			/* nchars to compare	*/
+  char	*cstring,		/* command string	*/
+  int	nchars 			/* nchars to compare	*/
 )
 {
 	int	k;

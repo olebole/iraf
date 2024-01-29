@@ -50,7 +50,7 @@ extern	int context;			/* lexical context flags	*/
 extern  int ntasks;
 static	int dtype;			/* set if typed procedure	*/
 
-extern  char *vfn2osfn(char *vfn, int new);
+extern  char *vfn2osfn (char *vfn, int new);
 extern  void skipnl (void);
 
 
@@ -219,7 +219,7 @@ NI	[^a-zA-Z0-9_]
  * code for d_newproc().
  */
 void
-typespec (int	typecode)
+typespec (int typecode)
 {
 	if (context & DECL)
 	    d_declaration (typecode);
@@ -340,7 +340,7 @@ do_include(void)
 		    root_len = 0;
 	        else
 		    root_len = p - fname[istkptr-1] + 1;
-	        strncpy (fname[istkptr], fname[istkptr-1], root_len);
+                strncpy (fname[istkptr], fname[istkptr-1], root_len);
 
 	    } else {
 	        if ((p = vfn2osfn (HBIN_INCLUDES, 0))) {

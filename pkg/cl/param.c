@@ -842,14 +842,14 @@ lookup_param (char *pkname, char *ltname, char *pname)
 		    if ((pfp = pfp_head[i]) != NULL) {
 			pfiles[npfiles++] = pfp;
 			if (pfp->pf_flags & PF_PSETREF) {
-			    while ( (pfp = pfp->pf_npset) ) {
+			    while ((pfp = pfp->pf_npset)) {
 				pfiles[npfiles++] = pfp;
 				if (npfiles >= 62)
 				    cl_error (E_IERR,
 					"lookup_param: too many pfiles");
 			    }
-			}
 		    }
+	    }
 	    }
 
 	    pfiles[npfiles++] = firstask->t_pfp;	/* firstask == cl */
@@ -870,7 +870,7 @@ lookup_param (char *pkname, char *ltname, char *pname)
 		    } else if (!strcmp (pp->p_name, pname)) {
 			ambig = 0;
 			break;			/* exact match */
-		    } else if (candidate != NULL && candidate != pp) {
+                    } else if (candidate != NULL && candidate != pp) {
 			ambig++;
 		    } else {
 			candidate = pp;
@@ -1256,11 +1256,11 @@ pvaldefined (struct param *pp, char *s)
  */
 struct param *
 newfakeparam (
-    struct pfile *pfp,
-    char *name,
-    int pos,
-    int type,
-    int string_len	/* if new param is type string, size of string */
+  struct pfile *pfp,
+  char	*name,
+  int	pos, 
+  int   type,
+  int	string_len 	/* if new param is type string, size of string */
 )
 {
 	register struct param *pp;
@@ -1277,7 +1277,7 @@ newfakeparam (
 	if (cldebug)
 	    eprintf ("adding fake param `%s', type code %d\n",
 		pp->p_name, type);
-
+	    
 	type &= OT_BASIC;
 	pp->p_valo.o_type = type;
 	pp->p_mino.o_type = type;

@@ -124,7 +124,7 @@ extern	int save_prtype;
 #define	UNAUTH		99		/* means auth did not match       */
 
 #ifndef IPPORT_USERRESERVED
-#define IPPORT_USERRESERVED 5000
+#define IPPORT_USERRESERVED	5000
 #endif
 
 #define	SELWIDTH	FD_SETSIZE	/* number of bits for select	  */
@@ -167,7 +167,7 @@ static  int ks_achan[MAXOFILES];
 static	int ks_getresvport(int *alport), ks_rexecport(void);
 static	int ks_socket(char *host, u_long addr, int port, char *mode), ks_geti(int fd), ks_puti(int fd, int ival), ks_getlogin(char *hostname, char *loginname, char *password, struct ksparam *ks);
 static	void dbgsp(int pid), dbgmsg(char *msg), dbgmsgf(char *fmt, ...);
-static	char *ks_getpass(char *user, char *host);
+static char *ks_getpass (char *user, char *host);
 static	void ks_onsig(int sig), ks_reaper(int sig);
 
 static int ks_getlogin (char *hostname, char *loginname, char *password,
@@ -1327,16 +1327,16 @@ dbgmsg (char *msg)
 static void
 dbgmsgf (char *fmt, ...)
 {
-	int pid;
-	va_list vargs;
-	
+            int pid;
+            va_list vargs;
+
 	if (debug_ks) {
-	    fprintf (debug_fp, "[%5d] ", (pid = getpid())); dbgsp(pid);
+            fprintf (debug_fp, "[%5d] ", (pid = getpid())); dbgsp(pid);
 	    va_start(vargs, fmt);
 	    vfprintf (debug_fp, fmt, vargs);
-	    va_end(vargs);
-	    fflush (debug_fp);
-	}
+            va_end(vargs);
+            fflush (debug_fp);
+        }
 }
 
 

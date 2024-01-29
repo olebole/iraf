@@ -35,7 +35,7 @@ extern	int	cldebug;
  * fatal but is propagated through.  Call error() and do not return if find an
  * internal error or an undefined string operation.
  */
-void 
+void
 unop (int opcode)
 {
 	register int out_type;		/* bool, int, real, string	*/
@@ -336,7 +336,7 @@ pushresult:
  * It is illegal to perform a boolean operation on a non-boolean operand;
  *   there is no automatic type coercion for booleans.
  */
-void 
+void
 unexp (int opcode)
 {
 	struct	operand o, result;

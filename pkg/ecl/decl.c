@@ -37,7 +37,7 @@ char	*dup_def     = "Duplicate definition of `%s' ignored.\n";
 /* GETLIMITS -- Get the limits for the n'th index of a parameter.
  * Returns ERR if the parameter is not defined, or has fewer than n indexes.
  */
-int
+int 
 getlimits (
   char	*pname,
   int	 n, 
@@ -75,7 +75,7 @@ getlimits (
 
 /* GET_DIM -- Get the dimensionality of an parameter.  If not an array return 0.
  */
-int
+int 
 get_dim (char *pname)
 {
 	struct param *pp, *lookup_param();
@@ -102,7 +102,7 @@ get_dim (char *pname)
 
 /* MAKETYPE -- Set the type of a parameter.
  */
-int
+int 
 maketype (int type, int list)
 {
 	register int	p = -1;
@@ -156,7 +156,7 @@ maketype (int type, int list)
  * we may find that some values are not initialized and so we
  * may need to allocate more memory.
  */
-void
+void 
 do_arrayinit (
   struct param *pp,
   int	 nval, 
@@ -322,7 +322,7 @@ do_arrayinit (
 
 /* DO_SCALARINIT -- Initialize a scalar.  Mostly copied from ADDPARAM.
  */
-void
+void 
 do_scalarinit (
   struct param	*pp,
   int	inited
@@ -444,7 +444,7 @@ do_scalarinit (
 
 /* SCANFTYPE -- Get file type for file parameter.
  */
-int
+int 
 scanftype (
   struct param	*pp,
   struct operand *o
@@ -476,7 +476,7 @@ scanftype (
 
 /* C_SCANMODE -- Get the mode for a parameter.
  */
-int
+int 
 c_scanmode (
   struct param	*pp,
   struct operand *o
@@ -492,7 +492,7 @@ c_scanmode (
 
 /* SCANLEN -- Get the length for structs and strings.
  */
-int
+int 
 scanlen (
   struct param	*pp,
   struct operand *o
@@ -509,7 +509,7 @@ scanlen (
 
 /* SCANMIN -- Get the minimum for a parameter.
  */
-int
+int 
 scanmin (
   struct param	*pp,
   struct operand *o
@@ -548,7 +548,7 @@ scanmin (
 /* SCANENUM -- Get the legal values for an enumerated string an store in the
  * min field of the parameter.
  */
-int
+int 
 scanenum (
   register struct param	*pp,
   register struct operand *o
@@ -567,7 +567,7 @@ scanenum (
 
 /* SCANMAX -- Get the maximum for a param.
  */
-int
+int 
 scanmax (
   struct param	*pp,
   struct operand *o
@@ -608,7 +608,7 @@ scanmax (
  * set it to AUTO mode.  Also rearrange the parameters so they
  * agree with order of definition in the procedure statement.
  */
-void
+void 
 proc_params (int npar)
 {
 	struct	operand	*o;
@@ -751,7 +751,7 @@ initparam (
 
 /* PROCSCRIPT -- Is this a procedure script? 
  */
-int
+int 
 procscript (FILE *fp)
 {
 	char	*p, buf[PF_MAXLIN+1];
@@ -798,7 +798,7 @@ procscript (FILE *fp)
 
 /* SKIP_TO -- Within a file, skip to the statement beginning with the key.
  */
-int
+int 
 skip_to (
   FILE	*fp,
   char	*key
@@ -835,7 +835,7 @@ skip_to (
 /* DO_OPTION -- Set parameter attributes which have been explicitly
  * defined by the user.
  */
-void
+void 
 do_option (
   struct param	*pp,
   struct operand *oo,

@@ -18,7 +18,7 @@
 #include "mem.h"
 #include "task.h"
 #include "proto.h"
-
+                
 
 /*
  * BINOP.C -- Perform binary operations or expressions on two operands.
@@ -75,7 +75,7 @@ strint (register char *s, int side)
  * Call error() and do not return if internal error or undefined string
  *   operation.
  */
-void
+void 
 binop (int opcode)
 {
 	register int typ1, typ2;
@@ -110,7 +110,7 @@ binop (int opcode)
 	    case OP_DIV:
 	    case OP_POW:
 		cl_error (E_UERR,
-		"Illegal boolean operand in arithmetic expression");
+		    "Illegal boolean operand in arithmetic expression");
 		break;
 
 	    case OP_MAX:
@@ -703,7 +703,7 @@ pushresult:
  * INDEF operands propagate through. we should never see an UNDEF operand.
  * all error() and do not return on internal error or bad string operations.
  */
-void
+void 
 binexp (int opcode)
 {
 	register int typ1, typ2;

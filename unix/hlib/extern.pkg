@@ -15,8 +15,8 @@ if (access ("pkg$softools/softools.cl") == yes) {
 }
 ;
 if (access ("iraf$noao/noao.cl") == yes) {
-    reset	noao		= iraf$noao/
-    task	noao.pkg	= noao$noao.cl
+reset	noao		= iraf$noao/
+task	noao.pkg	= noao$noao.cl
     reset	helpdb		= (envget("helpdb") // ",noao$lib/helpdb.mip")
     reset	aproposdb       = (envget("aproposdb") + ",noao$lib/apropos.db" )
 }

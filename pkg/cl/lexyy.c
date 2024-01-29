@@ -33,7 +33,7 @@ int yylook (void);
 int traverse (int);
 int yyback (int *p, int m);
 
-int 
+int
 lex_yylex (void){
 int nstr; extern int yyprevious;
 while((nstr = yylook()) >= 0)
@@ -237,7 +237,7 @@ fprintf(yyout,"bad switch yylook %d",nstr);
  * Quotes may be included in the string by escaping them, or by means of
  * the double quote convention.
  */
-int 
+int
 traverse (int delim)
 {
 	register char *op, *cp, ch;
@@ -729,7 +729,7 @@ char *yysptr = yysbuf;
 int *yyfnd;
 extern struct yysvf *yyestate;
 int yyprevious = YYNEWLINE;
-int 
+int
 yylook (void){
 	register struct yysvf *yystate, **lsp;
 	register struct yywork *yyt;
@@ -878,8 +878,8 @@ yylook (void){
 # endif
 		}
 	}
-int 
-yyback (int *p, int m)
+int
+yyback(int *p, int m)
 {
 if (p==0) return(0);
 while (*p)
@@ -890,15 +890,15 @@ while (*p)
 return(0);
 }
 	/* the following are only used in the lex library */
-int 
+int
 yyinput (void){
 	return(input());
-	}
-int 
+}
+int
 yyoutput (int c) {
 	output(c);
-	}
-int 
+}
+int
 yyunput (int c) {
 	unput(c);
-	}
+}

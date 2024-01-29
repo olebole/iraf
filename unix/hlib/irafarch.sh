@@ -74,11 +74,11 @@ fi
 
 
 # Determine parameters for each architecture.
-if [ -n "$IRAFARCH" ]; then
-    mach="$IRAFARCH"
+        if [ -n "$IRAFARCH" ]; then
+            mach="$IRAFARCH"
     if [ "$mach" = "macintel" ] || [ "$mach" = "macos64" ] || [ "$mach" = "freebsd64" ] || [ "$mach" = "linux64" ]; then
 	nbits=64
-    else
+	else 
 	nbits=32
     fi
 else
@@ -87,39 +87,39 @@ else
      "darwin")		# Mac OS X
 	 if [ "$nbits" = 64 ] ; then
 	     if [ "$(uname -m)" = "x86_64" ] ; then
-	         mach="macintel"
+                mach="macintel"
              else
                  mach="macos64"
 	     fi
 	 else
-             mach="macosx"
-         fi
-         ;;
+                mach="macosx"
+	fi
+        ;;
 
      "linux")
 	 if [ "$nbits" = 64 ] ; then
              mach="linux64"
-	 else
+	    else
 	     mach="linux"
-         fi
+	    fi
          ;;
 
      "*freebsd")
 	 if [ "$nbits" = 64 ] ; then
              mach="freebsd64"
-         else
+	else 
              mach="freebsd"
-         fi
+        fi
          ;;
      "gnu"|"hurd") # GNU HURD
          mach="hurd"
-         ;;
+        ;;
 
     *)
 	echo  "Unable to determine platform architecture for ($MNAME)."
 	exit 1
 	;;
-    esac
+esac
 fi
 if [ "$(printf 'I' | od -to2 | awk 'FNR==1{ print substr($2,6,1)}')" = "0" ] ; then
     endian="big"

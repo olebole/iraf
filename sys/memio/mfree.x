@@ -86,7 +86,7 @@ begin
 	        call mgc_update (ptr)
 	    if (mcollect >= 0)
 	        nfree = nfree + 1
-	    ptr   = NULL
+	    ptr = NULL
 	}
 end
 

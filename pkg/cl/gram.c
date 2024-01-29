@@ -44,16 +44,16 @@ extern	int get_nscanval();
 int	pipetable[MAXPIPES];	/* for maintaining pipe temp files	*/
 int	nextpipe = 0;
 
-char	*truestr    = "yes";	/* true constant as it appears in ASCII	*/
-char	*falsestr   = "no";	/* false                "		*/
-char	*nullstr    = "";
-char	*undefval   = "";	/* used in nextfield(), pvaldefined()	*/
-char	*indefstr   = "INDEF";	/* input or output for indef operands	*/
-char	*indeflc    = "indef";	/*   lower case version.		*/
-char	*eofstr     = "EOF";	/* list file EOF or input		*/
-char	*eoflc      = "eof";	/*   lower case version			*/
+char	*truestr = "yes";	/* true constant as it appears in ASCII	*/
+char	*falsestr = "no";	/* false                "		*/
+char	*nullstr = "";
+char	*undefval = "";		/* used in nextfield(), pvaldefined()	*/
+char	*indefstr = "INDEF";	/* input or output for indef operands	*/
+char	*indeflc = "indef";	/*   lower case version.		*/
+char	*eofstr = "EOF";	/* list file EOF or input		*/
+char	*eoflc = "eof";		/*   lower case version			*/
 char	*epsilonstr="epsilon";	/* a small value; see config.h		*/
-char	*errorstr   = "error";	/* the error statement			*/
+char	*errorstr = "error";	/* the error statement			*/
 char	*err_cmdblk;		/* Pointer where error detected		*/
 extern  char  cmdblk[SZ_CMDBLK+1]; /* current command block (in history.c) */
 
@@ -122,27 +122,27 @@ crackident (char *s)
 
 	    /* Control flow keywords.
 	     */
-	    { "while",  Y_WHILE,  0 },	{ "if",        Y_IF,        0 },
-	    { "else",   Y_ELSE,   0 },	{ "switch",    Y_SWITCH,    0 },
-	    { "case",   Y_CASE,   0 },	{ "default",   Y_DEFAULT,   0 },
-	    { "break",  Y_BREAK,  0 },	{ "next",      Y_NEXT,      0 }, 
-	    { "return", Y_RETURN, 0 },	{ "goto",      Y_GOTO,      0 },
-	    { "for",    Y_FOR,    0 },	{ "procedure", Y_PROCEDURE, 0 },
-	    { "begin",  Y_BEGIN,  0 },	{ "end",       Y_END,       0 },
+	  { "while", Y_WHILE, 0},	{ "if", Y_IF, 0},
+	  { "else", Y_ELSE, 0},		{ "switch", Y_SWITCH, 0},
+	  { "case", Y_CASE, 0},		{ "default", Y_DEFAULT, 0},
+	  { "break", Y_BREAK, 0},	{ "next", Y_NEXT, 0}, 
+	  { "return", Y_RETURN, 0},	{ "goto", Y_GOTO, 0},
+	  { "for", Y_FOR, 0},		{ "procedure", Y_PROCEDURE, 0},
+	  { "begin", Y_BEGIN, 0},	{ "end", Y_END, 0},
 
 	    /* Parameter and variable types.
 	     */
-	    { "int",    Y_INT,    0 },	{ "char",      Y_STRING,    0 },
-	    { "real",   Y_REAL,   0 },	{ "string",    Y_STRING,    0 },
-	    { "file",   Y_FILE,   0 },	{ "gcur",      Y_GCUR,      0 },
-	    { "imcur",  Y_IMCUR,  0 },	{ "ukey",      Y_UKEY,      0 },
-	    { "pset",   Y_PSET,   0 },	{ "bool",      Y_BOOL,      0 },
-	    { "struct", Y_STRUCT, 0 },
+	  { "int", Y_INT, 0},		{ "char", Y_STRING, 0},
+	  { "real", Y_REAL, 0},		{ "string", Y_STRING, 0},
+	  { "file", Y_FILE, 0},		{ "gcur", Y_GCUR, 0},
+	  { "imcur", Y_IMCUR, 0},	{ "ukey", Y_UKEY, 0},
+	  { "pset", Y_PSET, 0},		{ "bool", Y_BOOL, 0},
+	  { "struct", Y_STRUCT, 0},
 
 	    /* debugging commands.
 	     */
-	    { "d_d",    D_D,      0 },
-	    { "d_peek", D_PEEK,   0 },
+	  { "d_d", D_D, 0},
+	  { "d_peek", D_PEEK, 0},
 
 	    { "", 0, 0 } 		/* sentinel; leave it here... */
 	};
@@ -151,13 +151,13 @@ crackident (char *s)
 	    /* Keywords of intrinsic functions that get built into
 	     * the grammar.  Most intrinsics handled by intrinsic().
 	     */
-	    { "scan",   Y_SCAN,   0 },
-	    { "scanf",  Y_SCANF,  0 },
-	    { "fscan",  Y_FSCAN,  0 },
-	    { "fscanf", Y_FSCANF, 0 },
+	  { "scan", Y_SCAN, 0},
+	  { "scanf", Y_SCANF, 0},
+	  { "fscan", Y_FSCAN, 0},
+	  { "fscanf", Y_FSCANF, 0},
 
 	    /* sentinel; leave it here... */
-	    { "", 0, 0 } 
+	  { "", 0, 0} 
 	};
 
 	register struct keywords *kp;
@@ -700,16 +700,16 @@ intrfunc (char *fname, int nargs)
 	    NULL
 	};
 	static int optbl[] = {
-	 UNOP|OP_ABS,      UNOP|OP_ACCESS,   BINOP|OP_ATAN2,    UNOP|OP_COS,
-	 UNOP|OP_DEFPAC,   UNOP|OP_DEFPAR,    UNOP|OP_DEFTASK,  UNOP|OP_ENVGET,
-	 UNOP|OP_EXP,      UNOP|OP_FRAC,      UNOP|OP_INT,      UNOP|OP_LOG,
-	 UNOP|OP_LOG10,  MULTOP|OP_NSCAN,   MULTOP|OP_MAX,    MULTOP|OP_MIN,
-	BINOP|OP_MOD,      UNOP|OP_NINT,      UNOP|OP_OSFN,    BINOP|OP_RADIX,
-	 UNOP|OP_REAL,     UNOP|OP_SIN,       UNOP|OP_SQRT,     UNOP|OP_STR,
-       MULTOP|OP_SUBSTR,   UNOP|OP_TAN,       UNOP|OP_MKTEMP,  BINOP|OP_STRIDX,
-	 UNOP|OP_STRLEN,   UNOP|OP_IMACCESS,  UNOP|OP_DEFVAR,  BINOP|OP_STRLDX,
-	BINOP|OP_STRSTR,   UNOP|OP_STRLWR,    UNOP|OP_STRUPR,   UNOP|OP_ISINDEF,
-	BINOP|OP_STRLSTR,
+	    UNOP|OP_ABS,     UNOP|OP_ACCESS,  BINOP|OP_ATAN2,   UNOP|OP_COS,
+	    UNOP|OP_DEFPAC,  UNOP|OP_DEFPAR,   UNOP|OP_DEFTASK, UNOP|OP_ENVGET,
+	    UNOP|OP_EXP,     UNOP|OP_FRAC,     UNOP|OP_INT,     UNOP|OP_LOG,
+	    UNOP|OP_LOG10, MULTOP|OP_NSCAN,  MULTOP|OP_MAX,   MULTOP|OP_MIN,
+	   BINOP|OP_MOD,     UNOP|OP_NINT,     UNOP|OP_OSFN,   BINOP|OP_RADIX,
+	    UNOP|OP_REAL,    UNOP|OP_SIN,      UNOP|OP_SQRT,    UNOP|OP_STR,
+	  MULTOP|OP_SUBSTR,  UNOP|OP_TAN,      UNOP|OP_MKTEMP, BINOP|OP_STRIDX,
+	    UNOP|OP_STRLEN,  UNOP|OP_IMACCESS, UNOP|OP_DEFVAR, BINOP|OP_STRLDX,
+	   BINOP|OP_STRSTR,  UNOP|OP_STRLWR,   UNOP|OP_STRUPR,  UNOP|OP_ISINDEF,
+	   BINOP|OP_STRLSTR,
 	};
 	int	index, op;
 	int	i, n, subi[2];
@@ -870,22 +870,22 @@ addpipe (void)
 	/* Get unique pipefile name described by a simple integer.
 	 */
 	do {
-	   /*
-	    * There seems to be a problem with this code in the VMS compiler.
-	    * It has been changed to a form which will work for UNIX and VMS.
-	    *
-	    *	    pipecode = (pipecode++ % MAX_PIPECODE);
-	    */
+	/*
+	 * There seems to be a problem with this code in the VMS compiler.
+	 * It has been changed to a form which will work for UNIX and VMS.
+	 *
+	 *	    pipecode = (pipecode++ % MAX_PIPECODE);
+	 */
 	    pipecode %= MAX_PIPECODE;
 
-	   /* There can be applications where multiple CL are spawned in
-	    * relatively short order so that the PIDs are close.  Incrementing
-	    * the least significant digits can result in duplications.  So
-	    * instead we use the lower digits as the "unique" part and
-	    * increment the higer digits.
-	    *
-	    *  pipecode++;
-	    */
+	 /* There can be applications where multiple CL are spawned in
+	  * relatively short order so that the PIDs are close.  Incrementing
+	  * the least significant digits can result in duplications.  So
+	  * instead we use the lower digits as the "unique" part and
+	  * increment the higer digits.
+	  *  
+	  *  pipecode++;
+	  */
 	    pipecode += 1000;
 
 	} while (c_access (pipefile(pipecode),0,0) == YES);
@@ -1288,7 +1288,7 @@ y_typedef (char *key)
 	else
 	    cl_error (E_UERR, "illegal type specifier `%s'", key);
 	/*NOTREACHED*/
-	return (0);
+        return (0);
 }
 
 

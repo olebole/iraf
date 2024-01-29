@@ -1001,7 +1001,7 @@ o_doaddpipe (memel *argp)
 
 void
 o_dogetpipe (
-    memel *argp			/* name of ltask (not used) */
+  memel *argp			/* name of ltask (not used) */
 )
 {
 	struct	operand o;

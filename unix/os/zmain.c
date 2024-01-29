@@ -15,7 +15,7 @@
 #define import_prtype
 #define	import_knames
 #define	import_xnames
-#define import_kproto
+#define	import_kproto
 #include <iraf.h>
 
 extern	int  ONENTRY(XINT *prtype, XCHAR *bkgfile, XCHAR *cmd);

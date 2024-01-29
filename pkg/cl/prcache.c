@@ -111,17 +111,17 @@ static void pr_unlink (struct process *pr);
  */
 int
 pr_connect (
-    char *process,			/* filename of process		*/
-    char *command,			/* IRAF Main command		*/
+  char	*process,			/* filename of process		*/
+  char	*command,			/* IRAF Main command		*/
     FILE **in,
     FILE **out,				/* IPC channels (output)	*/
     FILE *t_in,
-    FILE *t_out,
+  FILE  *t_out, 
     FILE *t_err,			/* task stdin,out,err (input)	*/
     FILE *t_gr,
-    FILE *t_im,
+  FILE  *t_im, 
     FILE *t_pl,				/* task graphics streams	*/
-    int timeit				/* if !0, time command		*/
+  int	timeit 				/* if !0, time command		*/
 )
 {
 	register int	pid;
@@ -165,7 +165,7 @@ pr_connect (
  */
 void
 pr_disconnect (
-    int pid			/* process id returned by connect	*/
+  int	pid 			/* process id returned by connect	*/
 )
 {
 	struct process *pr;
@@ -187,9 +187,9 @@ pr_disconnect (
  */
 int
 pr_pconnect (
-    char *process,			/* filename of process		*/
-    FILE **in,
-    FILE **out			/* IPC channels (output)	*/
+  char	*process,			/* filename of process		*/
+  FILE	**in, 
+  FILE  **out 				/* IPC channels (output)	*/
 )
 {
 	struct process *pr;
@@ -366,7 +366,7 @@ pr_findproc (char *process)
  */
 int
 pr_cachetask (
-    char *ltname		/* logical task name	*/
+  char	*ltname 		/* logical task name	*/
 )
 {
 	register int  pid;
@@ -392,7 +392,7 @@ pr_cachetask (
  */
 void
 pr_lock (
-    register int pid			/* process id			*/
+  register int	pid 			/* process id			*/
 )
 {
 	struct process *pr;
@@ -414,7 +414,7 @@ pr_lock (
  */
 int
 pr_unlock (
-    register int pid			/* process id			*/
+  register int	pid 			/* process id			*/
 )
 {
 	struct process *pr;
@@ -433,7 +433,7 @@ pr_unlock (
  */
 void
 pr_listcache (
-    FILE *fp			/* output file		*/
+  FILE	*fp 			/* output file		*/
 )
 {
 	register struct process *pr;
@@ -563,7 +563,7 @@ pr_chdir (register int pid, char *newdir)
 		continue;
 	    else if (pid == 0 || pr->pr_pid == pid)
 		c_prchdir (pr->pr_pid, newdir);
-	}
+}
 }
 
 
@@ -581,7 +581,7 @@ pr_envset (register int pid, char *envvar, char *valuestr)
 		continue;
 	    else if (pid == 0 || pr->pr_pid == pid)
 		c_prenvset (pr->pr_pid, envvar, valuestr);
-	}
+}
 }
 
 
@@ -605,7 +605,7 @@ pr_checkup (void)
 		    pr->pr_flags = 0;
 		    pr_pdisconnect (pr);
 		}
-	    }
+}
 	}
 }
 
@@ -618,7 +618,7 @@ pr_checkup (void)
 /* ARGSUSED */
 void
 onipc (
-    int *vex,			/* virtual exception code	*/
+  int	*vex,			/* virtual exception code	*/
     funcptr_t *next_handler	/* next handler to be called	*/
 )
 {

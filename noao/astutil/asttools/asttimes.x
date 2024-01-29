@@ -114,35 +114,35 @@ end
 
 double procedure ast_date_to_julday (year, month, day, t)
 
-int	year			# Year
-int	month			# Month (1-12)
-int	day			# Day of month
-double	t			# Time for date (mean solar day)
+int     year                    # Year
+int     month                   # Month (1-12)
+int     day                     # Day of month
+double  t                       # Time for date (mean solar day)
 
-double	jd
-int	y, m, d
+double  jd
+int     y, m, d
 
 begin
-	if (year < 100)
-	    y = 1900 + year
-	else
-	    y = year
+        if (year < 100)
+            y = 1900 + year
+        else
+            y = year
 
-	if (month > 2)
-	    m = month + 1
-	else {
-	    m = month + 13
-	    y = y - 1
-	}
+        if (month > 2)
+            m = month + 1
+        else {
+            m = month + 13
+            y = y - 1
+        }
 
-	jd = int (JYEAR * y) + int (30.6001 * m) + day + 1720995
-	if (day + 31 * (m + 12 * y) >= 588829) {
-	    d = int (y / 100)
-	    m = int (y / 400)
-	    jd = jd + 2 - d + m
-	}
-	jd = jd - 0.5 + int (t * 360000. + 0.5) / 360000. / 24.
-	return (jd)
+        jd = int (JYEAR * y) + int (30.6001 * m) + day + 1720995
+        if (day + 31 * (m + 12 * y) >= 588829) {
+            d = int (y / 100)
+            m = int (y / 400)
+            jd = jd + 2 - d + m
+        }
+        jd = jd - 0.5 + int (t * 360000. + 0.5) / 360000. / 24.
+        return (jd)
 end
 
 
@@ -195,48 +195,48 @@ end
 
 procedure ast_julday_to_date (j, year, month, day, t)
 
-double	j,dj2			# Julian day
+double  j,dj2                   # Julian day
 data dj2 /0./
-int	year			# Year
-int	month			# Month (1-12)
-int	day			# Day of month
-double	t			# Time for date (mean solar day)
+int     year                    # Year
+int     month                   # Month (1-12)
+int     day                     # Day of month
+double  t                       # Time for date (mean solar day)
 
 long jd, l, n, i, k
 double d1, d2, f1, f2, f, d
 double mod(), nint()
 
 begin
-	# Copy the date, big then small, and re-align to midnight.
-	if (j >= dj2) {
-	  d1 = j
-	  d2 = dj2
-	} else {
-	  d1 = dj2
-	  d2 = j
-	}
-	d2 = d2 - 0.5
+        # Copy the date, big then small, and re-align to midnight.
+        if (j >= dj2) {
+          d1 = j
+          d2 = dj2
+        } else {
+          d1 = dj2
+          d2 = j
+        }
+        d2 = d2 - 0.5
 
-	# Separate day and fraction.
-	f1 = mod(d1, 1.0)
-	f2 = mod(d2, 1.0)
-	f = mod(f1 + f2, 1.0)
-	if (f < 0.0) f = f + 1.0
-	d = nint(d1-f1) + nint(d2-f2) + nint(f1+f2-f)
-	jd = long(nint(d)) + 1
+        # Separate day and fraction.
+        f1 = mod(d1, 1.0)
+        f2 = mod(d2, 1.0)
+        f = mod(f1 + f2, 1.0)
+        if (f < 0.0) f = f + 1.0
+        d = nint(d1-f1) + nint(d2-f2) + nint(f1+f2-f)
+        jd = long(nint(d)) + 1
 
-	# Express day in Gregorian calendar.
-	l = jd + 68569
-	n = (4 * l) / 146097
-	l = l - (146097 * n + 3) / 4
-	i = (4000 * (l + 1)) / 1461001
-	l = l - ((1461 * i) / 4 - 31)
-	k = (80 * l) / 2447
-	day = int(l - (2447 * k) / 80)
-	l = k / 11
-	month = int(k + 2 - 12 * l)
-	year = int(100 * (n - 49) + i + l)
-	t = f * 24
+        # Express day in Gregorian calendar.
+        l = jd + 68569
+        n = (4 * l) / 146097
+        l = l - (146097 * n + 3) / 4
+        i = (4000 * (l + 1)) / 1461001
+        l = l - ((1461 * i) / 4 - 31)
+        k = (80 * l) / 2447
+        day = int(l - (2447 * k) / 80)
+        l = k / 11
+        month = int(k + 2 - 12 * l)
+        year = int(100 * (n - 49) + i + l)
+        t = f * 24
 end
 
 

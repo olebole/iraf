@@ -252,8 +252,8 @@ err:
 long
 h_ardate (char *fname)
 {
-	extern	char *makeobj(char *fname);
-	long	mlb_getdate(char *modname);
+	extern	char *makeobj (char *fname);
+	long	mlb_getdate (char *modname);
 
 	return (mlb_getdate (makeobj (fname)));
 }

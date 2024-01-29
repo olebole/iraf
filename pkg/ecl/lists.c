@@ -79,7 +79,7 @@ again:	    fgets (line, SZ_LINE, pp->p_listfp);
 		result = makeop (eofstr, OT_STRING);
 
 	    } else {
-		char *nlp, *ip;
+		char  *nlp, *ip;
 
 		nlp = strchr (line, '\n');
 		if (nlp != NULL)

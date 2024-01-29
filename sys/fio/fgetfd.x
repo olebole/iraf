@@ -121,7 +121,7 @@ begin
 
 	# A static file is equivalent to a binary file at the VOS level.
 	if (mode != STRING_FILE)
-            FMODE(fp) = mmap[mode]
+        FMODE(fp) = mmap[mode]
 	else
 	    FMODE(fp) = STRING_FILE
 

@@ -235,8 +235,8 @@ begin
 		            call pargstr (Memc[ibuf+ip-1])
 		    } else {
 		        call fprintf (out, "<dl id=\"l_%s\">\n<dt><b>%s")
-		            call pargstr (Memc[name])
-		            call pargstr (Memc[ibuf+ip-1])
+		        call pargstr (Memc[name])
+		        call pargstr (Memc[ibuf+ip-1])
 		    }
 		    call fprintf (out, "</b></dt>\n")
 
@@ -505,7 +505,7 @@ begin
 	            case '&':
 		        ip = ip + gstrcpy ("'&amp;'", Memc[ip], SZ_LINE)
 		    default:
-	                ip = ip + gstrcpy (str[i],  Memc[ip], 3)
+		    ip = ip + gstrcpy (str[i],  Memc[ip], 3)
 		    }
 		    ip = ip + gstrcpy ("</span>", Memc[ip], SZ_LINE)
 		    i = i + 2
@@ -523,7 +523,7 @@ begin
 	            case '&':
 		        ip = ip + gstrcpy ("`&amp;`", Memc[ip], SZ_LINE)
 		    default:
-	                ip = ip + gstrcpy (str[i],  Memc[ip], 3)
+		    ip = ip + gstrcpy (str[i],  Memc[ip], 3)
 		    }
 		    ip = ip + gstrcpy ("</span>", Memc[ip], SZ_LINE)
 		    i = i + 2
@@ -531,8 +531,8 @@ begin
 		    goto copy_
 	    case '"':
                 if (format) {
-	            if (font == F_TELETYPE) {
-	                # Do a closing quote.
+		    if (font == F_TELETYPE) {
+		        # Do a closing quote.
 	                ip = ip + gstrcpy ("\"</span>", Memc[ip], SZ_LINE)
 		        font = F_ROMAN
 		    } else if (font == F_ROMAN) {

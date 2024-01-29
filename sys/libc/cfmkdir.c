@@ -9,9 +9,9 @@
 
 /* C_FMKDIR -- FIO procedure to create a new directory.
 */
-int 
+int
 c_fmkdir (
-    char *newdir			/* name of the new directory	*/
+  char	*newdir		        /* name of the new directory	*/
 )
 {
 	iferr (FMKDIR (c_sppstr(newdir)))

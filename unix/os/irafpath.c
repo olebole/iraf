@@ -71,7 +71,7 @@ irafpath (char *fname)
 	 */
 	strcpy (pathname, (char *)hostdir);
 	strcat (pathname, "bin");
-	if ( (irafarch = getenv("IRAFARCH")) ) {
+        if ((irafarch = getenv("IRAFARCH"))) {
 	    strcat (pathname, ".");
 	    strcat (pathname, irafarch);
 	}
@@ -94,7 +94,7 @@ irafpath (char *fname)
 	    strcat (pathname, ".");
 	    strcat (pathname, irafarch);
 	}
-	strcat (pathname, "/");
+	    strcat (pathname, "/");
 	strcat (pathname, fname);
 	if (access (pathname, 0) == 0)
 	    return (pathname);

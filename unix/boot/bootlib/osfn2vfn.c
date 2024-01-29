@@ -18,7 +18,7 @@ osfn2vfn (
   char	*osfn 			/* input OS filename	*/
 )
 {
-	strcpy (vfn, osfn);		/* [MACHDEP */
+	strcpy (vfn, osfn);	/* [MACHDEP */
 	return (vfn);
 }
 
@@ -50,7 +50,7 @@ osfn2vfn (
 
 	strcpy ((char *)x_osfn, osfn);
 	iferr (nchars = VFNUNMAP (&vp, x_osfn, x_vfn, &x_maxch))
-	    goto err_;
+	        goto err_;
 	if (nchars < 0)
 	    goto err_;
 

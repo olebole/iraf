@@ -24,8 +24,8 @@
 	       }
 	    }
 	    if (linect (level) > 0) {
-	       linect (level) = linect (level) + 1
-	    }
+	 linect (level) = linect (level) + 1
+	 }
 	 }
    else {
       c = buf (bp)

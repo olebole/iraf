@@ -59,7 +59,7 @@ begin
 	    new_fwa = old_fwa
 
 	    # Change the buffer size; any error is fatal.
-	    call zraloc (new_fwa, nchars * SZB_CHAR,  status)
+	    call zraloc (new_fwa, nchars * SZB_CHAR, status)
 	    if (status == ERR) {
 		call merror ("Realloc failed\n")
 		ptr = NULL
@@ -88,7 +88,7 @@ begin
 	    new_char_offset = (locbuf - new_fwa)
 
 	    # Shift the old data to satisfy the new alignment criteria,
-	    # if necessary.  
+	    # if necessary.
 	    # 
 	    # FIXME -- If the new alloation is smaller than the old pointer,
 	    # 	       we should only copy as much data as will fit in the

@@ -18,7 +18,7 @@
 #  for input.
 
 
-# Initialize the script variables.
+				# Initialize the script variables.
 uparm_init="ask"
 quiet=""
 def=""
@@ -40,29 +40,29 @@ fi
 
 # Parse the command-line options.
 for i in "$@"; do
-    case $i in
-	-d|--default)			# Create default login dir
+  case $i in
+    -d|--default)			# Create default login dir
             def="default"
             quiet="quiet"
-	    echo ""
-    	    ;;
-	-i|--init)			# Initialize uparm directory
+	echo ""
+    	;;
+    -i|--init)				# Initialize uparm directory
             uparm_init="yes"
-    	    ;;
-	-n|--noinit)			# Don't initialize uparm directory
+    	;;
+    -n|--noinit)			# Don't initialize uparm directory
             uparm_init="no"
     	    ;;
 	-c|--copy)                      # Copy login.cl file
 	    copy="yes"
-	    ;;
-	-q|--quiet)			# Suppress output
+    	;;
+    -q|--quiet)				# Suppress output
             quiet="quiet"
-    	    ;;
-	*)
+    	;;
+    *)
             echo "Error: unknown option '$i'"
-	    exit 1
-    	    ;;
-    esac
+	exit 1
+    	;;
+  esac
 done
 
 # With --default, chdir to the default directory to create uparm and
@@ -70,7 +70,7 @@ done
 if [ "$def" ]; then
     cd "${HOME}/.iraf/"
 else
-    # Protect against running mkiraf in an iraf system directory.
+# Protect against running mkiraf in an iraf system directory.
     irafdir=$(cd "$iraf" ; pwd)
     if (pwd | grep -q "^$irafdir") && ! (pwd | grep -q iraf/local); then
 	echo "Error: current directory is not an iraf user login directory"
@@ -94,17 +94,17 @@ else
     if [ "$uparm_init" = "ask" ] ; then
 	if [ ! "$quiet" ] ; then
             printf 'Initialize uparm? (y|n): '
-            read yesno
-	else
-	    yesno="yes"
-	fi
+        read yesno
+      else
+	yesno="yes"
+      fi
 	if [ "$yesno" = "y" ] || [ "$yesno" = "yes" ]; then
 	    if [ ! "$quiet" ]; then
 		echo '-- initializing uparm'
-	    fi
-	    rm -rf uparm
-	    mkdir uparm
 	fi
+	    rm -rf uparm
+	mkdir uparm
+      fi
     elif [ "$uparm_init" = "yes" ]; then
 	if [ ! "$quiet" ]; then
 	    echo '-- initializing uparm'
@@ -117,12 +117,12 @@ fi
 
 # Create local login.cl
 if [ "$copy" ]; then
-    if [ -e login.cl ]; then
-	mv -f login.cl login.cl.OLD
-    fi
+if [ -e login.cl ]; then
+    mv -f login.cl login.cl.OLD
+fi
     cp -f "${iraf}unix/hlib/login.cl" login.cl
     if [ ! "$def" ]; then
 	echo 'A new LOGIN.CL file has been created in the current directory.'
 	echo 'You may wish to review and edit this file to change the defaults.'
-    fi
+ fi
 fi

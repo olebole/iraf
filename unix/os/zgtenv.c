@@ -108,7 +108,7 @@ _ev_scaniraf (char *envvar)
 	    strcat(ip, "unix/");
 	} else if (strcmp(envvar, "iraf") == 0) {
  	    if ((ip = _ev_irafroot()) == NULL) {
-		return (NULL);
+	    return (NULL);
 	    }
 	    if (ip[strlen(ip)-1] != '/') {
 		ip = realloc(ip, strlen(ip) + 2);
@@ -143,7 +143,7 @@ _ev_irafroot (void)
 	if ((home = getenv ("HOME"))) {
 	    sprintf (hpath, "%s/.iraf/irafroot", home);
 	    fp = fopen (hpath, "r");
-	}
+	    	}
 	if (fp == NULL) {
 	    if ((fp = fopen (IRAFROOT, "r")) == NULL) {
 	        fprintf (stderr, "os.zgtenv: cannot open `%s'\n", IRAFROOT);
@@ -153,13 +153,13 @@ _ev_irafroot (void)
 
 	lbuf = malloc(SZ_LINE+1);
 	if (fgets (lbuf, SZ_LINE, fp) == NULL) {
-	    fclose(fp);
+	fclose (fp);
 	    return (NULL);
 	} else {
-	    fclose(fp);
+	fclose (fp);
 	    if (lbuf[strlen(lbuf)-1] == '\n') {
 	        lbuf[strlen(lbuf)-1] = 0;
-	    }
+}
 	    return (lbuf);
 	}
 }

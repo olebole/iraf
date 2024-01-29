@@ -704,7 +704,7 @@ up_to_date (
 )
 {
 	long	armod_date, newest_date, date;
-	long	h_ardate(char *fname);
+	long	h_ardate (char *fname);
 	char	*fname;
 	int	old, i;
 

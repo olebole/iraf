@@ -37,7 +37,7 @@ int	lhs;			/* "left hand side" switch for []	*/
  * _lexmodes to zero.  A single parser accepts input from both lexical
  * analyzers.
  */
-int 
+int
 yylex (void)
 {
 	register int	token;
@@ -142,7 +142,7 @@ yylex (void)
  * lexical analyser.  Any sequence of nonwhite characters that does not form
  * one of the recognized tokens is returned as a string.
  */
-int 
+int
 lexicon (void)
 {
 	char	*bkgerr = "ERROR: cannot submit background job inside {}\n";

@@ -53,7 +53,7 @@ extern	int loggingout;		/* in the process of logging out	*/
  *   a longjmp(errenv,1), causing setjmp to return (in main) and an
  *   immediate retreat to the most recent terminaltask with unwind().
  */
-void 
+void
 run (void)
 {
 	register struct codeentry *cp;
@@ -260,7 +260,7 @@ execnewtask (void)
 	if (newtask == NULL)
 	    /* if this ever happens, i don't want to know about it. */
 	    return;
-
+	
 	currentask->t_pc = pc;		/* instruction after EXEC	*/
 
 	if (cldebug)
@@ -517,9 +517,9 @@ execnewtask (void)
  */
 void
 mk_startupmsg (
-    struct task *tp,			/* task being executed		*/
-    char *cmd,				/* receives formatted command	*/
-    int maxch				/* max chars out		*/
+  struct task *tp,			/* task being executed		*/
+  char	*cmd,				/* receives formatted command	*/
+  int	maxch				/* max chars out		*/
 )
 {
 	register char	*ip, *op, *cp;
@@ -716,11 +716,11 @@ findexe (
 	    strcpy (bin_root, root_path);
 	    if ((ip = strstr (bin_root, arch)))
 		*ip = '\0';
-	    else {
-		int len = strlen (bin_root);
-		if (bin_root[len-1] == '/')
-		    bin_root[len-1] = '\0';
-	    }
+            else {
+                int len = strlen (bin_root);
+                if (bin_root[len-1] == '/')
+                    bin_root[len-1] = '\0';
+            }
 
 	    if (strcmp (arch, ".linux64") == 0) {
 		/*  On 64-bit Linux systems we can use either of the
@@ -826,11 +826,11 @@ set_clio (register struct task *newtask)
  */
 struct param *
 ppfind (
-    struct pfile *pfp,		/* first pfile in chain		*/
-    char *tn,			/* psetname (taskname) or null	*/
-    char *pn,			/* parameter name		*/
-    int pos,			/* for paramfind		*/
-    int abbrev			/* for paramfind		*/
+  struct pfile *pfp,		/* first pfile in chain		*/
+  char	*tn,			/* psetname (taskname) or null	*/
+  char	*pn,			/* parameter name		*/
+  int	pos,			/* for paramfind		*/
+  int	abbrev			/* for paramfind		*/
 )
 {
 	struct	param *pp, *m_pp;
@@ -877,8 +877,8 @@ ppfind (
  */
 void
 psetreload (
-    struct pfile *main_pfp,		/* main task pfile	*/
-    struct param *psetp			/* pset param		*/
+  struct pfile *main_pfp,		/* main task pfile	*/
+  struct param *psetp 			/* pset param		*/
 )
 {
 	struct	pfile *o_pfp, *n_pfp, *prev_pfp;
@@ -1190,7 +1190,7 @@ oneof (void)
 	if (currentask->t_ltp->lt_flags & LT_PFILE) {
 	    pfcopyback (pfp = currentask->t_pfp);
 	    if (currentask->t_ltp->lt_flags & LT_DEFPCK)
-		if ( (pkp = pacfind(currentask->t_ltp->lt_lname)) )
+		if ((pkp = pacfind(currentask->t_ltp->lt_lname)))
 		    if (pkp->pk_pfp == pfp)
 			pkp->pk_pfp = pfp->pf_oldpfp;
 	    for (pfp = pfp->pf_npset;  pfp != NULL;  pfp = pfp->pf_npset)
@@ -1216,7 +1216,7 @@ void
 printcall (FILE *fp, struct task *tp)
 {
 	register struct param *pp;
-	int	 notfirst = 0;
+	int	notfirst = 0;
 
 	fprintf (fp, "    %s (", tp->t_ltp->lt_lname);
 	for (pp = tp->t_pfp->pf_pp;  pp != NULL;  pp = pp->p_np) {

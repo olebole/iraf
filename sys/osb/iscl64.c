@@ -13,11 +13,11 @@
  */
 void
 ISCL64 (
-  XCHAR	*a,			/* input array			*/
-  XCHAR	*b,			/* output array			*/
-  XINT	*npix,			/* number of bytes to swap	*/
-  XDOUBLE *bscale,
-  XDOUBLE *bzero		/* scaling factors		*/
+    XCHAR     *a,		/* input array			*/
+    XCHAR     *b,		/* output array			*/
+    XINT     *npix,		/* number of bytes to swap	*/
+    XDOUBLE  *bscale,
+    XDOUBLE  *bzero 	        /* scaling factors		*/
 )
 {
     int   i, pix;

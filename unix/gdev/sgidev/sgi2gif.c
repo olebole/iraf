@@ -82,7 +82,7 @@ static int blue[]  = { DEF_BG, DEF_FG } ;
 static char *infile[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 static char *s_root = "sgigif_";
 
-static int	GIFNextPixel(void);
+static int  GIFNextPixel (void);
 static void 	BumpPixel(void), GIFEncode(FILE *fp, int GWidth, int GHeight, int GInterlace, int Background, int Bpp, int *Red, int *Green, int *Blue), Putword(int w, FILE *fp), compress(int init_bits, FILE *outfile);
 static void 	output(code_int code), cl_block(void), cl_hash(register count_int hsize), char_init(void);
 static void 	char_out(int c), flush_char(void), unpack1to8(byte *dest, byte *src, int len);
@@ -687,7 +687,7 @@ cl_hash(register count_int hsize)          /* reset code table */
 /* Set up the 'byte output' routine
  */
 static void
-char_init(void)
+char_init (void)
 {
 	register int i;
 

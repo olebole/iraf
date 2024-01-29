@@ -108,17 +108,17 @@ struct	sfile {
  */
 struct	sfile	*sf_dirsearch(char *dirname), *sf_filesearch(struct sfile *sflist, char *stname);
 struct	context *push_context(register struct context *cx, char *module, char *newdir, char *fname);
-struct	context *pop_context(register struct context *cx);
+struct  context *pop_context (register struct context *cx);
 char	*vfn2osfn(char *, int);
 char	*os_getenv(char *);
-char	*mklower(char *s);
-char	*getargs(register struct context *cx);
-char	*makeobj(char *fname);
-char	*getsym(char *name);
-char	*putstr(char *s);
+char    *mklower (char *s);
+char    *getargs (register struct context *cx);
+char    *makeobj (char *fname);
+char    *getsym( char *name);
+char    *putstr (char *s);
 long	os_fdate(char *);
-long	m_fdate(char *fname);
-char	*k_fgets(char *op, int maxch, register struct context *cx);
+long    m_fdate (char *fname);
+char    *k_fgets (char *op, int maxch, register struct context *cx);
 
 
 /*****************************************************************************/

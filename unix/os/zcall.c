@@ -52,7 +52,7 @@ int ZCALL4 (XINT *proc, void *arg1, void *arg2, void *arg3, void *arg4)
 }
 
 
-int ZCALL5 (XINT *proc, void *arg1, void *arg2, void *arg3, void *arg4,
+int ZCALL5 (XINT *proc, void *arg1, void *arg2, void *arg3, void *arg4, 
 	     void *arg5)
 {
 	return ((int(*)(void *, void *, void *, void *, void *))*proc)
@@ -61,14 +61,14 @@ int ZCALL5 (XINT *proc, void *arg1, void *arg2, void *arg3, void *arg4,
 
 
 int ZCALL6 (XINT *proc, void *arg1, void *arg2, void *arg3, void *arg4,
-	    void *arg5, void *arg6)
+	     void *arg5, void *arg6)
 {
 	return ((int(*)(void *, void *, void *, void *, void *, void *))*proc)
 	  (arg1, arg2, arg3, arg4, arg5, arg6);
 }
 
 
-int ZCALL7 (XINT *proc, void *arg1, void *arg2, void *arg3, void *arg4,
+int ZCALL7 (XINT *proc, void *arg1, void *arg2, void *arg3, void *arg4, 
 	     void *arg5, void *arg6, void *arg7)
 {
 	return ((int(*)(void *, void *, void *, void *,
@@ -96,7 +96,7 @@ int ZCALL9 (XINT *proc, void *arg1, void *arg2, void *arg3, void *arg4,
 
 
 int ZCALLA (XINT *proc, void *arg1, void *arg2, void *arg3, void *arg4,
-	     void *arg5, void *arg6, void *arg7, void *arg8, void *arg9,
+	     void *arg5, void *arg6, void *arg7, void *arg8, void *arg9, 
 	     void *arg10)
 {
 	return ((int(*)(void *, void *, void *, void *, void *,

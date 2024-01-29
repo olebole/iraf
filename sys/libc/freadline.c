@@ -21,9 +21,9 @@ freadline (
   char	*prompt				/* user supplied output buffer	*/
 )
 {
-	char  *cmd = (char *) NULL;
+	char   *cmd = (char *) NULL;
 	static char line[SZ_LINE];
-	char  *readline (char *prompt);
+	char   *readline (char *prompt);
 
 
 	memset (line, 0, SZ_LINE);

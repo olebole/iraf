@@ -17,7 +17,7 @@ c_open (
 )
 {
 	int	fd;
-	XINT  x_mode = mode, x_type = type;
+	XINT    x_mode = mode, x_type = type;
 
 	iferr (fd = (int) OPEN (c_sppstr(fname), &x_mode, &x_type))
 	    return (ERR);

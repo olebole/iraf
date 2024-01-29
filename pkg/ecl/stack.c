@@ -49,7 +49,7 @@ XINT basos = -1;		/* lowest legal index of operand stack	*/
  * call poptask() to pop tasks off the control stack.  We must be careful
  * to avoid having the compiler temporaries interfere with task frames.
  */
-void
+void 
 pushmem (memel v)
 {
 	if (topcs - 1 > topos)
@@ -63,7 +63,7 @@ pushmem (memel v)
 /* Pop top memory value off control stack and return it.
  * ==> no real err return, although it is checked.
  */
-memel
+memel 
 popmem (void)
 {
 	if (topcs < STACKSIZ)
@@ -77,7 +77,7 @@ popmem (void)
 /* PPush pushes an element onto the stack, but leaves the top
  * of the stack untouched.
  */
-void
+void 
 ppushmem (memel p)
 {
 	register memel	q;
@@ -110,7 +110,7 @@ ppushmem (memel p)
  *		    |--------------|
  *			...
  */
-struct operand
+struct operand 
 pushop (struct operand *op)
 {
 	struct operand  junk;
@@ -148,7 +148,7 @@ overflow:
  * set topos to top of stack; see diagram with pushop().
  * call error() and do not return if underflow.
  */
-struct operand
+struct operand 
 popop (void)
 {
 	struct operand  junk;
@@ -161,7 +161,7 @@ popop (void)
 	    return (*op);
 	}
 	cl_error (E_UERR, e_sunderflow);
-	/* NOTREACHED */
+/* NOTREACHED */
 	return (junk);
 }
 

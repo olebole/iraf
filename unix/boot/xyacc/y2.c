@@ -1711,7 +1711,7 @@ lrprnt (void)
 
 #ifdef XYACC_DEBUG 
 
-static void 
+static void
 beg_debug (void)
 {				/* dump initial sequence for fdebug file */
     (void) fprintf (fdebug, "typedef struct\n");
@@ -1727,7 +1727,7 @@ beg_debug (void)
 }
 
 
-static void 
+static void
 end_toks (void)
 {				/* finish yytoks array, get ready for yyred's strings */
     (void) fprintf (fdebug, "\t\"-unknown-\",\t-1\t/* ends search */\n");
@@ -1738,7 +1738,7 @@ end_toks (void)
 }
 
 
-static void 
+static void
 end_debug (void)
 {				/* finish yyred array, close file */
     lrprnt ();			/* dump last lhs, rhs */

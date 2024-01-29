@@ -31,7 +31,7 @@ extern	char fname[][SZ_PATHNAME];
 extern	int linenum[];
 extern	char *vfn2osfn(char *, int);
 extern	char *os_getenv(char *);
-char	*dottor(char *fname);
+char	*dottor (char *fname);
 
 extern  void ZZSTRT (void);
 extern  void ZZSTOP (void);

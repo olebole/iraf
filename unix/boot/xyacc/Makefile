@@ -6,7 +6,7 @@ xyacc.e: $(OBJS)
 install: xyacc.e
 	cp $? $(bindir)
 
-clean:
+clean :
 	rm -f $(OBJS) xyacc.e
 
 .PHONY: install clean

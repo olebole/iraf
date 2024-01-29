@@ -113,7 +113,7 @@ ppushmem (memel p)
 struct operand
 pushop (struct operand *op)
 {
-	struct operand  junk;
+	struct	operand junk;
 
 	if (topos + OPSIZ+1 < topcs) {
 	    int		lasttopos = topos;
@@ -151,7 +151,7 @@ overflow:
 struct operand
 popop (void)
 {
-	struct operand  junk;
+	struct	operand junk;
 
 	if (topos > basos) {
 	    struct	operand *op;

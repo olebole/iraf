@@ -90,10 +90,10 @@ void  d_declfunc (struct symbol *sp, FILE *fp);
  * several lines.  The symbol table is cleared whenever a new procedure
  * declaration is started.
  */
-void 
+void
 d_newproc (
-    char *name,			/* procedure name		*/
-    int dtype			/* procedure type (0 if subr)	*/
+  char	*name,			/* procedure name		*/
+  int	dtype			/* procedure type (0 if subr)	*/
 )
 {
 	register int	token;
@@ -407,8 +407,8 @@ d_makedecl (
 struct symbol *
 d_enter (
     char *name,			/* symbol name			*/
-    int dtype,			/* data type code		*/
-    int flags			/* flag bits			*/
+    int	  dtype,		/* data type code		*/
+    int	  flags			/* flag bits			*/
 )
 {
 	register struct	symbol *sp;
@@ -436,7 +436,7 @@ d_enter (
  */
 struct symbol *
 d_lookup (
-    char *name			/* symbol name			*/
+    char  *name			/* symbol name			*/
 )
 {
 	register struct	symbol *sp;
@@ -453,8 +453,8 @@ d_lookup (
 
 /* D_CHKSBUF -- Check for overflow on the string buffer.
  */
-void 
-d_chksbuf (void)
+void
+d_chksbuf(void)
 {
 	if (nextch > SPMAX)
 	    error (XPP_COMPERR, "decl string buffer overflow");
@@ -465,10 +465,10 @@ d_chksbuf (void)
  * value of the first character of the token as the function value.  EOF
  * is an error in this application, not a token.
  */
-int 
+int
 d_gettok (
     char *tokstr,		/* receives token string	*/
-    int maxch			/* max chars to token string	*/
+    int	  maxch		        /* max chars to token string	*/
 )
 {
 	register char 	*op = tokstr;

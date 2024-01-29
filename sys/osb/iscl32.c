@@ -17,7 +17,7 @@ ISCL32 (
     XCHAR	*b,		/* output array			*/
     XINT	*npix,		/* number of bytes to swap	*/
     XDOUBLE *bscale, 
-    XDOUBLE *bzero		/* scaling factors		*/
+    XDOUBLE *bzero	        /* scaling factors		*/
 )
 {
     int   i, pix;

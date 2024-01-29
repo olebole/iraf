@@ -410,11 +410,11 @@ static int dio_threshold  = DEF_DIOTHRESH;
 static int vm_port 	  = DEF_VMPORT;
 static char vm_client[SZ_CNAME+1];
 
-static void vm_initialize(void);
-static void vm_shutdown(void);
-static void vm_identify(void);
-static int vm_write(int fd, char *buf, int nbytes);
-static int vm_connect(void);
+static void vm_initialize (void);
+static void vm_shutdown (void);
+static void vm_identify (void);
+static int vm_write (int fd, char *buf, int nbytes);
+static int vm_connect (void);
 static int getstr(char **ipp, char *obuf, int maxch, int delim);
 
 

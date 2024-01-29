@@ -324,7 +324,7 @@ ieee0(Void)
 #define RQD_FPU_MASK (_FPU_MASK_OPERR+_FPU_MASK_DZ+_FPU_MASK_SNAN+_FPU_MASK_OVFL)
 
 #elif (defined(__powerpc__)||defined(_ARCH_PPC)||defined(_ARCH_PWR)) /* !__mc68k__ */
-    /* The following is NOT a mistake -- the author of the fpu_control.h
+/* The following is NOT a mistake -- the author of the fpu_control.h
      * for the PPC has erroneously defined IEEE mode to turn on exceptions
      * other than Inexact! Start from default then and turn on only the ones
      * which we want*/
@@ -374,11 +374,11 @@ ieee0(Void)
 static void ieee0(Void)
 {
 #ifdef RQD_FPU_STATE
-        
+
 #ifndef UNINIT_F2C_PRECISION_53 /* 20051004 */
         __fpu_control = RQD_FPU_STATE;
-        _FPU_SETCW(__fpu_control);
-#else 
+	_FPU_SETCW(__fpu_control);
+#else
 	/* unmask invalid, etc., and keep current rounding precision */
 	fpu_control_t cw;
 	_FPU_GETCW(cw);

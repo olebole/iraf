@@ -60,7 +60,7 @@ ZOSCMD (
 	sigaction (SIGINT, NULL, &oldact);
 
 	while ((pid =  fork()) == ERR)
-	  sleep (2);
+	    sleep (2);
 
 	if (pid == 0) {
 	    /* Child.

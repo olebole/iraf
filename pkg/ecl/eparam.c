@@ -86,11 +86,11 @@ static	struct ep_context *e_cx;	/* current context		      */
 /* These global variables are reset by parse_clmodes() in modes.c whenever the
  * appropriate CL parameter is changed.
  */
-int	ep_standout = YES;		/* eparam default for standout 	      */
-int	ep_showall  = NO;		/* display all params, incl. hiddens  */
-int	eh_standout = YES;		/* ehist default for standout         */
-int	eh_bol      = NO;		/* start ehist at beginning of line   */
-int	eh_verify   = NO;		/* use ehist with history meta-chars  */
+int	ep_standout 	= YES;		/* eparam default for standout 	      */
+int	ep_showall  	= NO;		/* display all params, incl. hiddens  */
+int	eh_standout 	= YES;		/* ehist default for standout         */
+int	eh_bol      	= NO;		/* start ehist at beginning of line   */
+int	eh_verify   	= NO;		/* use ehist with history meta-chars  */
 #ifdef NO_READLINE
 int	eh_readline 	= NO;		/* no readline() available here       */
 #else
@@ -102,16 +102,16 @@ char	*e_tonextword(), *e_toprevword();
 
 char	epar_cmdbuf[SZ_LINE];
 
-int eparam (struct ep_context *cx, int *update, int *nextcmd, char *nextpset);
+int   eparam (struct ep_context *cx, int *update, int *nextcmd, char *nextpset);
 
 /* EPSET -- Edit a parameter set.  Once in the parameter set editor, editor
  * colon commands may be used to edit any other parameter set, to save psets
  * in pfiles, load psets from pfiles, and so on.  ERR is returned if the user
  * wants to quit altogether, e.g., when epset is called in a loop.
  */
-int
+int 
 epset (
-  char	*pset			/* ltaskname or pfilename */
+    char *pset			/* ltaskname or pfilename */
 )
 {
 	struct  ep_context context[20], *cx;
@@ -200,12 +200,12 @@ epset (
  * structure, allowing the editor to be reentered at the same point
  * on the old pset.
  */
-int
+int 
 eparam (
-  struct ep_context *cx,		/* eparam editor context	*/
-  int	*update,			/* update pset upon exit	*/
-  int	*nextcmd,			/* receives next command	*/
-  char	*nextpset 			/* receives next pset name	*/
+    struct ep_context *cx,		/* eparam editor context	*/
+    int *update,		/* update pset upon exit	*/
+    int *nextcmd,		/* receives next command	*/
+    char *nextpset		/* receives next pset name	*/
 )
 {
 	char	string[G_MAXSTRING];
@@ -299,7 +299,7 @@ exit:
  * multiline prompt environment, we need a table of pointers to the firstline
  * of each keyword.
  */
-int
+int 
 e_makelist (
   struct pfile  *pfileptr
 )
@@ -402,10 +402,10 @@ e_makelist (
 /* E_TESTTOP -- Check to see if we have filled up a screen and if so,
  * start a new page.
  */
-int
+int 
 e_testtop (
-  int	cur,			/* current line count on screen */
-  int	new 			/* new count, returned if new page */
+    int cur,			/* current line count on screen */
+    int new			/* new count, returned if new page */
 )
 {
 	if (cur > (botline - topline + 1)) {
@@ -418,7 +418,7 @@ e_testtop (
 
 /* E_REPAINT -- Repaint the current screen.
  */
-void
+void 
 e_repaint (void)
 {
 	static	char *static_prompt = "--------- parameter array ---------";
@@ -492,11 +492,11 @@ e_repaint (void)
 
 /* E_PHEADER -- Print the EPARAM form header.
  */
-void
+void 
 e_pheader (
-  struct pfile *pfp,		/* pfile pointer		*/
-  int	cmdline,		/* terminal command line number	*/
-  int	maxcol 			/* max cols on a line		*/
+    struct pfile *pfp,		/* pfile pointer		*/
+    int cmdline,		/* terminal command line number	*/
+    int maxcol			/* max cols on a line		*/
 )
 {
 	static	char	*logo = "  I R A F  ";
@@ -561,7 +561,7 @@ e_pheader (
  * For maximum drawing speed output is optimized using line clears and screen 
  * gotos rather than blanks to erase and position text.
  */
-void
+void 
 e_drawkey (void)
 {
 	char	valuebuf[MAXPROMPT];
@@ -642,7 +642,7 @@ int	indent;
  * get several of the values.  If it is an array, make sure the undefined values
  * get a '***', without calling spparval (which would bomb).
  */
-void
+void 
 e_encode_vstring (
   struct param *pp,
   char	*outbuf
@@ -711,7 +711,7 @@ e_encode_vstring (
  * the array and check it.  Also check whether there are enough elements in the
  * array.  In any case, if gquery returns an error, report that to the user.
  */
-void
+void 
 e_check_vals (
   char    *string
 )
@@ -800,7 +800,7 @@ e_check_vals (
 
 /* E_UNDEF -- Recognize the undefined string of 3 asterisks.
  */
-int
+int 
 e_undef (
   register char *s
 )
@@ -820,7 +820,7 @@ static	char	message[SZ_LINE];	/* used by e_rpterror and e_clrerror */
 
 /* E_RPTERROR -- Report the error for the eparam user.
  */
-void
+void 
 e_rpterror (
   char	*errstr
 )
@@ -856,7 +856,7 @@ e_rpterror (
 
 /* E_CLRERROR -- Clear the error line, i.e. the last error message.
  */
-void
+void 
 e_clrerror (void)
 {
 	register int	i, len;
@@ -885,9 +885,9 @@ e_clrerror (void)
  */
 char *
 e_getfield (
-  register char	*ip,		/* pointer into input string	*/
-  char	*outstr,		/* receives token		*/
-  int	maxch 			/* max chars out		*/
+    register char *ip,		/* pointer into input string	*/
+    char *outstr,		/* receives token		*/
+    int maxch			/* max chars out		*/
 )
 {
 	register char	*op, *otop;
@@ -999,10 +999,10 @@ e_scrollit (void)
  * A 'return' or EXIT_UPDATE will execute the edited command.
  * An EXIT_NOUPDATE will not execute the edited command.
  */
-int
+int 
 edit_history_directive (
-  char	*args,			/* ehistory argument list */
-  char	*new_cmd 		/* the command to be executed after editing */
+    char *args,			/* ehistory argument list */
+    char *new_cmd		/* the command to be executed after editing */
 )
 {
 	static	char *firstchr[MAX_COMMANDS]; /*array of character pointers */
@@ -1146,10 +1146,10 @@ edit_history_directive (
 /* EDITSTRING -- A very limited string editor for interactive input.  The number
  * of characters in the edited string is returned as the function value.
  */
-int
+int 
 editstring (
-  char	*string,
-  int	eparam 				/* flag to indicate eparam or ehis  */
+    char *string,
+    int eparam				/* flag to indicate eparam or ehis  */
 )
 {
 	char	oldchar;		/* save old character after delete  */
@@ -1560,7 +1560,7 @@ editstring (
 /* E_TTYINIT -- Initialize the terminal, i.e., set raw mode and standout mode
  * (if enabled).  Get dimensions of terminal screen.
  */
-void
+void 
 e_ttyinit (void)
 {
 	/* Open the tty (termcap) descriptor for the terminal.
@@ -1601,7 +1601,7 @@ e_ttyinit (void)
  * does not exit when an invalid colon escape is entered.  EP_EOF is returned
  * as the function value if eparam is to exit.
  */
-int
+int 
 e_colon (void)
 {
 	register char	*ip, *op;
@@ -1806,7 +1806,7 @@ again_:
 /* E_PSETOK -- Verify that the named pfile exists and can be read.  Report
  * any problems to the user.
  */
-int
+int 
 e_psetok (
   char	*pset
 )
@@ -1884,7 +1884,7 @@ error_:
 
 /* E_PUTERR -- Put an error message on the command line.
  */
-void
+void 
 e_puterr (
   char	*errmsg
 )
@@ -1898,7 +1898,7 @@ e_puterr (
 /* E_TTYEXIT -- Turn off raw mode and standout mode and close the termcap
  * descriptor, leaving everything as we found it.
  */
-void
+void 
 e_ttyexit (void)
 {
 	c_fseti (fileno(stdin), F_RAW, NO);	/* unset raw mode */
@@ -1913,7 +1913,7 @@ e_ttyexit (void)
 
 /* E_MOVEUP -- Move the cursor up one line.
  */
-int
+int 
 e_moveup (
   int	eparam
 )
@@ -1950,7 +1950,7 @@ e_moveup (
 
 /* E_MOVEDOWN -- Move the cursor down one line.
  */
-int
+int 
 e_movedown (
   int	eparam
 )
@@ -2042,7 +2042,7 @@ e_toprevword (
 
 /* E_CTRL -- Send a control sequence to the terminal.
  */
-void
+void 
 e_ctrl (
   char	*cap
 )
@@ -2059,7 +2059,7 @@ e_ctrl (
 
 /* E_GOTO -- High level edcap version of ttygoto (cursor addressing).
  */
-void
+void 
 e_goto (
   int    col, 
   int    line
@@ -2072,7 +2072,7 @@ e_goto (
 /* E_PUTLINE -- Put a line of text to the terminal.  Do not map any embedded
  * control codes (bell will get lost).
  */
-void
+void 
 e_putline (
   char      *stwing
 )
@@ -2106,7 +2106,7 @@ e_putline (
 
 /* E_CLEAR -- Clear the screen (disables standout mode as a side effect).
  */
-void
+void 
 e_clear (void)
 {
 	c_ttyctrl (tty_fd, tty, "se", 1);
@@ -2117,7 +2117,7 @@ e_clear (void)
 
 /* E_CLRLINE -- Clear the current line.
  */
-void
+void 
 e_clrline (void)
 {
 	c_ttyclearln (tty_fd, tty);
@@ -2128,11 +2128,11 @@ e_clrline (void)
  * coordinates.  Each line is written starting at the same column on the
  * screen.
  */
-void
+void 
 e_display (
-  char	*string,		/* string to be printed		*/
-  int	sline, 
-  int   scol 			/* starting line and column	*/
+    char *string,		/* string to be printed		*/
+    int sline,
+    int scol		/* starting line and column	*/
 )
 {
 	e_displayml (string, sline, scol, scol);
@@ -2144,12 +2144,12 @@ e_display (
  * line begins with \r (CR) it will be displayed starting at column 1, rather
  * than starting at column scol.
  */
-void
+void 
 e_displayml (
-  char	*string,		/* string to be printed			*/
+    char *string,		/* string to be printed			*/
   int	sline, 			/* starting line and column		*/
   int   scol,
-  int	ccol 			/* start col of continuation lines	*/
+    int ccol			/* start col of continuation lines	*/
 )
 {
 	register char	*ip, *op;

@@ -199,7 +199,7 @@ loadenv (char *osfn)
 
 			if ((fp = fopen (vfn2osfn(fname,0), "r")) == NULL)
 			    break;
-		    }
+			}
 		    continue;
 		}
 

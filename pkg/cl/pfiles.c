@@ -40,7 +40,7 @@ static	void mapname();
  */
 struct pfile *
 newpfile (
-    struct ltask *ltp		/* ltask descriptor */
+  struct ltask *ltp 			/* ltask descriptor */
 )
 {
 	register struct pfile *pfp, *head_pfp;
@@ -69,7 +69,7 @@ newpfile (
  */
 void
 pfileunlink (
-    register struct pfile *pfp	/* pfile to be unlinked	*/
+  register struct pfile *pfp 	/* pfile to be unlinked	*/
 )
 {
 	register struct pfile *npf;
@@ -95,7 +95,7 @@ pfileunlink (
  */
 struct pfile *
 pfilefind (
-    register struct ltask *ltp		/* ltask descriptor */
+  register struct ltask *ltp 		/* ltask descriptor */
 )
 {
 	register struct pfile *pfp;
@@ -114,7 +114,7 @@ pfilefind (
  */
 struct pfile *
 pfilesrch (
-    char *pfilepath		/* filename or ltask pathname	*/
+  char	*pfilepath 		/* filename or ltask pathname	*/
 )
 {
 	struct	pfile *pfp;
@@ -154,7 +154,7 @@ pfilesrch (
  */
 struct pfile *
 pfileload (
-    register struct ltask *ltp		/* ltask descriptor */
+  register struct ltask *ltp 		/* ltask descriptor */
 )
 {
 	static	long sys_ftime = 0;
@@ -317,8 +317,8 @@ epset_:
  */
 int
 pfilemerge (
-    struct pfile *npf,			/* loaded parameter set	*/
-    char *opfile			/* old parameter file	*/
+  struct pfile *npf,			/* loaded parameter set	*/
+  char	*opfile 			/* old parameter file	*/
 )
 {
 	register struct param *o_pp, *n_pp, *l_pp;
@@ -423,7 +423,7 @@ pfilemerge (
  */
 void
 pfileupdate (
-    struct pfile *pfp		/* parameter file descriptor */
+  struct pfile *pfp 		/* parameter file descriptor */
 )
 {
 	if ((pfp->pf_flags & (PF_FAKE|PF_UPDATE)) != PF_UPDATE)
@@ -451,9 +451,9 @@ pfileupdate (
  */
 struct pfile *
 pfileread (
-    struct ltask *ltp,		/* associated ltask		*/
-    char *pfilename,		/* parameter file filename	*/
-    int checkmode		/* check for "mode" parameter	*/
+  struct ltask *ltp,		/* associated ltask		*/
+  char	*pfilename,		/* parameter file filename	*/
+  int	checkmode 		/* check for "mode" parameter	*/
 )
 {
 	register char	*ip;
@@ -467,7 +467,7 @@ pfileread (
 	if (cldebug)
 	    eprintf ("pfileread, task %s, pfile %s\n",
 		ltp ? ltp->lt_lname : "", pfilename);
-
+	    
 	if ((fp = fopen (pfilename, "r")) == NULL)
 	    return (NULL);
 
@@ -511,7 +511,7 @@ pfileread (
 		goto error_;
 
 	} else if (procscript (fp)) {
-	    extern int yyparse ();
+	    extern int yyparse();
 
 	    /* Parse the declarations section of a procedure script.
 	     * The procscript() call leaves us positioned to the procedure
@@ -596,8 +596,8 @@ error_:
  */
 int
 pfilewrite (
-    struct pfile *pfp,		/* pfile descriptor	*/
-    char *pfilename		/* file to be written	*/
+  struct pfile *pfp,		/* pfile descriptor	*/
+  char	*pfilename 		/* file to be written	*/
 )
 {
 	register char	*ip, *op, *dot;
@@ -752,11 +752,11 @@ is_pfilename (char *opstr)
  */
 void
 mkpfilename (
-    char *buf,			/* receives output filename	*/
-    char *dir,			/* dir name or prefix		*/
-    char *pkname,		/* package name			*/
-    char *ltname,		/* ltask name			*/
-    char *extn			/* filename extension		*/
+  char	*buf,			/* receives output filename	*/
+  char	*dir,			/* dir name or prefix		*/
+  char	*pkname,		/* package name			*/
+  char	*ltname,		/* ltask name			*/
+  char	*extn 			/* filename extension		*/
 )
 {
 	char	temp[SZ_FNAME+1];
@@ -805,8 +805,8 @@ mapname (char *in, char *out, int maxlen)
  */
 long
 filetime (
-    char *fname,			/* file name		*/
-    char *timecode		/* "c" or "m"		*/
+  char	*fname,			/* file name		*/
+  char	*timecode 		/* "c" or "m"		*/
 )
 {
 	struct	_finfo fi;

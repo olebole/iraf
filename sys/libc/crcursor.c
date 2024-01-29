@@ -17,7 +17,7 @@ c_rcursor (
 )
 {
 	XCHAR	buf[SZ_LINE];
-	XINT x_fd = fd, x_maxch = maxch;
+	XINT    x_fd = fd, x_maxch = maxch;
 	int	key;
 
 

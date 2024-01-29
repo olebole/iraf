@@ -130,7 +130,7 @@ if (deftask ("proto"))
 tv              # image display
 utilities       # miscellaneous utilities
 if (deftask ("noao"))
-    noao        # optical astronomy packages
+noao            # optical astronomy packages
 ;
 prcache directory
 cache   directory page type help

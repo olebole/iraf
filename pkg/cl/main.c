@@ -476,15 +476,15 @@ login (char *cmd)
 		compile (EXEC);
 	    }
 
-        } else {
+	} else {
 	    for (i = 0; loginfiles[i] != NULL; i++) {
 		c_fmapfn (loginfiles[i], loginfile, SZ_PATHNAME);
 		if (c_access (loginfile,0,0) == YES) {
-		    o.o_val.v_s = loginfile;
-		    compile (CALL, "cl");
-		    compile (PUSHCONST, &o);
-		    compile (REDIRIN);
-		    compile (EXEC);
+	    o.o_val.v_s = loginfile;
+	    compile (CALL, "cl");
+	    compile (PUSHCONST, &o);
+	    compile (REDIRIN);
+	    compile (EXEC);
 		    break;
 		}
 	    }

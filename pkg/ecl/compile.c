@@ -39,8 +39,8 @@ extern	int	cldebug, cltrace;
  */
 
 /*VARARGS1*/
-int
-compile (int opcode, ...)
+int 
+compile (int opcode, ... )
 {
 	register struct codeentry *cep;
 	register int status = OK;
@@ -99,7 +99,7 @@ compile (int opcode, ...)
 		register memel *argsaddr;
 		struct operand *op, *dp;
 
-		op = va_arg (argp, struct operand *);
+                op = va_arg (argp, struct operand *);
 		argsaddr = (memel *) &cep->c_args;
 		dp = (struct operand *) argsaddr;
 		*dp = *op;
@@ -169,7 +169,7 @@ compile (int opcode, ...)
 	 * entire switch block has been compiled.
 	 */
 	case SWITCH:
-		cep->c_length ++;
+		cep->c_length++;
 		break;
 
 
@@ -203,9 +203,9 @@ compile (int opcode, ...)
     	    d_instr (stderr, "\t", pc);
 
 	if (status != ERR) {
-		XINT oldpc = pc;
-		pc += cep->c_length;
-		return (oldpc);
+	    XINT oldpc = pc;
+	    pc += cep->c_length;
+	    return (oldpc);
 	}
 	return (ERR);
 }
@@ -216,7 +216,7 @@ compile (int opcode, ...)
  * taken up by string else ERR if no room.  
  * (comdstr() should be used to copy a string into the dictionary)
  */
-int
+int 
 comstr (register char *s, memel *loc)
 {
 	register char *to, *from;
@@ -245,7 +245,7 @@ comdstr (char *s)
  * only works, of course, if memneed() was not called since es was compiled
  * originally.
  */
-void
+void 
 catdstr (char *es, char *ns)
 {
 	int eslen = strlen (es) + 1;

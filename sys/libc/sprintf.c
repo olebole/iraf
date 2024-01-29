@@ -23,8 +23,8 @@ sprintf (char *str, char *format, ...)
 {
 	register XCHAR	*ip;
 	register char	*op;
-	XCHAR obuf[SZ_OBUF], *fiobuf;
-	XINT x_fd, x_maxch = SZ_OBUF, x_mode = NEW_FILE;
+	XCHAR   obuf[SZ_OBUF], *fiobuf;
+	XINT    x_fd, x_maxch = SZ_OBUF, x_mode = NEW_FILE;
 	va_list	argp;
 
 

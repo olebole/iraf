@@ -21,8 +21,8 @@ int	height			# nlines on screen (out)
 int	ttystati(), ttstati()
 
 begin
-	width = 0
-	height = 0
+		    width = 0
+		    height = 0
 
 	# Retrieve actual values when not in stty playback or record mode.
 	if (ttstati(in,TT_LOGIN) != YES && ttstati(in,TT_PLAYBACK) != YES)

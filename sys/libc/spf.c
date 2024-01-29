@@ -55,7 +55,7 @@ spf_close (
   XINT	fd			/* file descriptor of stringbuf	*/
 )
 {
-	XINT  x_fd = fd;
+	XINT    x_fd = fd;
 
 	CLOSE (&x_fd);
 	c_strpak (spf_buf, spf_userbuf, spf_maxch);

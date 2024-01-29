@@ -206,7 +206,7 @@ data	(ST0001(iyy),iyy= 9,14)	/111,114,108,100, 10, 0/
 begin
 #!# 10
 
-	call printf (ST0001)
+    call printf (ST0001)
 end
 
 

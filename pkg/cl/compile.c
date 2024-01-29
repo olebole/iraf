@@ -24,8 +24,8 @@
  */
 
 memel *dictionary;		/* base of dictionary			*/
-XINT   pc;			/* program-counter			*/
-XINT   topd, maxd;		/* current top and highest d. indices	*/
+XINT	 pc;			/* program-counter			*/
+XINT	 topd, maxd;		/* current top and highest d. indices	*/
 
 extern	int	cldebug;
 

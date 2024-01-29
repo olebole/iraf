@@ -509,9 +509,9 @@ search_history (char *directive, char *new_command_block)
  */
 int
 stredit (
-    char *edit_directive,		/* e.g., "^str1^str2^"		*/
-    char *in_text,			/* text to be edited		*/
-    char *out_text			/* buffer for output text	*/
+  char	*edit_directive,		/* e.g., "^str1^str2^"		*/
+  char	*in_text,			/* text to be edited		*/
+  char	*out_text 			/* buffer for output text	*/
 )
 {
 	register char *ip, *op, *pp;
@@ -698,8 +698,8 @@ expand_history_macros (char *in_text, char *out_text)
  */
 int
 get_arglist (
-    char *cmdblk,		/* buffer to store argument list in	*/
-    char *argp[]		/* receives argument pointers		*/
+  char	*cmdblk,		/* buffer to store argument list in	*/
+  char	*argp[] 		/* receives argument pointers		*/
 )
 {
 	register char	*cp;
@@ -1031,8 +1031,8 @@ reset_logfile (void)
  */
 void
 print_command (
-    register FILE *fp,
-    char *command,
+  register FILE	*fp,
+  char	*command,
     char *marg1,
     char *marg2		/* margin strings of first and subseq. cmds */
 )
@@ -1075,8 +1075,8 @@ what_record (void)
  */
 void
 putlog (
-    struct task *tp,		/* pointer to task or NULL */
-    char *usermsg
+  struct task  *tp,		/* pointer to task or NULL */
+  char	*usermsg 
 )
 {
 	register char	*ip, *op, *otop;
