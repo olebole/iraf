@@ -43,7 +43,10 @@
 #define	RIGHTSIDE	1
 
 char *
-strint (register char *s, int side)
+strint (
+    register char  *s,
+    int	  side
+)
 {
 	if (side == LEFTSIDE) {
 	    while (isdigit (*s))
@@ -249,6 +252,7 @@ binop (int opcode)
 
 		    break;
 		}
+
 
 	    case OP_RADIX:
 		if (typ1 == OT_STRING) {

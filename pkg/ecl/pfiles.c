@@ -1179,6 +1179,7 @@ addparam (struct pfile *pfp, char *buf, FILE *fp)
 	bastype = pp->p_type & OT_BASIC;
 	arrflag = pp->p_type & PT_ARRAY;
 
+
 	/* P_MODE */
 
 	if ((s = nextfield (tbuf, fp)) == NULL) {

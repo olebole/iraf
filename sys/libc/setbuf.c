@@ -37,7 +37,6 @@ setbuffer (
 {
 	register XINT	fd = fileno(fp);
 
-
 	if (buf == NULL)
 	    c_fseti (fd, F_BUFSIZE, 1);
 	else {

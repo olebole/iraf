@@ -72,7 +72,9 @@ extern	char *ifseen;		/* Processing an IF statement?		*/
  * the logfile.
  */
 int
-yy_getc (FILE *fp)
+yy_getc (
+  FILE	*fp
+)
 {
 	register char ch;
 
@@ -95,7 +97,9 @@ yy_getc (FILE *fp)
  * interrupted.
  */
 void
-yy_startblock (int logflag)
+yy_startblock (
+  int	logflag
+)
 {
 	register char *ip;
 
@@ -164,7 +168,9 @@ curcmd (void)
  *   or by a call to yy_startblock.
  */
 int
-get_command (FILE *fp)
+get_command (
+  FILE	*fp
+)
 {
 	register char *ip, *op;
 	char	raw_cmd[SZ_LINE+1];	/* buffer for raw command line	*/
@@ -353,7 +359,10 @@ input_:
  * is appended to the new command block.
  */
 int
-process_history_directive (char *directive, char *new_command_block)
+process_history_directive (
+  char	*directive,
+  char	*new_command_block
+)
 {
 	register char *ip, *op, *p;
 	char	last_command_block[SZ_CMDBLK+1];
@@ -434,7 +443,10 @@ process_history_directive (char *directive, char *new_command_block)
  * matches anything.
  */
 int
-search_history (char *directive, char *new_command_block)
+search_history (
+  char	*directive,
+  char	*new_command_block
+)
 {
 	register char *ip, *op, *p;
 	char	pattern[SZ_FNAME];
@@ -612,7 +624,10 @@ stredit (
  * The function returns true if any macros were expanded.
  */
 int
-expand_history_macros (char *in_text, char *out_text)
+expand_history_macros (
+  char	*in_text,
+  char	*out_text
+)
 {
 	register char *ip, *op, *ap;
 	char	cmdblk[SZ_CMDBLK+1], *argp[100];
@@ -766,7 +781,11 @@ put_history (char *command)
  * returning OK if found, ERR otherwise.
  */
 int
-get_history (int record, char *command, int maxch)
+get_history (
+  int	record,
+  char	*command,
+  int	maxch 
+)
 {
 	char	*recptr;
 	char	*find_history();
@@ -786,7 +805,11 @@ get_history (int record, char *command, int maxch)
  * well behaved linear rather than circular buffer).
  */
 void
-fetch_history (char *recptr, char *command, int maxch)
+fetch_history (
+  char	*recptr,
+  char	*command,
+  int	maxch 
+)
 {
 	register char	*ip, *op, *itop;
 	register int	n;
@@ -879,7 +902,10 @@ find_history (int record)
  * Show at most min (max_commands, MAX_SHOWHIST) command blocks.
  */
 void
-show_history (FILE *fp, int max_commands)
+show_history (
+  FILE	*fp,
+  int	max_commands
+)
 {
 	char	*recptr[MAX_SHOWHIST];
 	char	cmdblk[SZ_CMDBLK+1];
@@ -915,7 +941,9 @@ show_history (FILE *fp, int max_commands)
  * if menus() are enabled and a new package has been invoked.
  */
 void
-pprompt (register char *string)
+pprompt (
+  register char *string
+)
 {
 	static	struct package *lastpack = NULL;
 
@@ -1033,8 +1061,8 @@ void
 print_command (
   register FILE	*fp,
   char	*command,
-    char *marg1,
-    char *marg2		/* margin strings of first and subseq. cmds */
+  char	*marg1,  		/* margin strings of first and subseq. cmds */
+  char  *marg2
 )
 {
 	register char *ip;

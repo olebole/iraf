@@ -78,6 +78,7 @@ effmode (struct param *pp)
 	int	clmode, ltmode, pkmode, offset;
 	int	interactive;
 
+
 	/* Check if param is a local variable.  If it is undefined
 	 * this is an ERR, if defined just return mode 0 to defeat
 	 * querying.

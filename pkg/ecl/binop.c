@@ -88,6 +88,7 @@ binop (int opcode)
 	extern  int errorline, err_abort, err_trace, do_error;
 	extern  ErrCom errcom;
 
+
 	o2 = popop();		/* operands will be on stack backwards	*/
 	o1 = popop();
 	typ1 = o1.o_type & OT_BASIC;
@@ -544,6 +545,7 @@ binop (int opcode)
 			    cl_error (E_UERR, e_fdivzero, opcode, "binop()");
 		    } else
 			dresult = VALU(&o1) / VALU(&o2); 
+
 		} else {
 		    if (o2.o_val.v_i == 0) {
 			if (err_abort == NO || do_error == NO) {

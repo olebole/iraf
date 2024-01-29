@@ -964,6 +964,7 @@ o_gsredir (memel *argp)
 	    }
 }
 
+
 void 
 o_doaddpipe (memel *argp)
 {
@@ -1236,6 +1237,7 @@ o_doswitch (memel *argp)
 	 * next statement which is a branch beyond the SWITCH.
 	 */
 }
+
 
 void 
 o_swoff (memel *argp)

@@ -59,6 +59,7 @@ ZDVALL (
 {
 	PKCHAR	cmd[SZ_LINE+1], nullstr[1];
 
+
 	/* Syntax: $host/hlib/alloc.e -[ad] aliases
 	 */
 	strcpy ((char *)cmd, irafpath(ALLOCEXE));
@@ -188,6 +189,7 @@ u_allocstat (
 {
 	PKCHAR	cmd[SZ_LINE+1], nullstr[1];
 	XINT	x_status;
+
 
 	/* Syntax: $host/hlib/alloc.e -s aliases
 	 */

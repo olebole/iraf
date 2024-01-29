@@ -729,6 +729,7 @@ char *yysptr = yysbuf;
 int *yyfnd;
 extern struct yysvf *yyestate;
 int yyprevious = YYNEWLINE;
+
 int
 yylook (void){
 	register struct yysvf *yystate, **lsp;
@@ -878,6 +879,7 @@ yylook (void){
 # endif
 		}
 	}
+
 int
 yyback(int *p, int m)
 {

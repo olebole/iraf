@@ -23,8 +23,9 @@
  * the system files, e.g., for testing purposes.
  */
 char *
-irafpath (char *fname)
-            			/* simple filename, no dirs */
+irafpath (
+    char  *fname		/* simple filename, no dirs */
+)
 {
 	static	char pathname[SZ_PATHNAME+1];
 	PKCHAR	ulibs[SZ_ULIBSTR+1];
@@ -34,6 +35,7 @@ irafpath (char *fname)
 	XINT	sz_ulibs=SZ_ULIBSTR;
 	XINT	x_maxch=SZ_LINE, x_status;
 	char	*ip, *op, *irafarch;
+
 
 	/* Search any user libraries first. */
 	strcpy ((char *)ldir, ULIB);

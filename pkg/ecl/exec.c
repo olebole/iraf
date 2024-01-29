@@ -1217,6 +1217,7 @@ oneof (void)
 	extern  ErrCom	errcom;
 	extern  int 	err_clear;
 
+	    
 	if (cldebug)
 	    eprintf ("received `%s' from `%s'\n", yeof ? "eof" : "bye",
 		currentask == firstask ? "root" : currentask->t_ltp->lt_lname);
@@ -1301,6 +1302,7 @@ printcall (FILE *fp, struct task *tp)
 	    tp->t_ltp->lt_flags);
 
 	fprintf (fp, "     called as: `%s (", tp->t_ltp->lt_lname);
+
 	for (pp = tp->t_pfp->pf_pp;  pp != NULL;  pp = pp->p_np) {
 	    if (pp->p_flags & P_CLSET) {
 		if (notfirst)

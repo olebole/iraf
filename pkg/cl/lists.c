@@ -34,7 +34,9 @@ extern	int	cldebug;
  * Call error() if get ferror while reading or can't open list file.
  */
 struct operand
-readlist (struct param *pp)
+readlist (
+  struct param *pp
+)
 {
 	struct	operand result;
 	int	bastype;
@@ -113,7 +115,9 @@ again:	    fgets (line, SZ_LINE, pp->p_listfp);
  * already closed and that we're not closing the real stdin.
  */
 void
-closelist (register struct param *pp)
+closelist (
+  register struct param *pp
+)
 {
 	if (pp->p_listfp != NULL) {
 	    if (pp->p_listfp != stdin)

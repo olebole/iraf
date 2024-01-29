@@ -54,7 +54,10 @@ static	int nscan_val=0;	/* value returned by NSCAN intrinsic	*/
  * error() may be called on various conditions.
  */
 void
-cl_scan (int nargs, char *source)
+cl_scan (
+  int	nargs,
+  char	*source
+)
 {
 	char	buf[SZ_LINE];
 	char	*bp, *start, c;
@@ -197,7 +200,11 @@ cl_scan (int nargs, char *source)
  * statement is used to decode the input text.
  */
 void
-cl_scanf (char *format, int nargs, char *input)
+cl_scanf (
+  char	*format,
+  int	nargs,
+  char	*input
+)
 {
 	int	nscan_val, eoftst, n;
 	char	*pk, *t, *p, *f;
@@ -330,7 +337,9 @@ get_nscanval (void)
  * buffer.
  */
 void
-lentst (char *buf)
+lentst (
+  char	*buf
+)
 {
 	char	*bp;
 

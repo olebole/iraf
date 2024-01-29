@@ -340,6 +340,7 @@ show_editorhelp (void)
 	int	center, maxcols, firstcol, lastcol, nstrs, i;
 	int	save_raw;
 
+
 	maxcols = c_envgeti ("ttyncols");
 	center = maxcols / 2;
 

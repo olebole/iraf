@@ -177,6 +177,7 @@ get_command (FILE *fp)
 	char	new_cmd[SZ_CMDBLK+1];	/* temporary for processed cmd	*/
 	int	execute=1, temp, status;
 
+
 	if (!(currentask->t_flags & T_INTERACTIVE)  ||
 	    parse_state == PARSE_PARAMS) {
 
@@ -670,6 +671,7 @@ expand_history_macros (char *in_text, char *out_text)
 	register char *ip, *op, *ap;
 	char	cmdblk[SZ_CMDBLK+1], *argp[100];
 	int	nargs=0, nrep=0, argno=0, have_arg_strings=0;
+
 
 	/* Copy the command text.  Fetch argument strings from history only
 	 * if a history macro is found.  Otherwise the copy is very fast.

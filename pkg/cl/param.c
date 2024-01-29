@@ -49,7 +49,12 @@ char	*loc_field = "Attempt to access undefined field in local variable %s.\n";
  *   Depend on this and don't check for ERR; beware if change it.
  */
 struct param *
-paramfind (struct pfile *pfp, char *pname, int pos, int exact)
+paramfind (
+  struct pfile *pfp,
+  char	*pname,
+  int	pos, 
+  int   exact
+)
 {
 	register char first_char;
 	register struct	param *pp;
@@ -139,7 +144,10 @@ paramfind (struct pfile *pfp, char *pname, int pos, int exact)
  *	order of interpolator (3|5|7) (5):
  */
 void
-paramset (register struct param *pp, char field)
+paramset (
+  register struct param *pp,
+  char	field
+)
 {
 	struct	operand o;
 	int	bastype;	/* OT_BASIC portion of p_type		*/
@@ -359,7 +367,10 @@ paramset (register struct param *pp, char field)
  * or if pp is out of range.  Call error if return value would be undefined.
  */
 void
-validparamget (register struct param *pp, char field)
+validparamget (
+  register struct param *pp,
+  char	field
+)
 {
 	struct operand o;
 
@@ -380,7 +391,10 @@ validparamget (register struct param *pp, char field)
  * is out of range.  Value returned may be undefined.
  */
 void
-paramget (register struct param *pp, char field)
+paramget (
+  register struct param *pp,
+  char	field
+)
 {
 	char	mode[5];	/* used to turn bits into string	*/
 	struct	operand result;
@@ -588,7 +602,6 @@ paramget (register struct param *pp, char field)
 	 */
 	if ((result.o_type & OT_BASIC) == OT_STRING &&
 	    *result.o_val.v_s == PF_INDIRECT) {
-
 	    char	redir[SZ_FNAME];
 	    struct	param *np;
 	    char	*pk, *t, *p, *f;
@@ -633,7 +646,10 @@ paramget (register struct param *pp, char field)
  * (impossible) worse case.
  */
 void
-makemode (struct param *pp, char *s)
+makemode (
+  struct param *pp,
+  char	*s
+)
 {
 	register int m = pp->p_mode;
 
@@ -657,7 +673,9 @@ makemode (struct param *pp, char *s)
  * Null out all unused fields except the three union values.
  */
 struct param *
-newparam (struct pfile *pfp)
+newparam (
+  struct pfile *pfp
+)
 {
 	register struct param *newpp;
 
@@ -702,7 +720,11 @@ newparam (struct pfile *pfp)
  * Call error() and do not return if cannot find it.
  */
 struct param *
-paramsrch (char *pkname, char *ltname, char *pname)
+paramsrch (
+  char	*pkname, 
+  char  *ltname, 
+  char  *pname
+)
 {
 	register struct param *pp;
 	struct	pfile *pfp;
@@ -795,7 +817,11 @@ defvar (char *envvar)
  * Called by PARAMSRCH and by DEFPAR.
  */
 struct param *
-lookup_param (char *pkname, char *ltname, char *pname)
+lookup_param (
+  char	*pkname, 
+  char  *ltname, 
+  char  *pname
+)
 {
 	register struct param *pp;
 	register struct package *pkp;
@@ -1187,7 +1213,10 @@ printparam (struct param *pp, register FILE *fp)
  * sequences, so that they can later be read back in unmodified.
  */
 void
-qputs (register char *str, register FILE *fp)
+qputs (
+  register char	*str,
+  register FILE	*fp
+)
 {
 	register char	ch;
 
@@ -1232,7 +1261,10 @@ qputs (register char *str, register FILE *fp)
  * value.
  */
 int
-pvaldefined (struct param *pp, char *s)
+pvaldefined (
+  struct param *pp,
+  char	*s
+)
 {
 	int val;
 
@@ -1305,7 +1337,9 @@ newfakeparam (
  * for using the index values stored on the stack.
  */
 int
-getoffset (struct param *pp)
+getoffset (
+  struct param	*pp
+)
 {
 	int	dim, offset, index;
 	short	*plen, *poff, len, off;
@@ -1367,7 +1401,9 @@ offsetmode (int mode)
 /* SIZE_ARRAY -- Get the number of elements in an array.
  */
 int
-size_array (struct param *pp)
+size_array (
+  struct param *pp
+)
 {
 	int dim, d, size;
 	short *len;

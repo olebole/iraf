@@ -156,9 +156,6 @@ static char *getblock (int in);
 
 
 
-
-
-
 /* MAIN -- "rtar [xtvlef] [names]".  The default operation is to extract all
  * files from the tar format standard input in quiet mode.
  */
@@ -638,6 +635,7 @@ newfile (
 	int	fd;
 	char	*cp;
 
+
 	if (len_pathprefix && strncmp(fname,pathprefix,len_pathprefix) == 0)
 	    fname += len_pathprefix;
 
@@ -681,6 +679,7 @@ checkdir (
 )
 {
 	register char	*cp;
+
 
 	/* Quick check to see if the directory exists.
 	 */

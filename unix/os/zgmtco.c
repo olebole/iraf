@@ -13,6 +13,7 @@
 
 #define SECONDS_1970_TO_1980    315532800L
 
+
 /* ZGMTCO -- Return the correction, in seconds, from local standard time
  * (clock time) to GMT.   GMT = LST + gmtco (seconds), or gmtco = GMT-LST.
  */

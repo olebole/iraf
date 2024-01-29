@@ -48,7 +48,10 @@ XINT pachead;			/* dict index of first package		*/
  *   to clpackage; see clpkg().
  */
 struct ltask *
-cmdsrch (char *pkname, char *ltname)
+cmdsrch (
+  char	*pkname, 
+  char  *ltname
+)
 {
 	register struct ltask *ltp = NULL;
 	register struct package *pkp, *pkcand;
@@ -126,7 +129,10 @@ cmdsrch (char *pkname, char *ltname)
  *   error.
  */
 struct ltask *
-ltasksrch (char *pkname, char *ltname)
+ltasksrch (
+  char	*pkname, 
+  char  *ltname
+)
 {
 	struct	ltask *ltp;
 	struct	package *pkp;
@@ -152,7 +158,11 @@ ltasksrch (char *pkname, char *ltname)
 /* _LTASKSRCH -- Same as ltasksrch(), except that cl_error is not called.
  */
 struct ltask *
-_ltasksrch (char *pkname, char *ltname, struct package **o_pkp)
+_ltasksrch (
+  char	*pkname, 
+  char  *ltname,
+  struct package **o_pkp
+)
 {
 	register struct ltask *ltp, *ltcand;
 	register struct package *pkp;
@@ -227,7 +237,9 @@ _ltasksrch (char *pkname, char *ltname, struct package **o_pkp)
  * NULL if not found.
  */
 struct package *
-pacfind (char *name)
+pacfind (
+  char	*name
+)
 {
 	struct	package *pkp;
 	struct	package *candidate;
@@ -262,7 +274,9 @@ pacfind (char *name)
  * Call error if an ambiguous abbreviation is given.
  */
 int
-defpac (char *pkname)
+defpac (
+  char	*pkname
+)
 {
 	switch ((XINT)pacfind (pkname)) {
 	case 0:
@@ -323,7 +337,9 @@ ltaskfind (
  * the usual path.  Call error if an ambiguous abbreviation is given.
  */
 int
-deftask (char *task_spec)
+deftask (
+  char	*task_spec
+)
 {
 	char	buf[SZ_LINE];
 	char	*pkname, *ltname, *junk;
@@ -396,7 +412,12 @@ taskunwind (void)
  * N.B. ptname and ltname may be changed IN PLACE to simplify suffix tests.
  */
 struct ltask *
-addltask (struct package *pkp, char *ptname, char *ltname, int redef)
+addltask (
+  struct package *pkp,
+  char	*ptname, 
+  char *ltname,
+  int	redef
+)
 {
 	register char *cp;
 	register struct ltask *ltp;
@@ -484,7 +505,12 @@ addltask (struct package *pkp, char *ptname, char *ltname, int redef)
  * Null out all unused fields.
  */
 struct ltask *
-newltask (register struct package *pkp, char *lname, char *pname, struct ltask *oldltp)
+newltask (
+  register struct package *pkp,
+  char	*lname, 
+  char  *pname,
+  struct ltask *oldltp
+)
 {
 	register struct ltask *ltp, *newltp;
 
@@ -531,7 +557,10 @@ link:
  * call error() if no core or if name already exists.
  */
 struct package *
-newpac (char *name, char *bin)
+newpac (
+  char *name,
+  char *bin
+)
 {
 	register struct package *pkp;
 

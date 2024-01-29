@@ -176,7 +176,10 @@ MBCLIT *mbchars = (MBCLIT *) 0;	/* array of mb literals */
 int nmbcharsz = 0;		/* allocated space for mbchars */
 
 void
-setup (int argc, char **argv)
+setup (
+     int argc,
+     char *argv[]
+)
 {
     int ii, i, j, lev, t, ty;
     /* ty is the sequencial number of token name in tokset */
@@ -1585,8 +1588,9 @@ lhsfill (char *s)			/* new rule, dump old (if exists), restart strings */
 }
 
 static void
-rhsfill (char *s)
-             			/* either name or 0 */
+rhsfill (
+     char *s			/* either name or 0 */
+)
 {
     static char *loc;		/* next free location in rhstext */
     static int rhs_len = RHS_TEXT_LEN;
@@ -1875,7 +1879,6 @@ exp_mem (int flag)
 
 static int
 findchtok (int chlit)
-               
 /*
  * findchtok(chlit) returns the token number for a character literal
  * chlit that is "bigger" than 255 -- the max char value that the

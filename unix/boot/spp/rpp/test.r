@@ -86,6 +86,7 @@ define	TY_UBYTE	12
 
 define	INDEFS		(-32767)
 define	INDEFL		(-2147483647)
+
 define	INDEFI		INDEFL
 define	INDEFR		1.6e38
 define	INDEFD		1.6d308

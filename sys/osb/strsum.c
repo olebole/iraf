@@ -10,7 +10,6 @@
 /**
  *  STRSUM -- Compute the 32-bit checksum of an SPP string.
  */
-
 int
 STRSUM (XCHAR *array, XINT *length, XINT *maxch)
 {
@@ -57,7 +56,6 @@ STRSUM (XCHAR *array, XINT *length, XINT *maxch)
 /**
  *  STRSUM -- Compute the 32-bit checksum of an SPP string.
  */
-
 int
 STRSUM (XCHAR *array, XINT *length, XINT *maxch)
 {

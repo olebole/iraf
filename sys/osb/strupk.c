@@ -17,7 +17,11 @@
  * do nothing.
  */
 void
-STRUPK (PKCHAR *instr, XCHAR *outstr, XINT *maxch)
+STRUPK (
+    PKCHAR  *instr,
+    XCHAR   *outstr,
+    XINT    *maxch
+)
 {
 	register char	*ip = (char *)instr;
 	register XCHAR	*op = outstr;

@@ -68,7 +68,9 @@ int	cllogmode = LOG_COMMANDS;	/* Logging control flag */
  *   values are undefined.
  */
 int
-effmode (struct param *pp)
+effmode (
+  struct param *pp
+)
 {
 	static	char	*localerr =
 		"Attempt to access undefined local variable `%s'.\n";
@@ -192,7 +194,9 @@ effmode (struct param *pp)
 /* TASKMODE -- Determine the effective mode for a task.
  */
 int
-taskmode (register struct task *tp)
+taskmode (
+  register struct task *tp
+)
 {
 	register int	modebits, mode;
 	struct	pfile *pfp;
@@ -260,7 +264,9 @@ taskmode (register struct task *tp)
  *   get no response, we timeout.
  */
 void
-query (struct param *pp)
+query (
+  struct param *pp
+)
 {
 	static	char *oormsg =
 		"ERROR: Parameter value is out of range; try again";
@@ -529,13 +535,17 @@ testval:
 		n_ele++;
 	    }
 	}
+
 }
 
 
 /* NEXTSTR -- Get the next string in a prompt.
  */
 char *
-nextstr (char **pbuf, FILE *fp)
+nextstr (
+  char	**pbuf,
+  FILE	*fp
+)
 {
 	char	*p, *nxtchr();
 	static	char	tbuf[SZ_LINE];
@@ -615,7 +625,10 @@ nextstr (char **pbuf, FILE *fp)
 /* NXTCHR -- Get a pointer to the next char, reading the next line if necessary.
  */
 char *
-nxtchr (char *p, FILE *fp)
+nxtchr (
+  char	*p,
+  FILE	*fp
+)
 {
 	/* P may point to within readbuf on return, so it had better be
 	 * static.
@@ -646,7 +659,10 @@ start:
 /* PQUERY -- Print the query message.
  */
 void
-pquery (register struct param *pp, FILE *fp)
+pquery (
+  register struct param *pp,
+  FILE	*fp
+)
 {
 	struct	operand o;
 	int	offset=0, arrflag=0;
@@ -863,7 +879,12 @@ service_bkgquery (
  * job and then change uparm$ in the foreground cl.
  */
 void
-get_bkgqfiles (int bkgno, int pid, char *bkg_query_file, char *query_response_file)
+get_bkgqfiles (
+  int	bkgno, 
+  int   pid,
+  char	*bkg_query_file, 
+  char  *query_response_file
+)
 {
 	int	filecode;
 	char	*envget();
@@ -891,7 +912,10 @@ get_bkgqfiles (int bkgno, int pid, char *bkg_query_file, char *query_response_fi
  * This routine uses binexp() and thus the operand stack.
  */
 int
-inrange (register struct param *pp, register struct operand *op)
+inrange (
+  register struct param *pp,
+  register struct operand *op
+)
 {
 	register int fulltype, bastype;
 	struct	operand omin, test;
@@ -1003,7 +1027,9 @@ inrange (register struct param *pp, register struct operand *op)
  * is disabled.
  */
 int
-range_check (struct param *pp)
+range_check (
+  struct param *pp
+)
 {
 	int	fulltype, bastype;
 	struct	operand test, omin, omax;
@@ -1045,7 +1071,9 @@ range_check (struct param *pp)
  * been read in.
  */
 void
-setclmodes (struct task *tp)
+setclmodes (
+  struct task *tp
+)
 {
 	register struct param *pp;
 	register char *name;
@@ -1108,7 +1136,10 @@ setclmodes (struct task *tp)
  * delimited.
  */
 void
-parse_clmodes (struct param *pp, struct operand *newval)
+parse_clmodes (
+  struct param	*pp,
+  struct operand *newval
+)
 {
 	register char  *name, *ip;
 

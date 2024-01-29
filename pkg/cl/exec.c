@@ -97,7 +97,9 @@ run (void)
  *   Any parameter references will refer to the cl's also.
  */
 void
-callnewtask (char *name)
+callnewtask (
+  char	*name
+)
 {
 	/* x1 and x2 are just place holders to call breakout().
 	 */
@@ -783,7 +785,9 @@ findexe (
  * control stack but continue reading from the current command stream.
  */
 void
-set_clio (register struct task *newtask)
+set_clio (
+  register struct task *newtask
+)
 {
 	register struct task *tp;
 
@@ -929,7 +933,9 @@ psetreload (
  *   it might call us again and cause an inf. loop.
  */
 void
-iofinish (register struct task *tp)
+iofinish (
+  register struct task *tp
+)
 {
 	register FILE *fp;
 	int	flags;
@@ -1018,7 +1024,9 @@ iofinish (register struct task *tp)
  *   The way posargset, et al, and call/execnewtask are now, we are safe.
  */
 void
-restor (struct task *tp)
+restor (
+  struct task *tp
+)
 {
 	memel *topdp;
 	register struct ltask *ltp;
@@ -1251,7 +1259,9 @@ printcall (FILE *fp, struct task *tp)
  *   again.
  */
 void
-killtask (register struct task *tp)
+killtask (
+  register struct task *tp
+)
 {
 	char	buf[128];
 

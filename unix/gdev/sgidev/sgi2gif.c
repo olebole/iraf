@@ -256,7 +256,17 @@ static int	Interlace;
  */
 
 static void
-GIFEncode (FILE *fp, int GWidth, int GHeight, int GInterlace, int Background, int Bpp, int *Red, int *Green, int *Blue)
+GIFEncode (
+    FILE *fp,
+    int	  GWidth, 
+    int   GHeight,
+    int	  GInterlace,
+    int	  Background,
+    int	  Bpp,
+    int	  Red[], 
+    int   Green[], 
+    int   Blue[]
+)
 {
 	int	B;
 	int	RWidth, RHeight;
@@ -484,8 +494,12 @@ static unsigned long	masks[] = {
 static int a_count; 	    /* Number of characters so far in this 'packet'  */
 static char accum[256];     /* Define the storage for the packet accumulator */
 
+
 static void
-compress (int init_bits, FILE *outfile)
+compress (
+    int	  init_bits,
+    FILE *outfile
+)
 {
 	register long	fcode;
 	register code_int i /* = 0 */;
@@ -650,8 +664,7 @@ cl_block (void)             /* table clear for block compress */
 }
 
 static void
-cl_hash(register count_int hsize)          /* reset code table */
-                         
+cl_hash(count_int hsize)          /* reset code table */
 {
 
 	register count_int *htab_p = htab + hsize;
@@ -706,6 +719,7 @@ char_out (int c)
 	if (a_count >= 254)
 	    flush_char();
 }
+
 
 /* Flush the packet to disk, and reset the accumulator */
 static void

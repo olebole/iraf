@@ -183,7 +183,9 @@ bkg_spawn (
  * all bkg jobs to terminate.
  */
 void
-bkg_wait (register int job)
+bkg_wait (
+  register int	job
+)
 {
 	register int	j;
 	int	active_jobs;
@@ -211,7 +213,9 @@ bkg_wait (register int job)
  * If the job cannot be killed assume it is because it died unexpectedly.
  */
 void
-bkg_kill (int job)
+bkg_kill (
+  int	job
+)
 {
 	register struct _bkgjob *bk;
 	register int	j;
@@ -308,7 +312,9 @@ bkg_jobstatus (
  * service.
  */
 int
-bkg_jobactive (int job)
+bkg_jobactive (
+  int	job
+)
 {
 	bkg_update (1);
 	return (busy (job));
@@ -383,7 +389,9 @@ bkg_close (
  * user to answer a query).
  */
 int
-bkg_wfservice (int job)
+bkg_wfservice (
+  int	job
+)
 {
 	char	bkg_query_file[SZ_PATHNAME];
 	char	query_response_file[SZ_PATHNAME];
@@ -398,7 +406,9 @@ bkg_wfservice (int job)
  * complete normally.
  */
 void
-bkg_delfiles (int job)
+bkg_delfiles (
+  int	job
+)
 {
 	char	bkg_query_file[SZ_PATHNAME];
 	char	query_response_file[SZ_PATHNAME];

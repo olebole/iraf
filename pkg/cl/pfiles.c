@@ -665,7 +665,9 @@ pfilewrite (
  * "unlearn" to restore the package default parameters for an ltask or package.
  */
 int
-pfileinit (struct ltask *ltp)
+pfileinit (
+  struct ltask *ltp
+)
 {
 	struct	task *tp;
 	struct	pfile *pfp;
@@ -781,7 +783,11 @@ mkpfilename (
  * characters generated.
  */
 static void
-mapname (char *in, char *out, int maxlen)
+mapname (
+  char	*in,
+  char	*out,
+  int	maxlen
+)
 {
 	register int ip, op;
 
@@ -835,7 +841,9 @@ filetime (
  *   these events happened for this particular run of the task.
  */
 struct pfile *
-pfilecopy (register struct pfile *pfp)
+pfilecopy (
+  register struct pfile *pfp
+)
 {
 	register struct param *pp, *newpp;
 	struct	pfile *newpfp;
@@ -949,6 +957,7 @@ pfilecopy (register struct pfile *pfp)
 	    newpp->p_listfp = pp->p_listfp;
 	    newpp->p_listval = pp->p_listval;
 	    newpp->p_lenval = pp->p_lenval;
+
 	}
 
 	newpfp->pf_oldpfp = pfp;
@@ -980,7 +989,9 @@ pfilecopy (register struct pfile *pfp)
  *   dead pfile if it is below the new topd set by keep.
  */
 void
-pfcopyback (struct pfile *pff)
+pfcopyback (
+  struct pfile *pff
+)
 {
 	register struct param *pt, *pf;
 	struct	pfile *pft;
@@ -1125,7 +1136,11 @@ pfcopyback (struct pfile *pff)
  *   execnewtask(), to add such parameters as $nargs and mode.
  */
 struct param *
-addparam (struct pfile *pfp, char *buf, FILE *fp)
+addparam (
+  struct pfile *pfp,
+  char	*buf,
+  FILE	*fp
+)
 {
 	static char *minfields =
 		"must specify at least name,type,mode for `%s'\n";
@@ -1588,7 +1603,10 @@ addparam (struct pfile *pfp, char *buf, FILE *fp)
 /* CK_ATOI -- Check a string for non-numerics before conversion.
  */
 int
-ck_atoi (char *str, int *val)
+ck_atoi (
+  char	*str,
+  int	*val
+)
 {
 	char	*s;
 
@@ -1624,7 +1642,10 @@ ck_atoi (char *str, int *val)
  *   empty return a pointer to the string "undefval".
  */
 char *
-nextfield (char **pp, FILE *fp)
+nextfield (
+  char	**pp,
+  FILE	*fp
+)
 {
 	static char readbuf[SZ_LINE];
 	register char c, *p;	/* fast references to field	 	*/
@@ -1789,7 +1810,9 @@ nextfield (char **pp, FILE *fp)
  * you have ASCII.
  */
 char *
-makelower (register char *cp)
+makelower (
+  register char *cp
+)
 {
 	char *start = cp;
 	register char c;
@@ -1900,7 +1923,9 @@ scanmode (char *s)
  * N.B. hope ERR doesn't map into a reasonable set of flags.
  */
 int
-scantype (register char *s)
+scantype (
+  register char *s
+)
 {
 	static char *badtype =  "bad type spec `%c'";
 	static char *cnfltype = "conflicting type spec `%c'";

@@ -12,6 +12,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
+
 #include "xpp.h"
 #include "../bootProto.h"
 
@@ -249,6 +250,7 @@ main (int argc, char *argv[])
 	    useg95 = (strncmp (f77comp, "g95", 3) == 0 ? 1 : 0);
 	if ((s = os_getenv ("XC-LINKER")) || (s = os_getenv ("XC_LINKER")))
 	    strcpy (linker, s);
+
 
 
         /* Always load the default IRAF package environment. */

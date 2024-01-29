@@ -209,7 +209,6 @@ oneint:
 	    /* Output array index ranges: {beg, end} * N. */
 	    {   memel *ip = (memel *) &cep->c_args;
 		int i, n = (int)ip[2];
-
 		for (ip += 2, i=0;  i < n;  i++, ip += 2)
 		    fprintf (fp, "%d:%d ", (XINT)*ip, (XINT)(*ip+1));
 		fprintf (fp, "\n");
@@ -234,6 +233,7 @@ d_d (void)
 {
 	char *stackaddr = (char *)stack;  /*  just so we may subtract	*/
 	char *otheraddr;
+
 
 	eprintf ("\ndictionary indices:\n");
 	eprintf ("\tmaxd-1\t%u (%u)\n", maxd-1, dictionary[maxd-1]);

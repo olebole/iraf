@@ -269,7 +269,9 @@ addconst (char *s, int t)
  * parentheses.
  */
 void
-listparams (struct pfile *pfp)
+listparams (
+  struct pfile *pfp
+)
 {
 	register struct param *pp;
 
@@ -288,7 +290,10 @@ listparams (struct pfile *pfp)
  * if a hidden parameter.
  */
 void
-pretty_param (struct param *pp, FILE *fp)
+pretty_param (
+  struct param *pp,
+  FILE	*fp 
+)
 {
 	register char	ch, *p;
 	char	buf[SZ_LINE];
@@ -403,7 +408,9 @@ pretty_param (struct param *pp, FILE *fp)
  * t_stdout in the form `task.param=value'.
  */
 void
-dumpparams (struct pfile *pfp)
+dumpparams (
+  struct pfile *pfp
+)
 {
 	register struct param *pp;
 	register FILE	*fp = currentask->t_stdout;
@@ -424,7 +431,11 @@ dumpparams (struct pfile *pfp)
  * in the format `task.param = value'.
  */
 void
-show_param (struct ltask *ltp, struct param *pp, FILE *fp)
+show_param (
+  struct ltask *ltp,
+  struct param *pp,
+  FILE	*fp
+)
 {
 	char	buf[SZ_LINE+1];
 	int	isstr;
@@ -455,7 +466,10 @@ show_param (struct ltask *ltp, struct param *pp, FILE *fp)
  * of a sorted table.  Used to give menus in response to ? and ?? directives.
  */
 void
-listhelp (struct package *pkp, int show_invis)
+listhelp (
+  struct package *pkp,
+  int	show_invis
+)
 {
 	static	int first_col=7, maxch=20, ncol=0;
 	register struct ltask *ltp;
@@ -507,7 +521,9 @@ listhelp (struct package *pkp, int show_invis)
  * TODO: this should be optimized once a nice form is settled on.
  */
 void
-listallhelp (int show_invis)
+listallhelp (
+  int	show_invis
+)
 {
 	register struct package *pkp;
 
@@ -543,7 +559,13 @@ listallhelp (int show_invis)
  *   e.g. = task.array[*]
  */
 void
-breakout (char *full, char **pk, char **t, char **p, char **f)
+breakout (
+  char	*full, 
+  char **pk, 
+  char **t, 
+  char **p, 
+  char **f 
+)
 {
 	register char *cp;
 	register int npts, n;
@@ -611,7 +633,9 @@ breakout (char *full, char **pk, char **t, char **p, char **f)
  *   (and abbrevs are enabled).
  */
 int
-fieldcvt (register char *f)
+fieldcvt (
+  register char *f
+)
 {
 	/* Field name and corresponding code tables.
 	 */
@@ -653,7 +677,10 @@ fieldcvt (register char *f)
  * at which s matched.
  */
 int
-keyword (register char *tbl[], register char *s)
+keyword (
+  register char *tbl[], 
+  register char *s
+)
 {
 	register int i;
 	register char *kentry;
@@ -686,7 +713,10 @@ keyword (register char *tbl[], register char *s)
  * run it if found. it gets nargs arguments from the operand stack.
  */
 void
-intrfunc (char *fname, int nargs)
+intrfunc (
+  char	*fname,
+  int	nargs
+)
 {
 	static char *ifnames[] = {
 	    "abs",       "access",    "atan2",     "cos", 	"defpac",
@@ -837,7 +867,11 @@ sexa (char *s)
 /* Convert a sexagesimal real back to an index range.
  */
 void
-sexa_to_index (double r, int *i1, int *i2)
+sexa_to_index (
+  double r,
+  int	*i1, 
+  int   *i2
+)
 {
 	int	sgn;
 
@@ -916,7 +950,9 @@ getpipe (void)
  * deleted and the pipestack is cleared (i.e., during error recovery).
  */
 void
-delpipes (register int npipes)
+delpipes (
+  register int npipes
+)
 {
 	register int pipe;
 	char	*pipefile();
@@ -938,7 +974,9 @@ delpipes (register int npipes)
  * buffer and return pointer to pipefile name to caller.
  */
 char *
-pipefile (int pipecode)
+pipefile (
+  int	pipecode
+)
 {
 	static	char fname[SZ_PIPEFILENAME+1];
 	char	*dir;
@@ -1117,7 +1155,10 @@ in_switch (void)
  * executed.
  */
 void
-caseset (memel *parg, int ncaseval)
+caseset (
+  memel	*parg,
+  int	ncaseval 
+)
 {
 	struct	operand	*o;
 	static	char *badcase = "Invalid case constant.";
@@ -1152,7 +1193,9 @@ caseset (memel *parg, int ncaseval)
  * top of a linked list.
  */
 struct label *
-setlabel (struct operand *name)
+setlabel (
+  struct operand *name
+)
 {
 	struct	label	*p;
 
@@ -1173,7 +1216,9 @@ setlabel (struct operand *name)
  * name, or NULL if the label has not been defined.
  */
 struct label *
-getlabel (struct operand *name)
+getlabel (
+  struct operand *name
+)
 {
 	struct	label	*l;
 
@@ -1195,7 +1240,9 @@ getlabel (struct operand *name)
  * the GOTO is taken out of the indirect list.
  */
 void
-setigoto (int loc)
+setigoto (
+  int	loc
+)
 {
 	if (igoto1 < 0)
 	    coderef(loc)->c_args = -1;
@@ -1210,7 +1257,9 @@ setigoto (int loc)
  * the target may be put in the argument.
  */
 void
-unsetigoto (int loc)
+unsetigoto (
+  int loc
+)
 {
 	int 	last, curr;
 
@@ -1233,7 +1282,10 @@ unsetigoto (int loc)
  * implicit array loops e.g. a[*,5].
  */
 int
-make_imloop (int i1, int i2)
+make_imloop (
+  int  i1, 
+  int  i2
+)
 {
 	int 	mode;
 

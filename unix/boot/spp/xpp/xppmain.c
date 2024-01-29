@@ -40,7 +40,7 @@ extern  int yylex (void);
 static  int  isxfile (char *fname);
 
 
-int main (int argc, char *argv[])
+int main (int argc, char **argv)
 {
 	int	i, rfflag, nfiles;
 	FILE	*fp_defs, *source;

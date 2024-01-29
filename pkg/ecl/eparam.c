@@ -622,10 +622,12 @@ e_drawkey (void)
 /* E_INDENT_PROMPT -- Must handle multiline prompts, i.e. prompt string may
  * have imbedded newlines.  Convert newline into newline plus the number of
  * spaces to indent.
-e_indent_prompt (p, bp, indent)
-char	*p;
-char	*bp;
-int	indent;
+void
+e_indent_prompt (
+    char  *p,
+    char  *bp,
+    int	   indent
+)
 {
 	register int	i;
 	register char	c;
@@ -2147,8 +2149,8 @@ e_display (
 void 
 e_displayml (
     char *string,		/* string to be printed			*/
-  int	sline, 			/* starting line and column		*/
-  int   scol,
+    int sline,
+    int scol,		/* starting line and column		*/
     int ccol			/* start col of continuation lines	*/
 )
 {

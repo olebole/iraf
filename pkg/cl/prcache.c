@@ -474,10 +474,14 @@ pr_listcache (
  * to process termination.
  */
 void
-pr_dumpcache (int pid, int break_locks)
+pr_dumpcache (
+  int	pid,
+  int	break_locks 
+)
 {
 	register struct	process *pr;
 	register int	n;
+
 
 	pr_checkup();
 
@@ -553,7 +557,10 @@ pr_pnametopid (char *pname)
  * of all connected but idle processes if pid=0.
  */
 void
-pr_chdir (register int pid, char *newdir)
+pr_chdir (
+  register int	pid,
+  char	*newdir
+)
 {
 	register struct process *pr;
 
@@ -571,7 +578,11 @@ pr_chdir (register int pid, char *newdir)
  * or in all connected but idle processes if pid=0.
  */
 void
-pr_envset (register int pid, char *envvar, char *valuestr)
+pr_envset (
+  register int	pid,
+  char	*envvar,
+  char	*valuestr 
+)
 {
 	register struct process *pr;
 
@@ -663,8 +674,10 @@ pr_initcache (void)
 
 /* PR_TOHEAD -- Relink a process at the head of the cache list.
  */
-static void
-pr_tohead (struct process *pr)
+void
+pr_tohead (
+  register struct process *pr
+)
 {
 	if (pr_head != pr) {
 	    pr_unlink (pr);
@@ -679,7 +692,9 @@ pr_tohead (struct process *pr)
 /* PR_TOTAIL -- Relink a process at the tail of the cache list.
  */
 static void
-pr_totail (struct process *pr)
+pr_totail (
+  register struct process *pr
+)
 {
 	if (pr_tail != pr) {
 	    pr_unlink (pr);
@@ -694,7 +709,9 @@ pr_totail (struct process *pr)
 /* PR_UNLINK -- Unlink a process from the list.
  */
 static void
-pr_unlink (struct process *pr)
+pr_unlink (
+  register struct process *pr
+)
 {
 	if (pr->pr_up) {
 	    (pr->pr_up)->pr_dn = pr->pr_dn;

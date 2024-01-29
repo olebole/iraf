@@ -1116,7 +1116,12 @@ ZSTTKS (
  * to the remote socket at the given address.
  */
 static int
-ks_socket (char *host, u_long addr, int port, char *mode)
+ks_socket (
+    char   *host,
+    u_long  addr,
+    int	    port,
+    char   *mode
+)
 {
 	struct	sockaddr_in sockaddr;
 	struct	hostent *hp;
@@ -1289,9 +1294,7 @@ ks_geti (int fd)
 
 /* KS_GETS -- Read a null terminated ascii string.
 static int
-ks_gets (fd, outstr)
-int	fd;
-char	*outstr;
+ks_gets (int fd, char *outstr)
 {
 	register char *op = outstr;
 	int	stat;
@@ -1311,7 +1314,8 @@ char	*outstr;
 
 /* KS_MSG -- Print debugging messages.
  */
-static void dbgsp (int pid)
+static void
+dbgsp (int pid)
 {
 	int i, nsp = ((parent > 0) ? (pid - parent) : 0);
 	for (i=0; i < nsp; i++)

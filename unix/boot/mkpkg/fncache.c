@@ -41,7 +41,6 @@ struct  _sysfile *fn_unlink (register struct _sysfile *fn);
 struct  _sysfile *fn_tohead (register struct _sysfile *fn);
 struct  _sysfile *fn_totail (register struct _sysfile *fn);
 
-
 extern  int  os_sysfile (char *sysfile, char *fname, int maxch);
 
 int   m_sysfile (char *lname, char *fname, int maxch);

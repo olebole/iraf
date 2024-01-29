@@ -103,7 +103,8 @@ cllogout (void)
 	char	 owner[SZ_FNAME+1];
 
 
-	/* Set logout status value */
+        /* Set logout status value.
+	 */
         pfp = newtask->t_pfp;
         if ((n = nargs (pfp)) > 0) {
             pushbparams (pfp->pf_pp);   /* push so first popped is 1st param */
@@ -241,6 +242,7 @@ cl_locate (char *task_spec, int first_only)
 	struct	package *pkp;
 	struct  ltask   *stat;
 	int	found = 0;
+
 
 	strcpy (buf, task_spec);
 	breakout (buf, &junk, &pkname, &ltname, &junk);
@@ -701,6 +703,7 @@ clhelp (void)
 	    }
 	}
 }
+
 
 void 
 clallhelp (void)
@@ -2276,10 +2279,12 @@ clonerror (void)
 
 
 
-/* ----------------------------------------------
+/* ========================================================
+ *
  * End of builtin functions.
  * What follows is their support code.
- */
+ *
+ * ========================================================*/
 
 /* SETBUILTINS -- Add the builtin functions to package at pkp (this should
  * always just be clpackage).  To add more functions, write the support function
@@ -2376,9 +2381,11 @@ setbuiltins (register struct package *pkp)
 	  { "clear", clclear, 0},	/* clear the terminal screen	     */
 	  { "edit", cledit, 0},		/* edit a file or files	             */
 	  { "sleep", clsleep, 0},	/* suspend process execution	     */
+
 	  { "_allocate", clallocate, LT_INVIS},
 	  { "_deallocate", cldeallocate, LT_INVIS},
 	  { "_devstatus", cldevstatus, LT_INVIS},
+
 	  { "_errpsh", clerrpsh, LT_INVIS},	/* push error handler	     */
 	  { "_erreset", clerreset, LT_INVIS},	/* reset error handler	     */
 	  { "onerror", clonerror, 0},		/* post user error handler   */
@@ -2529,6 +2536,7 @@ void
 pushbpvals (struct param *pp)
 {
 	struct param *npp;
+
 
 	if (pp == NULL)
 	    return;		/* just a guard	*/

@@ -144,7 +144,10 @@ output (void)
 
 static int pkdebug = 0;
 int
-apack (int *p, int n)
+apack (
+     int *p,
+     int n
+)
 {
     /* pack state i from temp1 into amem */
     int off;

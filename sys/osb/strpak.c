@@ -17,7 +17,11 @@
  * do nothing.
  */
 void
-STRPAK (XCHAR *instr, PKCHAR *outstr, XINT *maxch)
+STRPAK (
+    XCHAR   *instr,
+    PKCHAR  *outstr,
+    XINT    *maxch
+)
 {
 	register XCHAR	*ip = instr;
 	register char	*op = (char *)outstr;

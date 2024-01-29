@@ -1025,7 +1025,9 @@ clfprint (void)
 
 
 void
-do_clprint (char *dest)
+do_clprint (
+  char	*dest
+)
 {
 	/* x1 and x2 are just place holders for the call to breakout.
 	 */
@@ -1394,7 +1396,9 @@ clstty (void)
  * first char in the task name is an underscore.
  */
 void
-cltask (int redef)
+cltask (
+  int	redef
+)
 {
 	register struct pfile *pfp;
 	struct	operand o;
@@ -2287,7 +2291,9 @@ mkarglist (
  * a builtin will be accessed right-to-left.
  */
 void
-pushfparams (register struct param *pp)
+pushfparams (
+  register struct param *pp
+)
 {
 	struct operand onam;
 
@@ -2306,7 +2312,9 @@ pushfparams (register struct param *pp)
  * parameters for a builtin will be accessed left-to-right.
  */
 void
-pushbparams (struct param *pp)
+pushbparams (
+  struct param *pp
+)
 {
 	struct operand onam;
 	struct param *npp;
@@ -2327,7 +2335,9 @@ pushbparams (struct param *pp)
 /* PUSHBPVALS -- Like pushbparams, but only the parameter value is pushed.
  */
 void
-pushbpvals (struct param *pp)
+pushbpvals (
+  struct param *pp
+)
 {
 	struct param *npp;
 
@@ -2345,7 +2355,9 @@ pushbpvals (struct param *pp)
  * the number of command line arguments to a builtin.
  */
 int
-nargs (struct pfile *pfp)
+nargs (
+  struct pfile *pfp
+)
 {
 	struct	param	*pp;
 	int	n;
@@ -2361,7 +2373,9 @@ nargs (struct pfile *pfp)
  * referenced task terminates.
  */
 void
-keep (register struct task *tp)
+keep (
+  register struct task *tp
+)
 {
 	if (cldebug) {
 	    eprintf ("currentask: %d, prevtask: %d\n",currentask,prevtask);

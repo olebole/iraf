@@ -120,6 +120,7 @@ extern  char *onerr_handler;
  * If we are a background task, print the task ordinal to tell the user
  * which task aborted.
  */
+
 void
 cl_error (int errtype, char *diagstr, ...)
 {
@@ -152,6 +153,7 @@ cl_error (int errtype, char *diagstr, ...)
 	 * we may safely longjmp back to main's loop on an error.  ERRENV is
 	 * not set for bkg jobs since error restart is not permitted.
 	 */
+	    
 	if (!validerrenv && !(firstask->t_flags & T_BATCH)) {
 	    nfatal++;
 	    vfprintf (currentask->t_stderr, diagstr, args);

@@ -53,6 +53,7 @@ static	int nscan_val=0;	/* value returned by NSCAN intrinsic	*/
  * query if readlist yields undefined.
  * error() may be called on various conditions.
  */
+
 void 
 cl_scan (int nargs, char *source)
 {

@@ -97,7 +97,6 @@ struct _bkgjob {
 #define	J_KILLED	04		/* job was killed 		*/
 #define	busy(job)	(jobtable[(job)-1].b_flags & J_RUNNING)
 
-
 static void bkg_close (int job, int pmsg);
 
 

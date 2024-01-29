@@ -161,6 +161,7 @@ popop (void)
 	    return (*op);
 	}
 	cl_error (E_UERR, e_sunderflow);
+
 /* NOTREACHED */
 	return (junk);
 }
@@ -182,6 +183,7 @@ pushtask (void)
 	    return ((struct task *) &stack[topcs]);
 	} 
 	cl_error (E_UERR, "task stack overflow");	/* does not return */
+
 /* NOTREACHED */
 	return ((struct task *) NULL);
 }
@@ -208,6 +210,7 @@ poptask (void)
 	    return ((struct task *) &stack[topcs]);
 	} 
 	cl_error (E_IERR, "Control stack underflow: topcs = %d", topcs);
+
 /* NOTREACHED */
 	return ((struct task *) NULL);
 }

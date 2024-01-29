@@ -35,8 +35,13 @@ struct hershey_tab {
 int	encode();
 
 
-int 
-main (int argc, char *argv[])
+
+/* Program MAIN.
+ */
+int main (
+    int argc, 
+    char *argv[]
+)
 {
 	register int i=0;
 	int	minx, maxx, charnum=0, idx=0, hnum, hindex, hlength;

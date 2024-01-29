@@ -237,6 +237,7 @@ shutdown (void)
 		fprintf (stderr, "\n[%d] done  %.1f %.0m %d%%\n", bkgno,
 		    cpu, clk/60., (int)((clk > 0 ? cpu / clk : 0.) * 100.));
 	    }
+
 	} else {
 	    firstask->t_topd = dereference (firstask->t_ltp) + LTASKSIZ;
 	    restor (firstask);
@@ -502,6 +503,7 @@ login (char *cmd)
 		    *ap++ = *arg++;
 	    }
 	}
+
 
 	/* Copy any user supplied host command line arguments into the
 	 * CL parameter $args to use in the startup script (for instance).

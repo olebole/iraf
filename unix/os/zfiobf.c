@@ -49,11 +49,13 @@
  * FIO interface is absolute offset, so we have to keep track of the file
  * position to avoid a seek on every i/o access.
  */
+
 int _u_fmode (int mode);
 int vm_access (char *fname, int mode);
 int vm_reservespace (long nbytes);
 int vm_largefile (long nbytes);
 int vm_directio (int fd, int flag);
+
 
 
 /* ZOPNBF -- Open a binary file.  The file must exist for modes RO, WO, RW.

@@ -40,7 +40,10 @@ static	void dd_f();
  * instructions.  Done directly.
  */
 void
-d_stack (register XINT locpc, int ss)
+d_stack (
+  register XINT locpc,
+  int ss
+)
 {
 	register struct codeentry *cep;
 	int n, opcode, errs = 0;
@@ -66,7 +69,11 @@ d_stack (register XINT locpc, int ss)
  * the instruction in memel is returned as the function value.
  */
 int
-d_instr (FILE *fp, char *prefix, register XINT locpc)
+d_instr (
+  FILE *fp,
+  char *prefix,
+  register XINT locpc
+)
 {
 	register struct codeentry *cep;
 	int opcode, extra=0;
@@ -331,7 +338,10 @@ d_f (void)
 }
 
 static void
-dd_f (char *msg, char *fname)
+dd_f (
+  char	*msg,
+  char	*fname
+)
 {
 	FILE	*fp[128];
 	int	fn;
@@ -392,7 +402,12 @@ e_dumpop (void)
 /* Format a multiline exec-task message string for debug output.
  */
 void
-d_fmtmsg (FILE *fp, char *prefix, char *message, int width)
+d_fmtmsg (
+  FILE *fp,
+  char *prefix,
+  char *message,
+  int width
+)
 {
 	register char *ip, *op, *cp;
 	char lbuf[SZ_COMMAND], obuf[SZ_COMMAND];

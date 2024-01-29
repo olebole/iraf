@@ -144,7 +144,9 @@ testval:
 /* MINMAX -- Format the minimum and maximum values of a parameter, if any.
  */
 char *
-minmax (register struct param *pp)
+minmax (
+    register struct param *pp
+)
 {
 	static char  message[SZ_LINE];
 
@@ -180,7 +182,9 @@ minmax (register struct param *pp)
 /* ENUMIN -- Format the enumeration string for a parameter.
  */
 char *
-enumin (register struct param *pp)
+enumin (
+  register struct param *pp
+)
 {
 	static char  message[SZ_LINE];
 

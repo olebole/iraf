@@ -77,7 +77,6 @@ scanf (char *format, ...)
 	struct _input in;
 	int status;
 
-
 	va_start (argp, format);
 	in.i_type = SCAN_FILE;
 	in.i_nchars = 0;
@@ -97,7 +96,6 @@ fscanf (FILE *fp, char *format, ...)
 	va_list	argp;
 	int	status;
 	struct	_input in;
-
 
 	va_start (argp, format);
 	in.i_type = SCAN_FILE;
@@ -119,7 +117,6 @@ sscanf (char *str, char *format, ...)
 	va_list	argp;
 	struct _input in;
 	int status;
-
 
 	va_start (argp, format);
 	in.i_type = SCAN_STRING;

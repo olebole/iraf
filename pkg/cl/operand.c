@@ -38,7 +38,10 @@ extern char *epsilonstr;
 /* SPROP -- Format the value of a parameter into the output string.
  */
 void
-sprop (register char *outstr, register struct operand *op)
+sprop (
+  register char *outstr,
+  register struct operand *op
+)
 {
 	register int type;
 
@@ -78,7 +81,10 @@ sprop (register char *outstr, register struct operand *op)
 /* SPPARVAL -- Print value field of a parameter into a string.
  */
 void
-spparval (char *outstr, struct param *pp)
+spparval (
+  char	*outstr,
+  struct param *pp
+)
 {
 	struct	operand o;
 
@@ -96,7 +102,10 @@ spparval (char *outstr, struct param *pp)
  * handle indefinite and abort on undefined.
  */
 void
-fprop (FILE *fp, struct operand *op)
+fprop (
+  FILE	*fp,
+  struct operand *op
+)
 {
 	/* Use MAXPROMPT to give greatest length we expect to print.
 	 */
@@ -128,7 +137,9 @@ fprop (FILE *fp, struct operand *op)
 /* print operand, using fprop, to our t_stdout.
  */
 void
-oprop (struct operand *op)
+oprop (
+  struct operand *op
+)
 {
 	fprop (currentask->t_stdout, op);
 }
@@ -137,7 +148,9 @@ oprop (struct operand *op)
 /* print operand, using fprintf, to currentask.
  */
 void
-prop (struct operand *op)
+prop (
+  struct operand *op
+)
 {
 	fprop (currentask->t_out, op);
 }
@@ -294,7 +307,10 @@ err:
  * undefined, however.
  */
 struct operand
-makeop (char *str, int type)
+makeop (
+  char	*str,
+  int	type
+)
 {
 	register char *s, *ip;
 	register char c;

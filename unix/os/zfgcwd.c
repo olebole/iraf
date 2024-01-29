@@ -28,6 +28,7 @@ ZFGCWD (
 	register int	n;
 	char	dirname[1025];
 
+
 	/* If cwd is already known, just return the name.  Reconstructing
 	 * the pathname of the cwd is expensive on some systems.
 	 */

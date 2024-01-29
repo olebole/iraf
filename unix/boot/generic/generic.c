@@ -75,11 +75,8 @@ int   gsize (char ch);
 char  nextch (void);
 char  gch (void);
 void  uch (char ch);
-
 void  output (char ch);
 void  outstr (char *s);
-
-
 
 
 /**

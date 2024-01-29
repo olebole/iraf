@@ -112,10 +112,7 @@ twrite (
  * Do not include a trailing \n.
  */
 void 
-prparamval (
-  struct param *pp,
-  FILE	*fp
-)
+prparamval (struct param *pp, FILE *fp)
 {
 	char	buf[SZ_LINE];
 
@@ -159,8 +156,8 @@ strtable (
     FILE *fp,			/* output file */
     char *list[],		/* array of string pointers */
     int nstr,			/* number of strings */
-  int	first_col,		/* where to place table on a line */ 
-  int   last_col,
+    int first_col,
+    int last_col,	/* where to place table on a line */
     int maxch,			/* maximum chars to print from a string */
     int ncol			/* desired # of columns (0 to autoscale) */
 )
