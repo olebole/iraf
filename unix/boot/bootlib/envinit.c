@@ -118,7 +118,8 @@ _envinit (void)
 	 * pathnames but the HSI architecture support requires only that
 	 * IRAFARCH be predefined.
 	 */
-	if (_os_getenv (IRAFARCH, irafarch, SZ_PATHNAME))
+	if ((_os_getenv (IRAFARCH, irafarch, SZ_PATHNAME)) &&
+	    (strlen(irafarch) > 0))
 	    if (!_os_getenv (ARCH, osfn, SZ_PATHNAME)) {
 		XCHAR   x_name[SZ_PATHNAME+1];
 		XCHAR   x_value[SZ_PATHNAME+1];
