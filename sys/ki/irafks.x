@@ -12,9 +12,7 @@ include	"ki.h"
 # a remote host.
 
 define	DEBUG_FILE	"/tmp/ks.out"	# MACHDEP
-#define	DEBUG_FILE	"iraftmp:ks.out"
 define	DEBUG		NO
-#define	DEBUG		YES
 
 define	DEF_LENIOBUF	32768		# reallocated if too small
 define	SZ_TXBUF	1024		# handy text buffer
