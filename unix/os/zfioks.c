@@ -152,7 +152,7 @@ struct	ksparam {
 };
 
 int	debug_ks = 1;			/* print debug info on stderr	  */
-char	debug_file[64] = "/tmp/ks";		/* debug output file if nonnull   */
+char	debug_file[64] = "/tmp/ks";	/* debug output file if nonnull   */
 FILE	*debug_fp = NULL;		/* debugging output		  */
 
 static	jmp_buf jmpbuf;
@@ -493,13 +493,6 @@ d_err:		dbgmsgf ("S:in.irafksd parent exit, status=%d\n", status);
 		} else
 		    dbgmsg ("S:in.irafksd: connection established\n");
 
-                /* Connection established.  Get client data. */
-                if ((s_port = ks_geti(fd)) < 0 || (check = ks_geti(fd)) < 0) {
-                    fprintf (stderr, "in.irafksd: protocol error\n");
-                    status = 1;
-                    goto s_err;
-                }
-
 		/* Find the connection's originating machine. */
 		fromlen = sizeof (from);
 		if (getpeername (fd, (struct sockaddr *)&from, 
@@ -507,6 +500,13 @@ d_err:		dbgmsgf ("S:in.irafksd parent exit, status=%d\n", status);
 		    fprintf (stderr, "in.irafksd: getpeername failed\n");
 		    exit (3);
 		}
+
+                /* Connection established.  Get client data. */
+                if ((s_port = ks_geti(fd)) < 0 || (check = ks_geti(fd)) < 0) {
+                    fprintf (stderr, "in.irafksd: protocol error\n");
+                    status = 1;
+                    goto s_err;
+                }
 
 		/* Verify authorization.  Shutdown if repeated unauthorized
 		 * requests occur.
