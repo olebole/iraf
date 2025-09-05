@@ -112,7 +112,7 @@ begin
 	    if (fntrfnb (catlist, i, Memc[str2], SZ_FNAME) == EOF)
 		break
 	    if (access (Memc[str2], READ_ONLY, TEXT_FILE) == YES) {
-		if (cq_setcat (cq, "filename@noao") <= 0) {
+		if (cq_setcat (cq, "filename@noirlab") <= 0) {
 		    if (verbose) {
 		        call printf ("Skipping catalog %s\n")
 		            call pargstr (Memc[str2])
