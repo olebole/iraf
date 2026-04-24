@@ -79,7 +79,7 @@ m_getc (register struct context *cx)
 		    fflush (stdout);
 		    if (fgets (lbuf, SZ_CMD, stdin) == NULL)
 			strcpy (lbuf, name);
-		    if ((val = index (lbuf, '\n')))
+		    if ((val = strchr (lbuf, '\n')))
 			*val = EOS;
 		    val = lbuf;
 		}
