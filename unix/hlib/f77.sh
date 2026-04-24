@@ -42,7 +42,7 @@
 # https://bugs.mageia.org/show_bug.cgi?id=11507
 set -e
 
-s=/tmp/stderr_$$
+s=${TMPDIR:-/tmp}/stderr_$$
 CC=${CC_f2c:-${CC:-cc}}
 CFLAGS="-I${iraf}include ${XC_CFLAGS} -std=gnu11 -Wno-deprecated-non-prototype -Wno-maybe-uninitialized -Wno-strict-aliasing -Wno-unknown-warning-option -Wno-return-type -fcommon"
 EFL=${EFL:-/v/bin/efl}
