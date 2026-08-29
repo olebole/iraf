@@ -35,10 +35,12 @@ cl> package
     language
     system
     lists
-    noao
     nttools
     utilities
     proto
+    onedspec
+    artdata
+    noao
     imutil
     immatch
     imgeom
